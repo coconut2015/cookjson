@@ -1,4 +1,4 @@
 #!/bin/bash
 COOKJSON_HOME=`dirname $0`
 COOKJSON_HOME=${COOKJSON_HOME}/../
-java -cp ${COOKJSON_HOME}/cookjson-utils/target/cookjson-utils-1.0.jar org.yuanheng.cookjson.FixBson $@
+java -cp ${COOKJSON_HOME}/cookjson-utils/target/cookjson-utils-0.1.jar org.yuanheng.cookjson.FixBson $@
