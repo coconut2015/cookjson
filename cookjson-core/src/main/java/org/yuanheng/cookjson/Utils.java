@@ -20,7 +20,6 @@ package org.yuanheng.cookjson;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
@@ -32,8 +31,6 @@ import javax.json.stream.JsonParser.Event;
 class Utils
 {
 	public static int THRESHOLD = 10000;
-
-	public final static Charset utf8 = Charset.forName ("utf-8");
 
 	public static void setInt (byte[] bytes, int value)
 	{

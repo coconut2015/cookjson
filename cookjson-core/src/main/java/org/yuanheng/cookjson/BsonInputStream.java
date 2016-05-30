@@ -141,7 +141,7 @@ class BsonInputStream
 		m_location += pos + 1;		// +1 for terminating null.
 		if (pos == 0)
 			return "";
-		return new String (buffer, 0, pos, Utils.utf8);
+		return new String (buffer, 0, pos, BOM.utf8);
 	}
 
 	public String getStringValue () throws IOException
@@ -149,7 +149,7 @@ class BsonInputStream
 		int size = readInt ();
 		byte[] bytes = new byte[size];
 		readFully (bytes);
-		return new String (bytes, 0, size - 1, Utils.utf8);
+		return new String (bytes, 0, size - 1, BOM.utf8);
 	}
 
 	public byte[] getBinary () throws IOException

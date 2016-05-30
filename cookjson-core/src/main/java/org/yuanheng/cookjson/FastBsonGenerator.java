@@ -23,12 +23,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Stack;
 
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonNumber;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.stream.JsonGenerator;
 
 /**
@@ -50,9 +48,16 @@ public class FastBsonGenerator implements JsonGenerator
 
 	private boolean m_validateName;
 
+	private boolean m_writeDouble = false;
+
 	public FastBsonGenerator (OutputStream os)
 	{
 		m_os = new BufferedOutputStream (os);
+	}
+
+	public void setWriteDouble (boolean b)
+	{
+		m_writeDouble = true;
 	}
 
 	private void writeCString (String name) throws IOException
@@ -61,7 +66,7 @@ public class FastBsonGenerator implements JsonGenerator
 			m_os.write (0);
 		else
 		{
-			byte[] bytes = name.getBytes (Utils.utf8);
+			byte[] bytes = name.getBytes (BOM.utf8);
 			if (m_validateName)
 			{
 				for (int i = 0; i < bytes.length; ++i)
@@ -124,7 +129,7 @@ public class FastBsonGenerator implements JsonGenerator
 
 	private JsonGenerator writeValue (String value)
 	{
-		byte[] bytes = value.getBytes (Utils.utf8);
+		byte[] bytes = value.getBytes (BOM.utf8);
 		Utils.setInt (m_bytes, bytes.length + 1);
 		writeElement (BsonType.String, m_name, m_bytes, 4);
 		try
@@ -185,19 +190,34 @@ public class FastBsonGenerator implements JsonGenerator
 			case ARRAY:
 			{
 				JsonArray array = (JsonArray)value;
-				writeArray (false);
+				writeArray (m_state == GeneratorState.INITIAL);
 				for (JsonValue v : array)
 				{
+					m_name = null;
 					if (v == null)
-						writeNull ();
+						writeNullValue ();
 					else
-						write (v);
+						writeValue (v);
 				}
 				writeEnd ();
 				break;
 			}
 			case OBJECT:
+			{
+				JsonObject obj = (JsonObject)value;
+				writeObject (m_state == GeneratorState.INITIAL);
+				for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
+				{
+					m_name = entry.getKey ();
+					JsonValue v = entry.getValue ();
+					if (v == null)
+						writeNullValue ();
+					else
+						writeValue (v);
+				}
+				writeEnd ();
 				break;
+			}
 			case NULL:
 				return writeNullValue ();
 			case NUMBER:
@@ -205,14 +225,30 @@ public class FastBsonGenerator implements JsonGenerator
 				JsonNumber number = (JsonNumber)value;
 				if (number.isIntegral ())
 				{
-					long l = number.longValue ();
-					if (l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE)
-						return writeValue (number.intValue ());
-					else
-						return writeValue (l);
+					// try write the number in int / long first and see it
+					// fits.  Otherwise, write it as the string literal.
+					try
+					{
+						return writeValue (number.intValueExact ());
+					}
+					catch (ArithmeticException ex)
+					{
+						try
+						{
+							return writeValue (number.longValueExact ());
+						}
+						catch (ArithmeticException ex2)
+						{
+							if (m_writeDouble)
+								return writeValue (number.doubleValue ());
+							return writeValue (number.toString ());
+						}
+					}
 				}
 				else
 				{
+					if (m_writeDouble)
+						return writeValue (number.doubleValue ());
 					return writeValue (number.toString ());
 				}
 			}
