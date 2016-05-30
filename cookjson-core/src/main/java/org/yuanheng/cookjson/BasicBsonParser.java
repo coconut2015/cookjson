@@ -29,10 +29,7 @@ import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 import javax.json.stream.JsonParser;
 
-import org.yuanheng.cookjson.value.CookJsonBinary;
-import org.yuanheng.cookjson.value.CookJsonBoolean;
-import org.yuanheng.cookjson.value.CookJsonNumber;
-import org.yuanheng.cookjson.value.CookJsonString;
+import org.yuanheng.cookjson.value.*;
 
 /**
  * @author	Heng Yuan
@@ -86,6 +83,8 @@ public class BasicBsonParser implements JsonParser
 		{
 			switch (m_field.type)
 			{
+				case BsonType.Null:
+					return CookJsonNull.NULL;
 				case BsonType.Double:
 					return new CookJsonNumber (m_is.readDouble ());
 				case BsonType.Integer:
@@ -110,7 +109,7 @@ public class BasicBsonParser implements JsonParser
 		{
 			throw new JsonException (ex.getMessage (), ex);
 		}
-		throw new JsonException ("Cannot handle the BSON type.");
+		throw new JsonException ("Cannot handle the BSON type: " + m_field.type);
 	}
 
 	private void getField () throws IOException

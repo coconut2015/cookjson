@@ -45,26 +45,46 @@ import javax.json.stream.JsonGenerator;
  */
 public class FastJsonGenerator implements JsonGenerator
 {
-	private Writer m_out;
-
-	private final Stack<Integer> m_states = new Stack<Integer> ();
-	private int m_state = GeneratorState.INITIAL;
-
-	private String m_name;
-
-	private boolean m_keyNameEscaped = true;
-	private boolean m_first = true;
+	/**
+	 * Current key name being worked on.  null if we are dealing with an
+	 * array.
+	 */
+	String m_name;
+	/**
+	 * If the name is already being escaped.
+	 */
+	boolean m_keyNameEscaped = true;
+	/**
+	 * The output writer.
+	 */
+	final Writer m_out;
+	/**
+	 * Saved state.
+	 */
+	final Stack<Integer> m_states = new Stack<Integer> ();
+	/**
+	 * The current state.
+	 * <p>
+	 * Subclasses should not modify this value.
+	 */
+	int m_state = GeneratorState.INITIAL;
+	/**
+	 * Are we dealing with the first element in an array / object?
+	 * <p>
+	 * Subclasses should not modify this value.
+	 */
+	boolean m_first = true;
 
 	public FastJsonGenerator (OutputStream os)
 	{
 		m_out = new BufferedWriter (new OutputStreamWriter (os, BOM.utf8));
 	}
 
-	public FastJsonGenerator (Writer writer)
+	public FastJsonGenerator (Writer out)
 	{
-		if (!(writer instanceof PrintWriter || writer instanceof BufferedWriter))
-			writer = new BufferedWriter (writer);
-		m_out = writer;
+		if (!(out instanceof PrintWriter || out instanceof BufferedWriter))
+			out = new BufferedWriter (out);
+		m_out = out;
 	}
 
 	/**
@@ -73,7 +93,7 @@ public class FastJsonGenerator implements JsonGenerator
 	 * 			the raw string value.
 	 * @return	this
 	 */
-	private JsonGenerator writeValue (String value)
+	JsonGenerator writeValue (String value)
 	{
 		try
 		{
@@ -159,9 +179,9 @@ public class FastJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject ()
 	{
-		pushState (GeneratorState.IN_OBJECT);
 		m_name = null;
 		writeValue ("{");
+		pushState (GeneratorState.IN_OBJECT);
 		m_first = true;
 		return this;
 	}
@@ -169,9 +189,9 @@ public class FastJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject (String name)
 	{
-		pushState (GeneratorState.IN_OBJECT);
 		m_name = name;
 		writeValue ("{");
+		pushState (GeneratorState.IN_OBJECT);
 		m_first = true;
 		return this;
 	}
@@ -179,9 +199,9 @@ public class FastJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray ()
 	{
-		pushState (GeneratorState.IN_ARRAY);
 		m_name = null;
 		writeValue ("[");
+		pushState (GeneratorState.IN_ARRAY);
 		m_first = true;
 		return this;
 	}
@@ -189,9 +209,9 @@ public class FastJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray (String name)
 	{
-		pushState (GeneratorState.IN_ARRAY);
 		m_name = name;
 		writeValue ("[");
+		pushState (GeneratorState.IN_ARRAY);
 		m_first = true;
 		return this;
 	}
@@ -271,14 +291,6 @@ public class FastJsonGenerator implements JsonGenerator
 			str = "}";
 		else
 		{
-			try
-			{
-				m_out.flush ();
-				m_out.close ();
-			}
-			catch (IOException ex)
-			{
-			}
 			throw new IllegalStateException ();
 		}
 		try

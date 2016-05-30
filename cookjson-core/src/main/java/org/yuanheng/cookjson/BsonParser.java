@@ -40,6 +40,7 @@ public class BsonParser implements JsonParser
 	private Stack<Boolean> m_inArrayStack = new Stack<Boolean> ();
 	private Event m_event;
 	private String m_keyName;
+	private boolean m_emptyObject;
 
 	public BsonParser (InputStream is)
 	{
@@ -75,6 +76,12 @@ public class BsonParser implements JsonParser
 			// use the saved key name
 			m_event = Event.KEY_NAME;
 		}
+		else if (m_event == Event.START_OBJECT &&
+				m_emptyObject)
+		{
+			m_emptyObject = false;
+			m_event = Event.END_OBJECT;
+		}
 		else
 		{
 			Event e = m_parser.next ();
@@ -86,7 +93,15 @@ public class BsonParser implements JsonParser
 					// check if we are dealing with an array
 					Event e2 = m_parser.next ();
 					if (e2 != Event.KEY_NAME)
-						throw new IllegalStateException ();
+					{
+						if (e2 == Event.END_OBJECT)
+						{
+							m_emptyObject = true;
+							break;
+						}
+						else
+							throw new IllegalStateException ();
+					}
 					String keyName = m_parser.getString ();
 					if ("0".equals (keyName))
 					{
