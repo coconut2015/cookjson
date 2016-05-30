@@ -32,6 +32,4 @@ class GeneratorState
 	public final static int IN_ARRAY = 1;
 	/** In object and started working on the first element. */
 	public final static int IN_OBJECT = 2;
-	/** Just specified field name. */
-	public final static int IN_FIELD = 3;
 }
