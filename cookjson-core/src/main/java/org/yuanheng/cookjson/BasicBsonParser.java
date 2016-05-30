@@ -44,6 +44,7 @@ public class BasicBsonParser implements JsonParser
 	private Stack<Integer> m_states = new Stack<Integer> ();
 	private int m_state = ParserState.INITIAL;
 	private JsonLocationImpl m_location = new JsonLocationImpl ();
+	private boolean m_objectIsArray;
 
 	public BasicBsonParser (InputStream is)
 	{
@@ -180,6 +181,9 @@ public class BasicBsonParser implements JsonParser
 				m_event = Event.START_OBJECT;
 				m_value = null;
 				m_is.readInt ();	// skip size;
+				// sets a temporary flag that indicates the object obtained
+				// was internally marked as Array.
+				m_objectIsArray = (type == BsonType.Array);
 				break;
 			}
 			default:
@@ -326,5 +330,16 @@ public class BasicBsonParser implements JsonParser
 		{
 			throw new JsonException (ex.getMessage (), ex);
 		}
+	}
+
+	/**
+	 * Checks if the current Object being dealt with is an array.  It is
+	 * only meaningful at START_OBJECT event.
+	 * @return	true if the object internally is marked as array.
+	 * 			false otherwise.
+	 */
+	public boolean isObjectIsArray ()
+	{
+		return m_objectIsArray;
 	}
 }
