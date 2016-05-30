@@ -59,9 +59,16 @@ public class CookJsonNumber implements JsonNumber
 	@Override
 	public int intValueExact ()
 	{
-		if (m_value instanceof Integer ||
-			m_value instanceof Long)
+		if (m_value instanceof Integer)
 			return m_value.intValue ();
+		else if (m_value instanceof Long)
+		{
+			long val = m_value.longValue ();
+			if (val > (long)Integer.MAX_VALUE ||
+				val < (long)Integer.MIN_VALUE)
+				throw new ArithmeticException ();
+			return (int) val;
+		}
 		return bigDecimalValue ().intValueExact ();
 	}
 

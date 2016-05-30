@@ -134,22 +134,48 @@ class Utils
 				case VALUE_NUMBER:
 				{
 					assert Debug.debug ("READ: " + e);
+					BigDecimal value = p.getBigDecimal ();
 					if (p.isIntegralNumber ())
 					{
-						int value = p.getInt ();
-						if (name == null)
+						try
 						{
-							g.write (value);
+							if (name == null)
+							{
+								g.write (value.intValueExact ());
+							}
+							else
+							{
+								g.write (name, value.intValueExact ());
+							}
 						}
-						else
+						catch (ArithmeticException ex)
 						{
-							g.write (name, value);
-							name = null;
+							try
+							{
+								if (name == null)
+								{
+									g.write (value.longValueExact ());
+								}
+								else
+								{
+									g.write (name, value.longValueExact ());
+								}
+							}
+							catch (ArithmeticException ex2)
+							{
+								if (name == null)
+								{
+									g.write (value.toBigInteger ());
+								}
+								else
+								{
+									g.write (name, value.toBigInteger ());
+								}
+							}
 						}
 					}
 					else
 					{
-						BigDecimal value = p.getBigDecimal ();
 						if (name == null)
 						{
 							g.write (value);

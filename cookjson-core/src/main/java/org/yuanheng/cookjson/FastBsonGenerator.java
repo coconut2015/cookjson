@@ -48,16 +48,16 @@ public class FastBsonGenerator implements JsonGenerator
 
 	private boolean m_validateName;
 
-	private boolean m_writeDouble = false;
+	private boolean m_useDouble = false;
 
 	public FastBsonGenerator (OutputStream os)
 	{
 		m_os = new BufferedOutputStream (os);
 	}
 
-	public void setWriteDouble (boolean b)
+	public void setUseDouble (boolean b)
 	{
-		m_writeDouble = true;
+		m_useDouble = true;
 	}
 
 	private void writeCString (String name) throws IOException
@@ -160,13 +160,13 @@ public class FastBsonGenerator implements JsonGenerator
 	{
 		long v = Double.doubleToLongBits (value);
 		Utils.setLong (m_bytes, v);
-		return writeElement (BsonType.Long, m_name, m_bytes, 8);
+		return writeElement (BsonType.Double, m_name, m_bytes, 8);
 	}
 
 	private JsonGenerator writeValue (boolean value)
 	{
 		m_bytes[0] = (byte) (value ? 1 : 0);
-		return writeElement (BsonType.Double, m_name, m_bytes, 1);
+		return writeElement (BsonType.Boolean, m_name, m_bytes, 1);
 	}
 
 	private JsonGenerator writeNullValue ()
@@ -239,7 +239,7 @@ public class FastBsonGenerator implements JsonGenerator
 						}
 						catch (ArithmeticException ex2)
 						{
-							if (m_writeDouble)
+							if (m_useDouble)
 								return writeValue (number.doubleValue ());
 							return writeValue (number.toString ());
 						}
@@ -247,7 +247,7 @@ public class FastBsonGenerator implements JsonGenerator
 				}
 				else
 				{
-					if (m_writeDouble)
+					if (m_useDouble)
 						return writeValue (number.doubleValue ());
 					return writeValue (number.toString ());
 				}
@@ -330,7 +330,7 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, BigInteger value)
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value.toString ());
@@ -340,9 +340,11 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, BigDecimal value)
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		m_name = name;
 		m_validateName = true;
+		if (m_useDouble)
+			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
 	}
 
@@ -350,7 +352,7 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, int value)
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -360,7 +362,7 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, long value)
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -370,7 +372,7 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, double value)
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -433,25 +435,29 @@ public class FastBsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (BigDecimal value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
+		if (m_useDouble)
+			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
 	}
 
 	@Override
 	public JsonGenerator write (BigInteger value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
+		if (m_useDouble)
+			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
 	}
 
 	@Override
 	public JsonGenerator write (int value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -460,7 +466,7 @@ public class FastBsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (long value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -469,7 +475,7 @@ public class FastBsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (double value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER");
+		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);

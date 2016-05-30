@@ -118,14 +118,12 @@ public class BsonParser implements JsonParser
 						m_keyName = null;
 						e = Event.START_ARRAY;
 						m_inArrayStack.push (Boolean.TRUE);
-						assert Debug.debug ("push true");
 					}
 					else
 					{
 						m_keyName = keyName;
 						e = Event.START_OBJECT;
 						m_inArrayStack.push (Boolean.FALSE);
-						assert Debug.debug ("push false");
 					}
 					break;
 				}

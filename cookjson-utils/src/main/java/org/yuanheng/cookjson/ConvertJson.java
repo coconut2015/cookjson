@@ -51,6 +51,7 @@ public class ConvertJson
 		options.addOption ("f", "from", true, "from file");
 		options.addOption ("t", "to", true, "to file");
 		options.addOption ("p", "pretty", false, "pretty output for text format.");
+		options.addOption ("d", "double", false, "use double for BSON to store BigDecimal / BigInteger.");
 		options.addOption ("h", "help", false, "print this message.");
 
 		if (args.length == 0)
@@ -62,6 +63,7 @@ public class ConvertJson
 		String src = null;
 		String dst = null;
 		boolean pretty = false;
+		boolean useDouble = false;
 
 		CommandLine cmdLine = new DefaultParser ().parse (options, args);
 
@@ -72,6 +74,9 @@ public class ConvertJson
 				case 'h':
 					usage (options);
 					System.exit (0);
+					break;
+				case 'd':
+					useDouble = true;
 					break;
 				case 'p':
 					pretty = true;
@@ -116,7 +121,13 @@ public class ConvertJson
 		FileOutputStream os = new FileOutputStream (dst);
 		JsonGenerator g;
 		if (dstBson)
+		{
 			g = new CheckedBsonGenerator (os);
+			if (useDouble)
+			{
+				((CheckedBsonGenerator)g).setUseDouble (true);
+			}
+		}
 		else
 		{
 			if (pretty)

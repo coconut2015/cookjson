@@ -95,14 +95,14 @@ class BsonInputStream
 	{
 		byte[] bytes = m_bytes;
 		readFully (bytes, 0, 8);
-		return (bytes[0] & 0xff) |
-			   ((bytes[1] & 0xff) << 8) |
-			   ((bytes[2] & 0xff) << 16) |
-			   ((bytes[3] & 0xff) << 24) |
-			   ((bytes[4] & 0xff) << 32) |
-			   ((bytes[5] & 0xff) << 40) |
-			   ((bytes[6] & 0xff) << 48) |
-			   ((bytes[7] & 0xff) << 56);
+		return (long)(bytes[0] & 0xff) |
+			   (((long)(bytes[1] & 0xff)) << 8) |
+			   (((long)(bytes[2] & 0xff)) << 16) |
+			   (((long)(bytes[3] & 0xff)) << 24) |
+			   (((long)(bytes[4] & 0xff)) << 32) |
+			   (((long)(bytes[5] & 0xff)) << 40) |
+			   (((long)(bytes[6] & 0xff)) << 48) |
+			   (((long)(bytes[7] & 0xff)) << 56);
 	}
 
 	public double readDouble () throws IOException
