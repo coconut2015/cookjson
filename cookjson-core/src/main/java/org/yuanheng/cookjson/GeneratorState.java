@@ -30,13 +30,8 @@ class GeneratorState
 
 	/** In array and started working on the first element. */
 	public final static int IN_ARRAY = 1;
-	/** In array and already worked on the first element. */
-	public final static int IN_ARRAY_SECOND = 2;
 	/** In object and started working on the first element. */
-	public final static int IN_OBJECT = 3;
-	/** In object and already worked on the first element. */
-	public final static int IN_OBJECT_SECOND = 4;
+	public final static int IN_OBJECT = 2;
 	/** Just specified field name. */
-	public final static int IN_FIELD = 5;
-
+	public final static int IN_FIELD = 3;
 }

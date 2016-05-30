@@ -193,18 +193,14 @@ class Utils
 		{
 			case GeneratorAction.END_ARRAY_OBJECT:
 				assertState (currentState == GeneratorState.IN_ARRAY ||
-							 currentState == GeneratorState.IN_ARRAY_SECOND ||
-							 currentState == GeneratorState.IN_OBJECT ||
-							 currentState == GeneratorState.IN_OBJECT_SECOND);
+							 currentState == GeneratorState.IN_OBJECT);
 				break;
 			case GeneratorAction.WRITE_ARRAY_VALUE:
 				assertState (currentState == GeneratorState.INITIAL ||
-							 currentState == GeneratorState.IN_ARRAY ||
-							 currentState == GeneratorState.IN_ARRAY_SECOND);
+							 currentState == GeneratorState.IN_ARRAY);
 				break;
 			case GeneratorAction.WRITE_OBJECT_VALUE:
-				assertState (currentState == GeneratorState.IN_OBJECT ||
-							 currentState == GeneratorState.IN_OBJECT_SECOND);
+				assertState (currentState == GeneratorState.IN_OBJECT);
 				break;
 			case GeneratorAction.CLOSE:
 				assertState (currentState == GeneratorState.INITIAL ||

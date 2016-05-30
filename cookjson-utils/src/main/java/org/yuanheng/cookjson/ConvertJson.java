@@ -122,14 +122,18 @@ public class ConvertJson
 			g = new CheckedBsonGenerator (os);
 		else
 		{
-			JsonProvider provider = JsonProvider.provider ();
-			HashMap<String, Object> config = new HashMap<String, Object> ();
 			if (pretty)
 			{
+				JsonProvider provider = JsonProvider.provider ();
+				HashMap<String, Object> config = new HashMap<String, Object> ();
 				config.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+				JsonGeneratorFactory f = provider.createGeneratorFactory (config);
+				g = f.createGenerator (new OutputStreamWriter (os, "utf-8"));
 			}
-			JsonGeneratorFactory f = provider.createGeneratorFactory (config);
-			g = f.createGenerator (new OutputStreamWriter (os, "utf-8"));
+			else
+			{
+				g = new FastJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+			}
 		}
 		Utils.convert (p, g);
 		g.close ();

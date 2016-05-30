@@ -34,6 +34,9 @@ import javax.json.stream.JsonGenerator;
  * This version of generator does not do any validations to maximize the
  * performance.
  * <p>
+ * The idea is that once you verified the writing logic is correct using a
+ * checked JsonGenerator, then switch to use this unchecked JsonGenerator.
+ * <p>
  * This JsonGenerator does not write the BOM to the file.  If you want to
  * have it, use {@link BOM#write(OutputStream, java.nio.charset.Charset)} to
  * do so.
@@ -42,21 +45,26 @@ import javax.json.stream.JsonGenerator;
  */
 public class FastJsonGenerator implements JsonGenerator
 {
-	private Writer m_pw;
+	private Writer m_out;
 
 	private final Stack<Integer> m_states = new Stack<Integer> ();
 	private int m_state = GeneratorState.INITIAL;
 
 	private String m_name;
 
+	private boolean m_keyNameEscaped = true;
+	private boolean m_first = true;
+
 	public FastJsonGenerator (OutputStream os)
 	{
-		m_pw = new OutputStreamWriter (os, BOM.utf8);
+		m_out = new BufferedWriter (new OutputStreamWriter (os, BOM.utf8));
 	}
 
 	public FastJsonGenerator (Writer writer)
 	{
-		m_pw = new PrintWriter (writer);
+		if (!(writer instanceof PrintWriter || writer instanceof BufferedWriter))
+			writer = new BufferedWriter (writer);
+		m_out = writer;
 	}
 
 	/**
@@ -69,12 +77,25 @@ public class FastJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			if (m_first)
+				m_first = false;
+			else
+				m_out.write (',');
 			if (m_name != null)
 			{
-				m_pw.write (m_name);
-				m_pw.write (":");
+				if (m_keyNameEscaped)
+				{
+					m_out.write (QuoteString.quote (m_name));
+				}
+				else
+				{
+					m_out.write ('"');
+					m_out.write (m_name);
+					m_out.write ('"');
+				}
+				m_out.write (":");
 			}
-			m_pw.write (value);
+			m_out.write (value);
 		}
 		catch (IOException ex)
 		{
@@ -89,8 +110,11 @@ public class FastJsonGenerator implements JsonGenerator
 		{
 			case ARRAY:
 			{
-				JsonArray array = (JsonArray)value;
-				writeStartArray ();
+				JsonArray array = (JsonArray) value;
+				if (m_name == null)
+					writeStartArray ();
+				else
+					writeStartArray (m_name);
 				for (JsonValue v : array)
 				{
 					if (v == null)
@@ -103,8 +127,11 @@ public class FastJsonGenerator implements JsonGenerator
 			}
 			case OBJECT:
 			{
-				JsonObject obj = (JsonObject)value;
-				writeStartObject ();
+				JsonObject obj = (JsonObject) value;
+				if (m_name == null)
+					writeStartObject ();
+				else
+					writeStartObject (m_name);
 				for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
 				{
 					JsonValue v = entry.getValue ();
@@ -132,29 +159,41 @@ public class FastJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject ()
 	{
+		pushState (GeneratorState.IN_OBJECT);
 		m_name = null;
-		return writeValue ("{");
+		writeValue ("{");
+		m_first = true;
+		return this;
 	}
 
 	@Override
 	public JsonGenerator writeStartObject (String name)
 	{
+		pushState (GeneratorState.IN_OBJECT);
 		m_name = name;
-		return writeValue ("{");
+		writeValue ("{");
+		m_first = true;
+		return this;
 	}
 
 	@Override
 	public JsonGenerator writeStartArray ()
 	{
+		pushState (GeneratorState.IN_ARRAY);
 		m_name = null;
-		return writeValue ("}");
+		writeValue ("[");
+		m_first = true;
+		return this;
 	}
 
 	@Override
 	public JsonGenerator writeStartArray (String name)
 	{
+		pushState (GeneratorState.IN_ARRAY);
 		m_name = name;
-		return writeValue ("{");
+		writeValue ("[");
+		m_first = true;
+		return this;
 	}
 
 	@Override
@@ -168,7 +207,7 @@ public class FastJsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, String value)
 	{
 		m_name = name;
-		return writeValue (value);
+		return writeValue (QuoteString.quote (value));
 	}
 
 	@Override
@@ -225,13 +264,26 @@ public class FastJsonGenerator implements JsonGenerator
 	{
 		int state = popState ();
 		String str;
-		if (state == ParserState.IN_ARRAY)
+		m_first = false;
+		if (state == GeneratorState.IN_ARRAY)
 			str = "]";
-		else
+		else if (state == GeneratorState.IN_OBJECT)
 			str = "}";
+		else
+		{
+			try
+			{
+				m_out.flush ();
+				m_out.close ();
+			}
+			catch (IOException ex)
+			{
+			}
+			throw new IllegalStateException ();
+		}
 		try
 		{
-			m_pw.write (str);
+			m_out.write (str);
 		}
 		catch (IOException ex)
 		{
@@ -251,7 +303,7 @@ public class FastJsonGenerator implements JsonGenerator
 	public JsonGenerator write (String value)
 	{
 		m_name = null;
-		return writeValue (value);
+		return writeValue (QuoteString.quote (value));
 	}
 
 	@Override
@@ -308,7 +360,7 @@ public class FastJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			m_pw.close ();
+			m_out.close ();
 		}
 		catch (IOException ex)
 		{
@@ -321,7 +373,7 @@ public class FastJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			m_pw.flush ();
+			m_out.flush ();
 		}
 		catch (IOException ex)
 		{
@@ -354,5 +406,30 @@ public class FastJsonGenerator implements JsonGenerator
 	void validateAction (int action)
 	{
 		Utils.validateGeneratorAction (m_state, action);
+	}
+
+	/**
+	 * Check if key name is escaped.
+	 * @return	true if key name is escaped.  false otherwise.
+	 */
+	public boolean isKeyNameEscaped ()
+	{
+		return m_keyNameEscaped;
+	}
+
+	/**
+	 * By default, key name is escaped.  However, if you know the name
+	 * is safe (or pre-escaped), you can avoid having them escaped.
+	 * <p>
+	 * This is useful in certain situations where the same key names
+	 * were repeatedly used.  Such as exporting data to JSON from
+	 * JDBC ResultSet.
+	 *
+	 * @param	b
+	 *			true if the key name should be escaped.  false otherwise.
+	 */
+	public void setKeyNameEscaped (boolean b)
+	{
+		m_keyNameEscaped = b;
 	}
 }
