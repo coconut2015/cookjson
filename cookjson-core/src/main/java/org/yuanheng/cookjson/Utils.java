@@ -88,6 +88,7 @@ class Utils
 				case END_OBJECT:
 					assert Debug.debug ("READ: " + e);
 					g.writeEnd ();
+					name = null;
 					break;
 				case VALUE_TRUE:
 				{
@@ -146,6 +147,7 @@ class Utils
 							else
 							{
 								g.write (name, value.intValueExact ());
+								name = null;
 							}
 						}
 						catch (ArithmeticException ex)
@@ -159,6 +161,7 @@ class Utils
 								else
 								{
 									g.write (name, value.longValueExact ());
+									name = null;
 								}
 							}
 							catch (ArithmeticException ex2)
@@ -170,6 +173,7 @@ class Utils
 								else
 								{
 									g.write (name, value.toBigInteger ());
+									name = null;
 								}
 							}
 						}
