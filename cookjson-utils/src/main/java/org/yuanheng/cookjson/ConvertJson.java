@@ -22,12 +22,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.HashMap;
 
 import javax.json.Json;
-import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
 import javax.json.stream.JsonParser;
 
 import org.apache.commons.cli.*;
@@ -124,11 +121,7 @@ public class ConvertJson
 		{
 			if (pretty)
 			{
-				JsonProvider provider = JsonProvider.provider ();
-				HashMap<String, Object> config = new HashMap<String, Object> ();
-				config.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
-				JsonGeneratorFactory f = provider.createGeneratorFactory (config);
-				g = f.createGenerator (new OutputStreamWriter (os, "utf-8"));
+				g = new FastPrettyJsonGenerator (new OutputStreamWriter (os, "utf-8"));
 			}
 			else
 			{

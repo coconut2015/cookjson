@@ -75,6 +75,7 @@ public class FixBson
 					if (justStarted)
 					{
 						start = offset - 5;
+						justStarted = false;
 					}
 					else
 					{
@@ -159,6 +160,7 @@ public class FixBson
 
 		// sort the pairs
 		Pair[] pa = pairs.toArray (new Pair[pairs.size ()]);
+
 		Arrays.sort (pa);
 
 		byte[] bytes = new byte[4];
