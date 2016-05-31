@@ -62,6 +62,15 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
+							<minimizeJar>true</minimizeJar>
+							<filters>
+								<filter>
+									<artifact>org.glassfish</artifact>
+									<includes>
+										<include>**</include>
+									</includes>
+								</filter>
+							</filters>
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ApacheLicenseResourceTransformer">
