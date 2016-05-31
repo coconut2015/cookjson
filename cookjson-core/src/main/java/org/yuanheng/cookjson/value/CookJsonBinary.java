@@ -20,12 +20,20 @@ package org.yuanheng.cookjson.value;
 
 import javax.json.JsonString;
 
+import org.yuanheng.cookjson.BinaryUtils;
+
 /**
  * @author	Heng Yuan
  */
 public class CookJsonBinary implements JsonString
 {
+	/** Use base64 to represent binary values. */
+	public final static int BASE64 = 0;
+	/** Use hexadecimal to represent binary values. */
+	public final static int HEX = 1;
+
 	private final byte[] m_bytes;
+	private int m_textFormat;
 
 	public CookJsonBinary (byte[] bytes)
 	{
@@ -41,7 +49,9 @@ public class CookJsonBinary implements JsonString
 	@Override
 	public String getString ()
 	{
-		return "";
+		if (m_textFormat == HEX)
+			return BinaryUtils.encodeHex (m_bytes);
+		return BinaryUtils.encodeBase64 (m_bytes);
 	}
 
 	@Override
@@ -53,5 +63,24 @@ public class CookJsonBinary implements JsonString
 	public byte[] getBytes ()
 	{
 		return m_bytes;
+	}
+
+	/**
+	 * @return	the textFormat
+	 */
+	public int getTextFormat ()
+	{
+		return m_textFormat;
+	}
+
+	/**
+	 * Use BASE64 or HEX format for string.
+	 *
+	 * @param	textFormat
+	 *			the text format to set
+	 */
+	public void setTextFormat (int textFormat)
+	{
+		m_textFormat = textFormat;
 	}
 }
