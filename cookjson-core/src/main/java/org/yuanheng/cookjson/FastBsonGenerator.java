@@ -29,6 +29,8 @@ import java.util.Stack;
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
 
+import org.yuanheng.cookjson.value.CookJsonBinary;
+
 /**
  * This version of generator does not do any validations to maximize the
  * performance.
@@ -125,6 +127,22 @@ public class FastBsonGenerator implements JsonGenerator
 			return writeRootObject ();
 		else
 			return writeElement (BsonType.Array, m_name, m_bytes, 4);
+	}
+
+	private JsonGenerator writeValue (byte[] value)
+	{
+		try
+		{
+			Utils.setInt (m_bytes, value.length);
+			m_os.write (m_bytes);
+			m_os.write (0);
+			m_os.write (value);
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+		return this;
 	}
 
 	private JsonGenerator writeValue (String value)
@@ -253,6 +271,8 @@ public class FastBsonGenerator implements JsonGenerator
 				}
 			}
 			case STRING:
+				if (value instanceof CookJsonBinary)
+					return writeValue (((CookJsonBinary) value).getBytes ());
 				return writeValue (value.toString ());
 			case TRUE:
 				return writeValue (true);
@@ -311,6 +331,15 @@ public class FastBsonGenerator implements JsonGenerator
 	{
 		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 		assert Debug.debug ("WRITE: JsonValue");
+		m_name = name;
+		m_validateName = true;
+		return writeValue (value);
+	}
+
+	public JsonGenerator write (String name, byte[] value)
+	{
+		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+		assert Debug.debug ("WRITE: VALUE_BINARY");
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -418,6 +447,14 @@ public class FastBsonGenerator implements JsonGenerator
 	public JsonGenerator write (JsonValue value)
 	{
 		assert Debug.debug ("WRITE: JsonValue");
+		m_name = getIndex ();
+		m_validateName = false;
+		return writeValue (value);
+	}
+
+	public JsonGenerator write (byte[] value)
+	{
+		assert Debug.debug ("WRITE: VALUE_BINARY");
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);

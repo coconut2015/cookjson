@@ -21,9 +21,12 @@ package org.yuanheng.cookjson;
 import java.io.IOException;
 import java.math.BigDecimal;
 
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
+
+import org.yuanheng.cookjson.value.CookJsonBinary;
 
 /**
  * @author Heng Yuan
@@ -195,6 +198,20 @@ class Utils
 				case VALUE_STRING:
 				{
 					assert Debug.debug ("READ: " + e);
+					if (p instanceof BasicBsonParser &&
+						g instanceof FastBsonGenerator)
+					{
+						JsonValue v = ((BasicBsonParser) p).getValue ();
+						if (v instanceof CookJsonBinary)
+						{
+							byte[] bytes = ((CookJsonBinary) v).getBytes ();
+							if (name == null)
+								((FastBsonGenerator)g).write (bytes);
+							else
+								((FastBsonGenerator)g).write (name, bytes);
+							break;
+						}
+					}
 					if (name == null)
 					{
 						g.write (p.getString ());
