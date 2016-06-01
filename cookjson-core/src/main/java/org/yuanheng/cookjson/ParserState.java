@@ -42,4 +42,6 @@ class ParserState
 	public final static int END_ARRAY = 6;
 	/** Just read object end */
 	public final static int END_OBJECT = 7;
+	/** Just read a value */
+	public final static int IN_VALUE = 8;
 }

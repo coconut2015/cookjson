@@ -61,4 +61,10 @@ class JsonLocationImpl implements JsonLocation
 	{
 		m_streamOffset = streamOffset;
 	}
+
+	@Override
+	public String toString ()
+	{
+		return "Line (" + m_lineNumber + ") Column (" + m_columnNumber + ") Offset (" + m_streamOffset + ")";
+	}
 }

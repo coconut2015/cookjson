@@ -18,12 +18,8 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 
-import javax.json.Json;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 
@@ -44,7 +40,7 @@ public class ConvertJson
 		pw.flush ();
 	}
 
-	public static void main (String[] args) throws Exception
+	public static void main (String[] args)
 	{
 		Options options = new Options ();
 
@@ -65,7 +61,16 @@ public class ConvertJson
 		boolean pretty = false;
 		boolean useDouble = false;
 
-		CommandLine cmdLine = new DefaultParser ().parse (options, args);
+		CommandLine cmdLine = null;
+		try
+		{
+			cmdLine = new DefaultParser ().parse (options, args);
+		}
+		catch (ParseException ex)
+		{
+			System.out.println (ex.getMessage ());
+			System.exit (1);
+		}
 
 		for (Option opt : cmdLine.getOptions ())
 		{
@@ -110,37 +115,50 @@ public class ConvertJson
 		if (dst.endsWith (".bson"))
 			dstBson = true;
 
-		FileInputStream is = new FileInputStream (src);
-		JsonParser p;
-
-		if (srcBson)
-			p = new BsonParser (is);
-		else
-			p = Json.createParser (is);
-
-		FileOutputStream os = new FileOutputStream (dst);
-		JsonGenerator g;
-		if (dstBson)
+		try
 		{
-			g = new CheckedBsonGenerator (os);
-			if (useDouble)
+			FileInputStream is = new FileInputStream (src);
+			JsonParser p;
+	
+			if (srcBson)
+				p = new BsonParser (is);
+			else
+				p = new CookJsonParser (new InputStreamReader (is, "utf-8"));
+	
+			FileOutputStream os = new FileOutputStream (dst);
+			JsonGenerator g;
+			if (dstBson)
 			{
-				((CheckedBsonGenerator)g).setUseDouble (true);
-			}
-		}
-		else
-		{
-			if (pretty)
-			{
-				g = new FastPrettyJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+				g = new CheckedBsonGenerator (os);
+				if (useDouble)
+				{
+					((CheckedBsonGenerator)g).setUseDouble (true);
+				}
 			}
 			else
 			{
-				g = new FastJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+				if (pretty)
+				{
+					g = new FastPrettyJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+				}
+				else
+				{
+					g = new FastJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+				}
 			}
+			Utils.convert (p, g);
+			g.close ();
+			p.close ();
 		}
-		Utils.convert (p, g);
-		g.close ();
-		p.close ();
+		catch (IllegalStateException ex)
+		{
+			System.out.println ("State error.");
+			System.exit (1);
+		}
+		catch (Exception ex)
+		{
+			System.out.println (ex.getMessage ());
+			System.exit (1);
+		}
 	}
 }

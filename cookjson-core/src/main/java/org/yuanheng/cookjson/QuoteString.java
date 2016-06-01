@@ -54,7 +54,7 @@ import org.yuanheng.cookcc.Lex;
  * @author	Heng Yuan
  */
 @CookCCOption (unicode = true)
-class QuoteString extends QuoteStringParser
+public class QuoteString extends QuoteStringParser
 {
 	private boolean m_quote;
 	private final StringBuffer m_buffer;
