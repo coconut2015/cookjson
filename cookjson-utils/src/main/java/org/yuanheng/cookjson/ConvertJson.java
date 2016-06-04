@@ -123,7 +123,7 @@ public class ConvertJson
 			if (srcBson)
 				p = new BsonParser (is);
 			else
-				p = new CookJsonParser (new InputStreamReader (is, "utf-8"));
+				p = new TextJsonParser (new InputStreamReader (is, "utf-8"));
 	
 			FileOutputStream os = new FileOutputStream (dst);
 			JsonGenerator g;
@@ -153,11 +153,13 @@ public class ConvertJson
 		catch (IllegalStateException ex)
 		{
 			System.out.println ("State error.");
+			assert Debug.debug (ex);
 			System.exit (1);
 		}
 		catch (Exception ex)
 		{
 			System.out.println (ex.getMessage ());
+			assert Debug.debug (ex);
 			System.exit (1);
 		}
 	}

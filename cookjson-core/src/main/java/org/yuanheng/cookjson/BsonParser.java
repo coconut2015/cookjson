@@ -22,8 +22,8 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.Stack;
 
+import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
-import javax.json.stream.JsonParser;
 
 /**
  * This JsonParser is used to handle the Array behavior of BSON.
@@ -34,9 +34,9 @@ import javax.json.stream.JsonParser;
  *
  * @author	Heng Yuan
  */
-public class BsonParser implements JsonParser
+public class BsonParser implements CookJsonParser
 {
-	private final JsonParser m_parser;
+	private final CookJsonParser m_parser;
 	private Stack<Boolean> m_inArrayStack = new Stack<Boolean> ();
 	private Event m_event;
 	private String m_keyName;
@@ -47,7 +47,7 @@ public class BsonParser implements JsonParser
 		m_parser = new BasicBsonParser (is);
 	}
 
-	public BsonParser (JsonParser parser)
+	public BsonParser (CookJsonParser parser)
 	{
 		m_parser = parser;
 	}
@@ -58,6 +58,12 @@ public class BsonParser implements JsonParser
 		if (m_keyName == null)
 			return m_parser.hasNext ();
 		return true;
+	}
+
+	@Override
+	public Event getEvent ()
+	{
+		return m_event;
 	}
 
 	@Override
@@ -148,6 +154,19 @@ public class BsonParser implements JsonParser
 			m_event = e;
 		}
 		return m_event;
+	}
+
+	@Override
+	public JsonValue getValue ()
+	{
+		switch (m_event)
+		{
+			case START_ARRAY:
+			case START_OBJECT:
+				return Utils.getValue (this);
+			default:
+				return m_parser.getValue ();
+		}
 	}
 
 	@Override

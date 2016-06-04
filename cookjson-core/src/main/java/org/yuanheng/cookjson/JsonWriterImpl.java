@@ -18,28 +18,46 @@
  */
 package org.yuanheng.cookjson;
 
-import javax.json.JsonValue;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonStructure;
+import javax.json.JsonWriter;
+import javax.json.stream.JsonGenerator;
 
 /**
  * @author	Heng Yuan
  */
-public interface CookJsonParser extends javax.json.stream.JsonParser
+class JsonWriterImpl implements JsonWriter
 {
-	/**
-	 * Gets the current event.
-	 *
-	 * @return	the current event.
-	 */
-	public Event getEvent ();
+	private final JsonGenerator m_g;
 
-	/**
-	 * Based on the current event, retrieve the JsonValue.
-	 * <p>
-	 * In case of START_OBJECT and START_ARRAY, JsonObject and JsonArray
-	 * objects are returned.  This feature is to allow the mixing of
-	 * streaming and model based APIs.
-	 *
-	 * @return	the JsonValue associated with the current event.
-	 */
-	public JsonValue getValue ();
+	public JsonWriterImpl (JsonGenerator g)
+	{
+		m_g = g;
+	}
+
+	@Override
+	public void writeArray (JsonArray array)
+	{
+		m_g.write (array);
+	}
+
+	@Override
+	public void writeObject (JsonObject object)
+	{
+		m_g.write (object);
+	}
+
+	@Override
+	public void write (JsonStructure value)
+	{
+		m_g.write (value);
+	}
+
+	@Override
+	public void close ()
+	{
+		m_g.close ();
+	}
+
 }

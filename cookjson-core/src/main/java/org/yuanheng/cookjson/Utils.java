@@ -18,15 +18,18 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.Stack;
 
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonStructure;
 import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
 
-import org.yuanheng.cookjson.value.CookJsonBinary;
+import org.yuanheng.cookjson.value.*;
 
 /**
  * @author Heng Yuan
@@ -55,7 +58,103 @@ class Utils
 		bytes[7] = (byte) ((value >> 56) & 0xff);
 	}
 
-	public static void convert (JsonParser p, JsonGenerator g) throws IOException
+	private static void addStructure (CookJsonParser p, JsonStructure struct)
+	{
+		Stack<JsonStructure> structStack = new Stack<JsonStructure> ();
+		Stack<String> nameStack = new Stack<String> ();
+
+		structStack.push (struct);
+		while (p.hasNext ())
+		{
+			Event e = p.next ();
+			JsonValue value = null;
+			switch (e)
+			{
+				case START_ARRAY:
+					structStack.push (new CookJsonArray ());
+					continue;
+				case START_OBJECT:
+					continue;
+				case KEY_NAME:
+					nameStack.push (p.getString ());
+					break;
+				case END_ARRAY:
+				{
+					value = structStack.pop ();
+					if (!(value instanceof JsonArray))
+						throw new IllegalStateException ();
+					if (structStack.isEmpty ())
+						return;	// done
+					break;
+				}
+				case END_OBJECT:
+				{
+					value = structStack.pop ();
+					if (!(value instanceof JsonObject))
+						throw new IllegalStateException ();
+					if (structStack.isEmpty ())
+						return;	// done
+					break;
+				}
+				case VALUE_TRUE:
+				case VALUE_FALSE:
+				case VALUE_NULL:
+				case VALUE_NUMBER:
+				case VALUE_STRING:
+				{
+					value = p.getValue ();
+					break;
+				}
+			}
+			struct = structStack.peek ();
+			if (struct instanceof JsonArray)
+			{
+				((JsonArray)struct).add (value);
+			}
+			else
+			{
+				String name = nameStack.pop ();
+				((JsonObject)struct).put (name, value);
+			}
+		}
+	}
+
+	public static JsonValue getValue (CookJsonParser p)
+	{
+		Event e = p.getEvent ();
+		switch (e)
+		{
+			case START_ARRAY:
+			{
+				CookJsonArray v = new CookJsonArray ();
+				addStructure (p, v);
+				return v;
+			}
+			case START_OBJECT:
+			{
+				CookJsonObject v = new CookJsonObject ();
+				addStructure (p, v);
+				return v;
+			}
+			case KEY_NAME:
+			case END_ARRAY:
+			case END_OBJECT:
+				throw new IllegalStateException ();
+			case VALUE_TRUE:
+				return CookJsonBoolean.TRUE;
+			case VALUE_FALSE:
+				return CookJsonBoolean.FALSE;
+			case VALUE_NULL:
+				return CookJsonNull.NULL;
+			case VALUE_NUMBER:
+			case VALUE_STRING:
+				return p.getValue ();
+			default:
+				throw new IllegalStateException ();
+		}
+	}
+
+	public static void convert (JsonParser p, JsonGenerator g)
 	{
 		String name = null;
 		while (p.hasNext ())
@@ -137,8 +236,8 @@ class Utils
 				}
 				case VALUE_NUMBER:
 				{
-					assert Debug.debug ("READ: " + e);
 					BigDecimal value = p.getBigDecimal ();
+					assert Debug.debug ("READ: " + e + " = " + value);
 					if (p.isIntegralNumber ())
 					{
 						try
@@ -197,7 +296,7 @@ class Utils
 				}
 				case VALUE_STRING:
 				{
-					assert Debug.debug ("READ: " + e);
+					assert Debug.debug ("READ: " + e + " = " + p.getString ());
 					if (p instanceof BasicBsonParser &&
 						g instanceof FastBsonGenerator)
 					{

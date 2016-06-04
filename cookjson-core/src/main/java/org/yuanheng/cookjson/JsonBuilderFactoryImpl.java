@@ -18,28 +18,40 @@
  */
 package org.yuanheng.cookjson;
 
-import javax.json.JsonValue;
+import java.util.Collections;
+import java.util.Map;
+
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObjectBuilder;
 
 /**
  * @author	Heng Yuan
  */
-public interface CookJsonParser extends javax.json.stream.JsonParser
+class JsonBuilderFactoryImpl implements JsonBuilderFactory
 {
-	/**
-	 * Gets the current event.
-	 *
-	 * @return	the current event.
-	 */
-	public Event getEvent ();
+	private final Map<String, ?> m_config;
 
-	/**
-	 * Based on the current event, retrieve the JsonValue.
-	 * <p>
-	 * In case of START_OBJECT and START_ARRAY, JsonObject and JsonArray
-	 * objects are returned.  This feature is to allow the mixing of
-	 * streaming and model based APIs.
-	 *
-	 * @return	the JsonValue associated with the current event.
-	 */
-	public JsonValue getValue ();
+	public JsonBuilderFactoryImpl (Map<String, ?> config)
+	{
+		m_config = config;
+	}
+
+	@Override
+	public JsonObjectBuilder createObjectBuilder ()
+	{
+		return new JsonObjectBuilderImpl ();
+	}
+
+	@Override
+	public JsonArrayBuilder createArrayBuilder ()
+	{
+		return new JsonArrayBuilderImpl ();
+	}
+
+	@Override
+	public Map<String, ?> getConfigInUse ()
+	{
+		return Collections.unmodifiableMap (m_config);
+	}
 }

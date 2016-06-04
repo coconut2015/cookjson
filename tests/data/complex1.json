@@ -6,7 +6,7 @@
 	"boolean" : true,
 	"boolean2" : false,
 	"null" : null,
-	"john" : "a quick brown fox",
+	"john" : "The quick brown fox jumps over the lazy dog",
 	"doe" : 1,
 	"strange" : {
 		"id" : 5555,

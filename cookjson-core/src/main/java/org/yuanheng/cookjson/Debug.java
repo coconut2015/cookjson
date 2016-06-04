@@ -18,14 +18,31 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.PrintStream;
+
 /**
  * @author	Heng Yuan
  */
 class Debug
 {
+	private final static PrintStream s_out = new PrintStream (System.err)
+	{
+		@Override
+		public void println (String msg)
+		{
+			super.println ("DEBUG: " + msg);
+		}
+	};
+
 	public static boolean debug (String msg)
 	{
-		System.out.println ("DEBUG: " + msg);
+		System.err.println ("DEBUG: " + msg);
+		return true;
+	}
+
+	public static boolean debug (Throwable t)
+	{
+		t.printStackTrace (s_out);
 		return true;
 	}
 }

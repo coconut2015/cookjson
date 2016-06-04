@@ -27,14 +27,13 @@ import javax.json.JsonException;
 import javax.json.JsonNumber;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
-import javax.json.stream.JsonParser;
 
 import org.yuanheng.cookjson.value.*;
 
 /**
  * @author	Heng Yuan
  */
-public class BasicBsonParser implements JsonParser
+public class BasicBsonParser implements CookJsonParser
 {
 	private final BsonInputStream m_is;
 
@@ -78,10 +77,25 @@ public class BasicBsonParser implements JsonParser
 		return oldState;
 	}
 
+	@Override
+	public Event getEvent ()
+	{
+		return m_event;
+	}
+
+	@Override
 	public JsonValue getValue ()
 	{
 		try
 		{
+			switch (m_event)
+			{
+				case START_ARRAY:
+				case START_OBJECT:
+					return Utils.getValue (this);
+				default:
+					break;
+			}
 			switch (m_field.type)
 			{
 				case BsonType.Null:
