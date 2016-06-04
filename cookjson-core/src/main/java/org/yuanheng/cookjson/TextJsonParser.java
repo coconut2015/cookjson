@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 
 import javax.json.JsonException;
 import javax.json.JsonValue;
@@ -62,10 +63,9 @@ public class TextJsonParser implements CookJsonParser
 	private final ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
 	private int m_state = ParserState.INITIAL;
 	private int m_lastToken;
+	private boolean m_int;
 
 	private Event m_event;
-	private String m_string;
-	private BigDecimal m_value;
 
 	public TextJsonParser (Reader r)
 	{
@@ -104,20 +104,17 @@ public class TextJsonParser implements CookJsonParser
 		throw new JsonException ("Line " + location.getLineNumber () + ", column " + location.getColumnNumber () + ", offset " + location.getStreamOffset () + ": " + msg);
 	}
 
-	/**
-	 * put the last character read back into the stream.
-	 */
-	private void unread ()
+	private void unexpected (char ch)
 	{
-		--m_readPos;
+		ioError ("unexpected character '" + ch + "'");
 	}
 
 	private char read () throws IOException
 	{
-		++m_offset;
-		++m_column;
 		if (m_readPos >= m_readMax)
 			fill ();
+		++m_offset;
+		++m_column;
 		return m_readBuf[m_readPos++];
 	}
 
@@ -179,24 +176,24 @@ public class TextJsonParser implements CookJsonParser
 		char ch = read ();
 		if (ch >= '0' && ch <= '9')
 		{
-			m_appendBuf[m_appendPos++] = ch;
+			append (ch);
 		}
 		else if (ch == '+' || ch == '-')
 		{
-			m_appendBuf[m_appendPos++] = ch;
+			append (ch);
 			ch = read ();
 			if (ch >= '0' && ch <= '9')
 			{
-				m_appendBuf[m_appendPos++] = ch;
+				append (ch);
 			}
 			else
 			{
-				ioError ("unexpected character '" + ch + "'");
+				unexpected (ch);
 			}
 		}
 		else
 		{
-			ioError ("unexpected character '" + ch + "'");
+			unexpected (ch);
 		}
 		
 
@@ -205,67 +202,75 @@ public class TextJsonParser implements CookJsonParser
 			ch = read ();
 			if (ch >= '0' && ch <= '9')
 			{
-				m_appendBuf[m_appendPos++] = ch;
+				append (ch);
 				continue;
 			}
-			unread ();
+			--m_readPos;	// unread the last char
 			return;
 		}
 	}
 
+	private void readFraction () throws IOException
+	{
+		m_int = false;
+		char ch;
+		char[] buf = m_appendBuf;
+		while ((ch = read ()) >= '0' && ch <= '9')
+		{
+			buf[m_appendPos++] = ch;
+		}
+		if (ch == 'E' || ch == 'e')
+		{
+			buf[m_appendPos++] = ch;
+			readExp ();
+		}
+		else
+			--m_readPos;	// unread the last char
+	}
+
 	private void readNumber (char firstChar) throws IOException
 	{
-		m_string = null;
-		m_value = null;
-		m_appendBuf[0] = firstChar;
-		m_appendPos = 1;
+		m_int = true;
+		char[] buf = m_appendBuf;
+		m_appendPos = 0;
+		buf[m_appendPos++] = firstChar;
 
-		boolean hasFrac = false;
-
-		char[] buf = m_readBuf;
-		for (;;)
+		if (firstChar == '0')
 		{
-			int readPos = m_readPos;
-			int readMax = m_readMax;
-			while (readPos < readMax)
+			// JSON requires 0 to be followed with . unless it is 0.
+			char ch = read ();
+			if (ch == '.')
 			{
-				char ch = buf[readPos++];
-				if (ch >= '0')
-				{
-					if (ch <= '9')
-					{
-						m_appendBuf[m_appendPos++] = ch;
-						continue;
-					}
-					else if (ch == 'E' || ch == 'e')
-					{
-						if (firstChar == '-' && m_appendPos == 1)
-							ioError ("unexpected character '" + ch + "'");
-						m_appendBuf[m_appendPos++] = ch;
-						int len = readPos - m_readPos;
-						m_readPos = readPos;
-						m_column += len;
-						m_offset += len;
-						readExp ();
-						return;
-					}
-				}
-				else if (ch == '.')
-				{
-					if (hasFrac)
-						ioError ("unexpected character '.'");
-					hasFrac = true;
-					m_appendBuf[m_appendPos++] = ch;
-					continue;
-				}
-				int len = readPos - m_readPos;
-				m_readPos = readPos - 1;
-				m_column += len - 1;
-				m_offset += len - 1;
+				buf[m_appendPos++] = ch;
+				readFraction ();
+			}
+			else
+			{
+				--m_readPos;	// unread the last char
 				return;
 			}
-			fill ();
 		}
+
+		// now read the integer part.
+		char ch;
+		while ((ch = read ()) >= '0' && ch <= '9')
+		{
+			buf[m_appendPos++] = ch;
+		}
+
+		if (ch == '.')
+		{
+			buf[m_appendPos++] = ch;
+			readFraction ();
+		}
+		else if (ch == 'E' || ch == 'e')
+		{
+			m_int = false;
+			buf[m_appendPos++] = ch;
+			readExp ();
+		}
+		else
+			--m_readPos;	// unread the last char
 	}
 
 	private void readEscape () throws IOException
@@ -326,7 +331,7 @@ public class TextJsonParser implements CookJsonParser
 							}
 						}
 					}
-					ioError ("unexpected character '" + ch + "'");
+					unexpected (ch);
 				}
 				append ((char) val);
 				break;
@@ -338,7 +343,6 @@ public class TextJsonParser implements CookJsonParser
 
 	private void readString () throws IOException
 	{
-		m_string = null;
 		m_appendPos = 0;
 
 		char[] buf = m_readBuf;
@@ -378,9 +382,7 @@ public class TextJsonParser implements CookJsonParser
 
 	private String getBufferString ()
 	{
-		if (m_string == null)
-			m_string = new String (m_appendBuf, 0, m_appendPos);
-		return m_string;
+		return new String (m_appendBuf, 0, m_appendPos);
 	}
 
 	@Override
@@ -419,109 +421,25 @@ public class TextJsonParser implements CookJsonParser
 	public Event next ()
 	{
 		if (m_state == ParserState.END)
-			stateError ();
+			throw new NoSuchElementException ();
 		try
 		{
 			for (;;)
 			{
 				char ch = read ();
+				// It is very import to sort the cases.  It appears to have
+				// 5-10% improvement than some random order.
 				switch (ch)
 				{
-					case '[':
-					{
-						checkValueState (true);
-						pushState (true);
-						m_event = Event.START_ARRAY;
-						m_lastToken = START;
-						return m_event;
-					}
-					case ']':
-					{
-						if (m_state != ParserState.IN_ARRAY)
-							stateError ();
-						if (m_states.isEmpty ())
-							m_state = ParserState.END;
-						popState ();
-						m_event = Event.END_ARRAY;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case '{':
-					{
-						checkValueState (true);
-						pushState (false);
-						m_event = Event.START_OBJECT;
-						m_lastToken = START;
-						return m_event;
-					}
-					case '}':
-					{
-						if (m_state != ParserState.IN_OBJECT)
-							stateError ();
-						if (m_states.isEmpty ())
-							m_state = ParserState.END;
-						popState ();
-						m_event = Event.END_ARRAY;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 'n':
-					{
-						checkValueState (true);
-						readNull ();
-						m_event = Event.VALUE_NULL;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 't':
-					{
-						checkValueState (true);
-						readTrue ();
-						m_event = Event.VALUE_TRUE;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 'f':
-					{
-						checkValueState (true);
-						readFalse ();
-						m_event = Event.VALUE_FALSE;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case '-':
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-					{
-						checkValueState (true);
-						readNumber (ch);
-						m_event = Event.VALUE_NUMBER;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case ',':
-					{
-						if (m_lastToken != VALUE)
-							stateError ();
-						m_lastToken = COMMA;
+					case '\t':
+					case '\r':
 						break;
-					}
-					case ':':
-					{
-						if (m_event != Event.KEY_NAME ||
-							m_lastToken != VALUE)
-							stateError ();
-						m_lastToken = COLON;
+					case '\n':
+						m_column = 0;
+						++m_line;
 						break;
-					}
+					case ' ':
+						break;
 					case '"':
 					{
 						saveLocation ();
@@ -554,17 +472,122 @@ public class TextJsonParser implements CookJsonParser
 							}
 						}
 						stateError ();
+						break;
 					}
-					case ' ':
-					case '\t':
-					case '\r':
+					case ',':
+					{
+						if (m_lastToken != VALUE)
+							stateError ();
+						m_lastToken = COMMA;
 						break;
-					case '\n':
-						m_column = 0;
-						++m_line;
+					}
+					case '-':
+					{
+						checkValueState (true);
+						ch = read ();
+						if (ch >= '0' && ch <= '9')
+						{
+							append (ch);
+						}
+						else
+						{
+							unexpected (ch);
+						}
+
+						readNumber (ch);
+						m_event = Event.VALUE_NUMBER;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+					{
+						checkValueState (true);
+						readNumber (ch);
+						m_event = Event.VALUE_NUMBER;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case ':':
+					{
+						if (m_event != Event.KEY_NAME ||
+							m_lastToken != VALUE)
+							stateError ();
+						m_lastToken = COLON;
 						break;
+					}
+					case '[':
+					{
+						checkValueState (true);
+						pushState (true);
+						m_event = Event.START_ARRAY;
+						m_lastToken = START;
+						return m_event;
+					}
+					case ']':
+					{
+						if (m_state != ParserState.IN_ARRAY)
+							stateError ();
+						if (m_states.isEmpty ())
+							m_state = ParserState.END;
+						popState ();
+						m_event = Event.END_ARRAY;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case 'f':
+					{
+						checkValueState (true);
+						readFalse ();
+						m_event = Event.VALUE_FALSE;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case 'n':
+					{
+						checkValueState (true);
+						readNull ();
+						m_event = Event.VALUE_NULL;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case 't':
+					{
+						checkValueState (true);
+						readTrue ();
+						m_event = Event.VALUE_TRUE;
+						m_lastToken = VALUE;
+						return m_event;
+					}
+					case '{':
+					{
+						checkValueState (true);
+						pushState (false);
+						m_event = Event.START_OBJECT;
+						m_lastToken = START;
+						return m_event;
+					}
+					case '}':
+					{
+						if (m_state != ParserState.IN_OBJECT)
+							stateError ();
+						if (m_states.isEmpty ())
+							m_state = ParserState.END;
+						popState ();
+						m_event = Event.END_ARRAY;
+						m_lastToken = VALUE;
+						return m_event;
+					}
 					default:
-						ioError ("unexpected character '" + ch + "'");
+						unexpected (ch);
 				}
 			}
 		}
@@ -603,7 +626,7 @@ public class TextJsonParser implements CookJsonParser
 	@Override
 	public boolean isIntegralNumber ()
 	{
-		return getBigDecimal ().scale () <= 0;
+		return m_int || getBigDecimal ().scale () == 0;
 	}
 
 	@Override
@@ -611,9 +634,7 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ();
-		if (m_value == null)
-			return Integer.valueOf (getBufferString ());
-		return m_value.intValue ();
+		return Integer.valueOf (getBufferString ());
 	}
 
 	@Override
@@ -621,9 +642,7 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ();
-		if (m_value == null)
-			return Long.valueOf (getBufferString ());
-		return m_value.longValue ();
+		return Long.valueOf (getBufferString ());
 	}
 
 	@Override
@@ -631,9 +650,7 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ();
-		if (m_value == null)
-			m_value = new BigDecimal (getBufferString ());
-		return m_value;
+		return new BigDecimal (getBufferString ());
 	}
 
 	@Override
