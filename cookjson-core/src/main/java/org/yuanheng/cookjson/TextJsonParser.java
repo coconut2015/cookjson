@@ -219,40 +219,51 @@ public class TextJsonParser implements CookJsonParser
 
 		boolean hasFrac = false;
 
+		char[] buf = m_readBuf;
 		for (;;)
 		{
-			char ch = read ();
-			switch (ch)
+			int readPos = m_readPos;
+			int readMax = m_readMax;
+			while (readPos < readMax)
 			{
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					m_appendBuf[m_appendPos++] = ch;
-					break;
-				case '.':
-					if (hasFrac)
-						ioError ("unexpected character '.'");
-					hasFrac = true;
-					m_appendBuf[m_appendPos++] = ch;
-					break;
-				case 'e':
-				case 'E':
-					if (firstChar == '-' && m_appendPos == 1)
-						ioError ("unexpected character '" + ch + "'");
-					m_appendBuf[m_appendPos++] = ch;
-					readExp ();
-					return;
-				default:
-					unread ();
-					return;
+				char ch = buf[readPos++];
+				++m_offset;
+				++m_column;
+				switch (ch)
+				{
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						m_appendBuf[m_appendPos++] = ch;
+						break;
+					case '.':
+						if (hasFrac)
+							ioError ("unexpected character '.'");
+						hasFrac = true;
+						m_appendBuf[m_appendPos++] = ch;
+						break;
+					case 'e':
+					case 'E':
+						if (firstChar == '-' && m_appendPos == 1)
+							ioError ("unexpected character '" + ch + "'");
+						m_appendBuf[m_appendPos++] = ch;
+						m_readPos = readPos;
+						readExp ();
+						return;
+					default:
+						// put the character back into the stream
+						m_readPos = readPos - 1;
+						return;
+				}
 			}
+			fill ();
 		}
 	}
 
@@ -310,11 +321,9 @@ public class TextJsonParser implements CookJsonParser
 						break;
 					case '"':
 						m_readPos = readPos;
-						m_readMax = readMax;
 						return;
 					case '\\':
 						m_readPos = readPos;
-						m_readMax = readMax;
 						readEscape ();
 						readPos = m_readPos;
 						readMax = m_readMax;
