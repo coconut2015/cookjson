@@ -176,37 +176,40 @@ public class TextJsonParser implements CookJsonParser
 
 	private void readExp () throws IOException
 	{
-		boolean hasSign = false;
+		char ch = read ();
+		if (ch >= '0' && ch <= '9')
+		{
+			m_appendBuf[m_appendPos++] = ch;
+		}
+		else if (ch == '+' || ch == '-')
+		{
+			m_appendBuf[m_appendPos++] = ch;
+			ch = read ();
+			if (ch >= '0' && ch <= '9')
+			{
+				m_appendBuf[m_appendPos++] = ch;
+			}
+			else
+			{
+				ioError ("unexpected character '" + ch + "'");
+			}
+		}
+		else
+		{
+			ioError ("unexpected character '" + ch + "'");
+		}
+		
 
 		for (;;)
 		{
-			char ch = read ();
-			switch (ch)
+			ch = read ();
+			if (ch >= '0' && ch <= '9')
 			{
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					hasSign = true;
-					m_appendBuf[m_appendPos++] = ch;
-					break;
-				case '+':
-				case '-':
-					if (hasSign)
-						ioError ("unexpected character '" + ch + "'");
-					hasSign = true;
-					m_appendBuf[m_appendPos++] = ch;
-					break;
-				default:
-					unread ();
-					return;
+				m_appendBuf[m_appendPos++] = ch;
+				continue;
 			}
+			unread ();
+			return;
 		}
 	}
 
@@ -227,41 +230,39 @@ public class TextJsonParser implements CookJsonParser
 			while (readPos < readMax)
 			{
 				char ch = buf[readPos++];
-				++m_offset;
-				++m_column;
-				switch (ch)
+				if (ch >= '0')
 				{
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
+					if (ch <= '9')
+					{
 						m_appendBuf[m_appendPos++] = ch;
-						break;
-					case '.':
-						if (hasFrac)
-							ioError ("unexpected character '.'");
-						hasFrac = true;
-						m_appendBuf[m_appendPos++] = ch;
-						break;
-					case 'e':
-					case 'E':
+						continue;
+					}
+					else if (ch == 'E' || ch == 'e')
+					{
 						if (firstChar == '-' && m_appendPos == 1)
 							ioError ("unexpected character '" + ch + "'");
 						m_appendBuf[m_appendPos++] = ch;
+						int len = readPos - m_readPos;
 						m_readPos = readPos;
+						m_column += len;
+						m_offset += len;
 						readExp ();
 						return;
-					default:
-						// put the character back into the stream
-						m_readPos = readPos - 1;
-						return;
+					}
 				}
+				else if (ch == '.')
+				{
+					if (hasFrac)
+						ioError ("unexpected character '.'");
+					hasFrac = true;
+					m_appendBuf[m_appendPos++] = ch;
+					continue;
+				}
+				int len = readPos - m_readPos;
+				m_readPos = readPos - 1;
+				m_column += len - 1;
+				m_offset += len - 1;
+				return;
 			}
 			fill ();
 		}
@@ -292,8 +293,46 @@ public class TextJsonParser implements CookJsonParser
 			case '"':
 				append (ch);
 				break;
+			case 'u':
+			{
+				int val = 0;
+				for (int i = 0; i < 4; ++i)
+				{
+					ch = read ();
+					if (ch >= '0')
+					{
+						if (ch <= '9')
+						{
+							int hex = ch - '0';
+							val = (val << 4) | hex;
+							continue;
+						}
+						else if (ch >= 'A')
+						{
+							if (ch <= 'F')
+							{
+								int hex = ch - 'A' + 10;
+								val = (val << 4) | hex;
+								continue;
+							}
+							else if (ch >= 'a')
+							{
+								if (ch <= 'f')
+								{
+									int hex = ch - 'a' + 10;
+									val = (val << 4) | hex;
+									continue;
+								}
+							}
+						}
+					}
+					ioError ("unexpected character '" + ch + "'");
+				}
+				append ((char) val);
+				break;
+			}
 			default:
-				ioError ("unexpected character '" + ch + "'");
+				ioError ("unknown escape sequence '\\" + ch + "'");
 		}
 	}
 

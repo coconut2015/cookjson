@@ -81,6 +81,7 @@ public class QuoteString extends QuoteStringParser
 		{
 			case '\\':
 				m_buffer.append ("\\\\");
+				break;
 			case '"':
 				m_buffer.append ("\\\"");
 				break;
@@ -95,6 +96,7 @@ public class QuoteString extends QuoteStringParser
 				break;
 			case '\b':
 				m_buffer.append ("\\\b");
+				break;
 			case '\t':
 				m_buffer.append ("\\\t");
 				break;
