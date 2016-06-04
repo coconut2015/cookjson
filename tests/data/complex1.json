@@ -16,5 +16,5 @@
 	"empty1" : {},
 	"notEmpty1" : [ 1, "abc", 123.45 ],
 	"empty2" : [],
-	"notEmpyt2" : "abc\"asasdf"
+	"notEmpyt2" : "abc\"as\\asdf\u005c"
 }
