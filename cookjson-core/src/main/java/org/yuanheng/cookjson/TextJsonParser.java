@@ -204,7 +204,7 @@ public class TextJsonParser implements CookJsonParser
 						char nextChar;
 						if (readPos < readMax)
 						{
-							nextChar = buf[readPos + 1];
+							nextChar = buf[readPos];
 						}
 						else
 						{
@@ -215,8 +215,9 @@ public class TextJsonParser implements CookJsonParser
 						}
 						if (nextChar == '/')
 						{
-							m_offset += len;
-							m_column += len;
+							m_offset += len + 1;
+							m_column += len + 1;
+							m_readPos = readPos + 1;
 							return;
 						}
 						break;
