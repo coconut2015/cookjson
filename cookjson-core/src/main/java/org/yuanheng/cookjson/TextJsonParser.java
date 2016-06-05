@@ -18,9 +18,9 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.math.BigDecimal;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
@@ -74,6 +74,25 @@ public class TextJsonParser implements CookJsonParser
 	public TextJsonParser (Reader r)
 	{
 		m_reader = r;
+	}
+
+	public TextJsonParser (InputStream is)
+	{
+		PushbackInputStream pis;
+		if (is instanceof PushbackInputStream)
+			pis = (PushbackInputStream) is;
+		else
+			pis = new PushbackInputStream (is);
+		Charset charset;
+		try
+		{
+			charset = BOM.guessCharset (pis);
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+		m_reader = new InputStreamReader (pis, charset);
 	}
 
 	private void saveLocation ()

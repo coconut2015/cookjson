@@ -20,6 +20,7 @@ package org.yuanheng.cookjson;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 
 /**
@@ -75,5 +76,61 @@ public class BOM
 			return bytes.length;
 		}
 		return 0;
+	}
+
+	/**
+	 * It should be noted that (rfc4627) does not requires BOM.  Instead,
+	 * it uses a pattern to determine if a JSON file is encoded in
+	 * utf-8, utf-16le, utf-16be, utf-32le, utf-32be.
+	 *
+	 * @param	is
+	 *			a PushbackInputStream to allow bytes to be unread.
+	 * @return	the character set of the input stream.
+	 * @throws	IOException
+	 *			in case of I/O error.
+	 */
+	public static Charset guessCharset (PushbackInputStream is) throws IOException
+	{
+		int b1;
+		int b2;
+
+		b1 = is.read ();
+		if (b1 < 0)
+			throw new IOException ("Json minimum size is 2");
+		b2 = is.read ();
+		if (b2 < 0)
+			throw new IOException ("Json minimum size is 2");
+
+		if (b1 == 0)
+		{
+			is.unread (b2);
+			is.unread (b1);
+			if (b2 == 0)
+			{
+				return utf32be;
+			}
+			return utf16be;
+		}
+		else
+		{
+			if (b2 == 0)
+			{
+				int b3 = is.read ();
+				if (b3 < 0)
+					throw new IOException ("Not a json file.");
+				is.unread (b3);
+				is.unread (b2);
+				is.unread (b1);
+				if (b3 == 0)
+					return utf32le;
+				return utf16le;
+			}
+			else
+			{
+				is.unread (b2);
+				is.unread (b1);
+				return utf8;
+			}
+		}
 	}
 }
