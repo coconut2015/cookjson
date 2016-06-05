@@ -166,8 +166,9 @@ public class TextJsonGenerator implements JsonGenerator
 			case NULL:
 				return writeValue ("null");
 			case NUMBER:
-			case STRING:
 				return writeValue (value.toString ());
+			case STRING:
+				return writeValue (QuoteString.quote (value.toString ()));
 			case TRUE:
 				return writeValue ("true");
 			case FALSE:

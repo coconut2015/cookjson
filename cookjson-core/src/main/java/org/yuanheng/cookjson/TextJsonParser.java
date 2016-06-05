@@ -537,6 +537,7 @@ public class TextJsonParser implements CookJsonParser
 			case KEY_NAME:
 				stateError ();
 			case VALUE_TRUE:
+				return CookJsonBoolean.TRUE;
 			case VALUE_FALSE:
 				return CookJsonBoolean.FALSE;
 			case VALUE_NULL:

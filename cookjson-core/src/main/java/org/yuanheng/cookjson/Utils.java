@@ -71,16 +71,18 @@ public class Utils
 		{
 			Event e = p.next ();
 			JsonValue value = null;
+			assert Debug.debug ("READ: " + e);
 			switch (e)
 			{
 				case START_ARRAY:
 					structStack.push (new CookJsonArray ());
 					continue;
 				case START_OBJECT:
+					structStack.push (new CookJsonObject ());
 					continue;
 				case KEY_NAME:
 					nameStack.push (p.getString ());
-					break;
+					continue;
 				case END_ARRAY:
 				{
 					value = structStack.pop ();
