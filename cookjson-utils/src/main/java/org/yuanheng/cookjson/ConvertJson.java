@@ -139,11 +139,11 @@ public class ConvertJson
 			{
 				if (pretty)
 				{
-					g = new FastPrettyJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+					g = new PrettyTextJsonGenerator (new OutputStreamWriter (os, "utf-8"));
 				}
 				else
 				{
-					g = new FastJsonGenerator (new OutputStreamWriter (os, "utf-8"));
+					g = new TextJsonGenerator (new OutputStreamWriter (os, "utf-8"));
 				}
 			}
 			Utils.convert (p, g);

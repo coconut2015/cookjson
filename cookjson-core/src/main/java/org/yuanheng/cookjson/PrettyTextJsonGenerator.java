@@ -28,16 +28,16 @@ import javax.json.stream.JsonGenerator;
 /**
  * @author	Heng Yuan
  */
-public class FastPrettyJsonGenerator extends FastJsonGenerator
+public class PrettyTextJsonGenerator extends TextJsonGenerator
 {
 	private String m_indent = "\t";
 
-	public FastPrettyJsonGenerator (OutputStream os)
+	public PrettyTextJsonGenerator (OutputStream os)
 	{
 		super (os);
 	}
 
-	public FastPrettyJsonGenerator (Writer out)
+	public PrettyTextJsonGenerator (Writer out)
 	{
 		super (out);
 	}

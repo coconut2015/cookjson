@@ -56,13 +56,13 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonGenerator createGenerator (Writer writer)
 	{
-		return new FastJsonGenerator (writer);
+		return new TextJsonGenerator (writer);
 	}
 
 	@Override
 	public JsonGenerator createGenerator (OutputStream out)
 	{
-		return new FastJsonGenerator (out);
+		return new TextJsonGenerator (out);
 	}
 
 	@Override
@@ -86,25 +86,25 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonWriter createWriter (Writer writer)
 	{
-		return new JsonWriterImpl (new FastJsonGenerator (writer));
+		return new JsonWriterImpl (new TextJsonGenerator (writer));
 	}
 
 	@Override
 	public JsonWriter createWriter (OutputStream os)
 	{
-		return new JsonWriterImpl (new FastJsonGenerator (os));
+		return new JsonWriterImpl (new TextJsonGenerator (os));
 	}
 
 	@Override
 	public JsonWriterFactory createWriterFactory (Map<String, ?> config)
 	{
-		return null;
+		return new TextJsonWriterFactory (config);
 	}
 
 	@Override
 	public JsonReaderFactory createReaderFactory (Map<String, ?> config)
 	{
-		return null;
+		return new TextJsonReaderFactory (config);
 	}
 
 	@Override
@@ -124,4 +124,55 @@ public class TextJsonProvider extends JsonProvider
 	{
 		return new JsonBuilderFactoryImpl (config);
 	}
+
+	public static CookJsonParser createParser (Map<String, ?> config, Reader reader)
+	{
+		boolean allowComments = false;
+		Object obj = config.get (TextJsonProvider.COMMENT);
+		if (obj != null)
+			allowComments = "true".equals (obj.toString ());
+		TextJsonParser p = new TextJsonParser (reader);
+		p.setAllowComments (allowComments);
+		return p;
+	}
+
+	public static CookJsonParser createParser (Map<String, ?> config, InputStream is)
+	{
+		boolean allowComments = false;
+		Object obj = config.get (TextJsonProvider.COMMENT);
+		if (obj != null)
+			allowComments = "true".equals (obj.toString ());
+		TextJsonParser p = new TextJsonParser (is);
+		p.setAllowComments (allowComments);
+		return p;
+	}
+
+	public static JsonGenerator createGenerator (Map<String, ?> config, Writer writer)
+	{
+		boolean pretty = false;
+		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
+		if (obj != null)
+			pretty = "true".equals (obj.toString ());
+		TextJsonGenerator g;
+		if (pretty)
+			g = new PrettyTextJsonGenerator (writer);
+		else
+			g = new TextJsonGenerator (writer);
+		return g;
+	}
+
+	public static JsonGenerator createGenerator (Map<String, ?> config, OutputStream os)
+	{
+		boolean pretty = false;
+		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
+		if (obj != null)
+			pretty = "true".equals (obj.toString ());
+		TextJsonGenerator g;
+		if (pretty)
+			g = new PrettyTextJsonGenerator (os);
+		else
+			g = new TextJsonGenerator (os);
+		return g;
+	}
+
 }

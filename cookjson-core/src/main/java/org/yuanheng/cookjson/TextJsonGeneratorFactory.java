@@ -33,42 +33,31 @@ import javax.json.stream.JsonGeneratorFactory;
  *
  * @author	Heng Yuan
  */
-class TextJsonGeneratorFactory implements JsonGeneratorFactory
+public class TextJsonGeneratorFactory implements JsonGeneratorFactory
 {
 	private final Map<String, ?> m_config;
-	private boolean m_pretty;
 
 	public TextJsonGeneratorFactory (Map<String, ?> config)
 	{
 		m_config = config;
-		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
-		if (obj != null)
-			m_pretty = "true".equals (obj.toString ());
 	}
 
 	@Override
 	public JsonGenerator createGenerator (Writer writer)
 	{
-		if (m_pretty)
-			return new FastPrettyJsonGenerator (writer);
-		return new FastJsonGenerator (writer);
+		return TextJsonProvider.createGenerator (m_config, writer);
 	}
 
 	@Override
 	public JsonGenerator createGenerator (OutputStream os)
 	{
-		if (m_pretty)
-			return new FastPrettyJsonGenerator (os);
-		return new FastJsonGenerator (os);
+		return TextJsonProvider.createGenerator (m_config, os);
 	}
 
 	@Override
 	public JsonGenerator createGenerator (OutputStream out, Charset charset)
 	{
-		OutputStreamWriter writer = new OutputStreamWriter (out, charset);
-		if (m_pretty)
-			return new FastPrettyJsonGenerator (writer);
-		return new FastJsonGenerator (writer);
+		return TextJsonProvider.createGenerator (m_config, new OutputStreamWriter (out, charset));
 	}
 
 	@Override

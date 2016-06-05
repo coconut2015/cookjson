@@ -46,7 +46,7 @@ public class CommentTest
 		JsonProvider provider = new TextJsonProvider ();
 		StringWriter out1 = new StringWriter ();
 		JsonParser p1 = provider.createParserFactory (config).createParser (new FileInputStream (file1));
-		JsonGenerator g1 = new FastJsonGenerator (out1);
+		JsonGenerator g1 = new TextJsonGenerator (out1);
 		Utils.convert (p1, g1);
 		p1.close ();
 		g1.close ();
@@ -54,7 +54,7 @@ public class CommentTest
 		StringWriter out2 = new StringWriter ();
 		provider = new org.glassfish.json.JsonProviderImpl ();
 		JsonParser p2 = provider.createParser (new FileInputStream (file2));
-		JsonGenerator g2 = new FastJsonGenerator (out2);
+		JsonGenerator g2 = new TextJsonGenerator (out2);
 		Utils.convert (p2, g2);
 		p2.close ();
 		g2.close ();

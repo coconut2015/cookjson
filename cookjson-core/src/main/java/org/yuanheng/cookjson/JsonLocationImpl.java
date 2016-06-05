@@ -23,7 +23,7 @@ import javax.json.stream.JsonLocation;
 /**
  * @author	Heng Yuan
  */
-class JsonLocationImpl implements JsonLocation
+class JsonLocationImpl implements JsonLocation, Cloneable
 {
 	public final static JsonLocationImpl Unknown = new JsonLocationImpl ();
 
@@ -75,5 +75,17 @@ class JsonLocationImpl implements JsonLocation
 	public String toString ()
 	{
 		return "Line (" + m_lineNumber + ") Column (" + m_columnNumber + ") Offset (" + m_streamOffset + ")";
+	}
+
+	public Object clone ()
+	{
+		try
+		{
+			return super.clone ();
+		}
+		catch (CloneNotSupportedException ex)
+		{
+			return null;
+		}
 	}
 }

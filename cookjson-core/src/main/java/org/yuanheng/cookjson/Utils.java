@@ -37,11 +37,11 @@ import org.yuanheng.cookjson.value.*;
 /**
  * @author Heng Yuan
  */
-class Utils
+public class Utils
 {
 	public static int THRESHOLD = 10000;
 
-	public static void setInt (byte[] bytes, int value)
+	static void setInt (byte[] bytes, int value)
 	{
 		bytes[0] = (byte) (value & 0xff);
 		bytes[1] = (byte) ((value >> 8) & 0xff);
@@ -49,7 +49,7 @@ class Utils
 		bytes[3] = (byte) ((value >> 24) & 0xff);
 	}
 
-	public static void setLong (byte[] bytes, long value)
+	static void setLong (byte[] bytes, long value)
 	{
 		bytes[0] = (byte) (value & 0xff);
 		bytes[1] = (byte) ((value >> 8) & 0xff);

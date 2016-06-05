@@ -25,51 +25,37 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
+import javax.json.JsonReader;
+import javax.json.JsonReaderFactory;
 
 /**
  * @author	Heng Yuan
  */
-public class TextJsonParserFactory implements JsonParserFactory
+public class TextJsonReaderFactory implements JsonReaderFactory
 {
 	private final Map<String, ?> m_config;
 
-	public TextJsonParserFactory (Map<String, ?> config)
+	public TextJsonReaderFactory (Map<String, ?> config)
 	{
 		m_config = config;
 	}
 
 	@Override
-	public JsonParser createParser (Reader reader)
+	public JsonReader createReader (Reader reader)
 	{
-		return TextJsonProvider.createParser (m_config, reader);
+		return new JsonReaderImpl (TextJsonProvider.createParser (m_config, reader));
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is)
+	public JsonReader createReader (InputStream is)
 	{
-		return TextJsonProvider.createParser (m_config, is);
+		return new JsonReaderImpl (TextJsonProvider.createParser (m_config, is));
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is, Charset charset)
+	public JsonReader createReader (InputStream is, Charset charset)
 	{
-		return TextJsonProvider.createParser (m_config, new InputStreamReader (is, charset));
-	}
-
-	@Override
-	public JsonParser createParser (JsonObject obj)
-	{
-		return new JsonStructureParser (obj);
-	}
-
-	@Override
-	public JsonParser createParser (JsonArray array)
-	{
-		return new JsonStructureParser (array);
+		return new JsonReaderImpl (TextJsonProvider.createParser (m_config, new InputStreamReader (is, charset)));
 	}
 
 	@Override

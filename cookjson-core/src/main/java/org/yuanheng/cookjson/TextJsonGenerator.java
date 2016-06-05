@@ -43,7 +43,7 @@ import javax.json.stream.JsonGenerator;
  *
  * @author	Heng Yuan
  */
-public class FastJsonGenerator implements JsonGenerator
+public class TextJsonGenerator implements JsonGenerator
 {
 	/**
 	 * Current key name being worked on.  null if we are dealing with an
@@ -75,12 +75,12 @@ public class FastJsonGenerator implements JsonGenerator
 	 */
 	boolean m_first = true;
 
-	public FastJsonGenerator (OutputStream os)
+	public TextJsonGenerator (OutputStream os)
 	{
 		m_out = new BufferedWriter (new OutputStreamWriter (os, BOM.utf8));
 	}
 
-	public FastJsonGenerator (Writer out)
+	public TextJsonGenerator (Writer out)
 	{
 		if (!(out instanceof PrintWriter || out instanceof BufferedWriter))
 			out = new BufferedWriter (out);

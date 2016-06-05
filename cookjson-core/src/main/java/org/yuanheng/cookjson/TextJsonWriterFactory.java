@@ -18,58 +18,44 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
 
 /**
  * @author	Heng Yuan
  */
-public class TextJsonParserFactory implements JsonParserFactory
+public class TextJsonWriterFactory implements JsonWriterFactory
 {
 	private final Map<String, ?> m_config;
 
-	public TextJsonParserFactory (Map<String, ?> config)
+	public TextJsonWriterFactory (Map<String, ?> config)
 	{
 		m_config = config;
 	}
 
 	@Override
-	public JsonParser createParser (Reader reader)
+	public JsonWriter createWriter (Writer writer)
 	{
-		return TextJsonProvider.createParser (m_config, reader);
+		return new JsonWriterImpl (TextJsonProvider.createGenerator (m_config, writer));
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is)
+	public JsonWriter createWriter (OutputStream os)
 	{
-		return TextJsonProvider.createParser (m_config, is);
+		return new JsonWriterImpl (TextJsonProvider.createGenerator (m_config, os));
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is, Charset charset)
+	public JsonWriter createWriter (OutputStream os, Charset charset)
 	{
-		return TextJsonProvider.createParser (m_config, new InputStreamReader (is, charset));
-	}
-
-	@Override
-	public JsonParser createParser (JsonObject obj)
-	{
-		return new JsonStructureParser (obj);
-	}
-
-	@Override
-	public JsonParser createParser (JsonArray array)
-	{
-		return new JsonStructureParser (array);
+		return new JsonWriterImpl (TextJsonProvider.createGenerator (m_config, new OutputStreamWriter (os, charset)));
 	}
 
 	@Override
