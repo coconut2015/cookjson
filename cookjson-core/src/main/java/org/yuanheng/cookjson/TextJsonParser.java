@@ -82,7 +82,7 @@ public class TextJsonParser implements CookJsonParser
 		if (is instanceof PushbackInputStream)
 			pis = (PushbackInputStream) is;
 		else
-			pis = new PushbackInputStream (is);
+			pis = new PushbackInputStream (is, 3);
 		Charset charset;
 		try
 		{
@@ -118,7 +118,7 @@ public class TextJsonParser implements CookJsonParser
 	private void stateError ()
 	{
 		JsonLocation location = getLocation ();
-		throw new JsonException ("Line " + location.getLineNumber () + ", column " + location.getColumnNumber () + ", offset " + location.getStreamOffset () + ": invalid token.");
+		throw new IllegalStateException ("Line " + location.getLineNumber () + ", column " + location.getColumnNumber () + ", offset " + location.getStreamOffset () + ": invalid token.");
 	}
 
 	private void ioError (String msg)
@@ -365,7 +365,6 @@ public class TextJsonParser implements CookJsonParser
 	{
 		m_int = true;
 		char[] buf = m_appendBuf;
-		m_appendPos = 0;
 		buf[m_appendPos++] = firstChar;
 
 		if (firstChar == '0')
@@ -663,6 +662,16 @@ public class TextJsonParser implements CookJsonParser
 			{
 				saveLocation ();
 				readString ();
+				m_event = Event.KEY_NAME;
+				m_lastToken = FIELD;
+				m_event = Event.KEY_NAME;
+				return;
+			}
+			if (ch == '}')
+			{
+				popState (false);
+				m_event = Event.END_OBJECT;
+				m_lastToken = VALUE;
 				return;
 			}
 			if (ch == ' ' || ch == '\t' || ch == '\r')
@@ -703,12 +712,10 @@ public class TextJsonParser implements CookJsonParser
 				}
 				case '-':
 				{
+					m_appendPos = 0;
+					append (ch);
 					ch = read ();
-					if (ch >= '0' && ch <= '9')
-					{
-						append (ch);
-					}
-					else
+					if (!(ch >= '0' && ch <= '9'))
 					{
 						unexpected (ch);
 					}
@@ -729,6 +736,7 @@ public class TextJsonParser implements CookJsonParser
 				case '8':
 				case '9':
 				{
+					m_appendPos = 0;
 					readNumber (ch);
 					m_event = Event.VALUE_NUMBER;
 					m_lastToken = VALUE;
@@ -824,9 +832,6 @@ public class TextJsonParser implements CookJsonParser
 					}
 
 					expectKeyName ();
-					m_event = Event.KEY_NAME;
-					m_lastToken = FIELD;
-					m_event = Event.KEY_NAME;
 					return m_event;
 				}
 

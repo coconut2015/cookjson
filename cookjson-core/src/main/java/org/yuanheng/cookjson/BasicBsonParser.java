@@ -48,6 +48,11 @@ public class BasicBsonParser implements CookJsonParser
 	public BasicBsonParser (InputStream is)
 	{
 		m_is = new BsonInputStream (is);
+
+		// neither column number and line number are meaningful
+		// set them to unknown.
+		m_location.setColumnNumber (-1);
+		m_location.setLineNumber (-1);
 	}
 
 	@Override

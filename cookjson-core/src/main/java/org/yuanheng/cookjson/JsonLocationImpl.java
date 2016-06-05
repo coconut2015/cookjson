@@ -25,6 +25,15 @@ import javax.json.stream.JsonLocation;
  */
 class JsonLocationImpl implements JsonLocation
 {
+	public final static JsonLocationImpl Unknown = new JsonLocationImpl ();
+
+	static
+	{
+		Unknown.m_columnNumber = -1;
+		Unknown.m_lineNumber = -1;
+		Unknown.m_streamOffset = -1;
+	}
+
 	private long m_lineNumber;
 	private long m_columnNumber;
 	private long m_streamOffset;

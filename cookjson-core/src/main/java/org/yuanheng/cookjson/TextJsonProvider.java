@@ -33,11 +33,7 @@ import javax.json.stream.JsonParserFactory;
  */
 public class TextJsonProvider extends JsonProvider
 {
-	public final static String FORMAT = "format";
-	/** Use the JSON format.  This is the default. */
-	public final static String FORMAT_JSON = "json";
-	/** Use the BSON format. */
-	public final static String FORMAT_BSON = "bson";
+	public final static String COMMENT = "comment";
 
 	@Override
 	public JsonParser createParser (Reader reader)
@@ -48,7 +44,7 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonParser createParser (InputStream is)
 	{
-		return null;
+		return new TextJsonParser (is);
 	}
 
 	@Override
@@ -78,13 +74,13 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonReader createReader (Reader reader)
 	{
-		return null;
+		return new JsonReaderImpl (new TextJsonParser (reader));
 	}
 
 	@Override
 	public JsonReader createReader (InputStream is)
 	{
-		return null;
+		return new JsonReaderImpl (new TextJsonParser (is));
 	}
 
 	@Override
@@ -96,8 +92,7 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonWriter createWriter (OutputStream os)
 	{
-		OutputStreamWriter writer = new OutputStreamWriter (os);
-		return new JsonWriterImpl (new FastJsonGenerator (writer));
+		return new JsonWriterImpl (new FastJsonGenerator (os));
 	}
 
 	@Override

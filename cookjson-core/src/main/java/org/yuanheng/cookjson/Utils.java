@@ -18,6 +18,9 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.Stack;
 
@@ -352,6 +355,27 @@ class Utils
 				assertState (currentState == GeneratorState.INITIAL ||
 							 currentState == GeneratorState.END);
 				break;
+		}
+	}
+
+	public static String getString (File file)
+	{
+		try
+		{
+			StringBuilder buf = new StringBuilder ();
+			char[] chars = new char[8192];
+			InputStreamReader r = new InputStreamReader (new FileInputStream (file), BOM.utf8);
+			int len;
+			while ((len = r.read (chars)) > 0)
+			{
+				buf.append (chars, 0, len);
+			}
+			r.close ();
+			return buf.toString ();
+		}
+		catch (Exception ex)
+		{
+			return null;
 		}
 	}
 }

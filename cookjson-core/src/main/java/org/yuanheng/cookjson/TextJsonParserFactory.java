@@ -36,40 +36,50 @@ import javax.json.stream.JsonParserFactory;
 class TextJsonParserFactory implements JsonParserFactory
 {
 	private final Map<String, ?> m_config;
+	private boolean m_allowComments;
 
 	public TextJsonParserFactory (Map<String, ?> config)
 	{
 		m_config = config;
+		Object obj = config.get (TextJsonProvider.COMMENT);
+		if (obj != null)
+			m_allowComments = "true".equals (obj.toString ());
 	}
 
 	@Override
 	public JsonParser createParser (Reader reader)
 	{
-		return new TextJsonParser (reader);
+		TextJsonParser p = new TextJsonParser (reader);
+		p.setAllowComments (m_allowComments);
+		return p;
 	}
 
 	@Override
-	public JsonParser createParser (InputStream in)
+	public JsonParser createParser (InputStream is)
 	{
-		return null;
+		TextJsonParser p = new TextJsonParser (is);
+		p.setAllowComments (m_allowComments);
+		return p;
 	}
 
 	@Override
 	public JsonParser createParser (InputStream is, Charset charset)
 	{
-		return new TextJsonParser (new InputStreamReader (is, charset));
+		TextJsonParser p = new TextJsonParser (new InputStreamReader (is, charset));
+		p.setAllowComments (m_allowComments);
+		return p;
 	}
 
 	@Override
 	public JsonParser createParser (JsonObject obj)
 	{
-		return null;
+		return new JsonStructureParser (obj);
 	}
 
 	@Override
 	public JsonParser createParser (JsonArray array)
 	{
-		return null;
+		return new JsonStructureParser (array);
 	}
 
 	@Override

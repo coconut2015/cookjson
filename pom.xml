@@ -26,6 +26,7 @@
 	</developers>
 	<modules>
 		<module>cookjson-core</module>
+		<module>cookjson-jsonpath</module>
 		<module>cookjson-utils</module>
 	</modules>
 </project>
