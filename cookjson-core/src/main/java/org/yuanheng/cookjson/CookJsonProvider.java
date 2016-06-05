@@ -18,7 +18,10 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.Map;
 
 import javax.json.*;
@@ -31,9 +34,20 @@ import javax.json.stream.JsonParserFactory;
 /**
  * @author	Heng Yuan
  */
-public class TextJsonProvider extends JsonProvider
+public class CookJsonProvider extends JsonProvider
 {
+	/** JSON format handling */
+	public final static String FORMAT = "format";
+	/** Specifies JSON format */
+	public final static String FORMAT_JSON = "json";
+	/** Specifies BSON format */
+	public final static String FORMAT_BSON = "bson";
+
+	/** If the value is true, allows line/block comments in the file. */
 	public final static String COMMENT = "comment";
+
+	/** If the value is true, stores BigDecimal / BigInteger as double. */
+	public final static String USE_DOUBLE = "useDouble";
 
 	@Override
 	public JsonParser createParser (Reader reader)
@@ -50,7 +64,7 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonParserFactory createParserFactory (Map<String, ?> config)
 	{
-		return new TextJsonParserFactory (config);
+		return new JsonParserFactoryImpl (config, getHandler (config));
 	}
 
 	@Override
@@ -60,15 +74,15 @@ public class TextJsonProvider extends JsonProvider
 	}
 
 	@Override
-	public JsonGenerator createGenerator (OutputStream out)
+	public JsonGenerator createGenerator (OutputStream os)
 	{
-		return new TextJsonGenerator (out);
+		return new TextJsonGenerator (os);
 	}
 
 	@Override
 	public JsonGeneratorFactory createGeneratorFactory (Map<String, ?> config)
 	{
-		return new TextJsonGeneratorFactory (config);
+		return new JsonGeneratorFactoryImpl (config, getHandler (config));
 	}
 
 	@Override
@@ -98,13 +112,13 @@ public class TextJsonProvider extends JsonProvider
 	@Override
 	public JsonWriterFactory createWriterFactory (Map<String, ?> config)
 	{
-		return new TextJsonWriterFactory (config);
+		return new JsonWriterFactoryImpl (config, getHandler (config));
 	}
 
 	@Override
 	public JsonReaderFactory createReaderFactory (Map<String, ?> config)
 	{
-		return new TextJsonReaderFactory (config);
+		return new JsonReaderFactoryImpl (config, getHandler (config));
 	}
 
 	@Override
@@ -125,54 +139,12 @@ public class TextJsonProvider extends JsonProvider
 		return new JsonBuilderFactoryImpl (config);
 	}
 
-	public static CookJsonParser createParser (Map<String, ?> config, Reader reader)
+	private CookJsonHandler getHandler (Map<String, ?> config)
 	{
-		boolean allowComments = false;
-		Object obj = config.get (TextJsonProvider.COMMENT);
-		if (obj != null)
-			allowComments = "true".equals (obj.toString ());
-		TextJsonParser p = new TextJsonParser (reader);
-		p.setAllowComments (allowComments);
-		return p;
-	}
-
-	public static CookJsonParser createParser (Map<String, ?> config, InputStream is)
-	{
-		boolean allowComments = false;
-		Object obj = config.get (TextJsonProvider.COMMENT);
-		if (obj != null)
-			allowComments = "true".equals (obj.toString ());
-		TextJsonParser p = new TextJsonParser (is);
-		p.setAllowComments (allowComments);
-		return p;
-	}
-
-	public static JsonGenerator createGenerator (Map<String, ?> config, Writer writer)
-	{
-		boolean pretty = false;
-		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
-		if (obj != null)
-			pretty = "true".equals (obj.toString ());
-		TextJsonGenerator g;
-		if (pretty)
-			g = new PrettyTextJsonGenerator (writer);
+		boolean bson = FORMAT_BSON.equals (config.get (FORMAT));
+		if (bson)
+			return BsonHandler.getInstance ();
 		else
-			g = new TextJsonGenerator (writer);
-		return g;
+			return TextJsonHandler.getInstance ();
 	}
-
-	public static JsonGenerator createGenerator (Map<String, ?> config, OutputStream os)
-	{
-		boolean pretty = false;
-		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
-		if (obj != null)
-			pretty = "true".equals (obj.toString ());
-		TextJsonGenerator g;
-		if (pretty)
-			g = new PrettyTextJsonGenerator (os);
-		else
-			g = new TextJsonGenerator (os);
-		return g;
-	}
-
 }

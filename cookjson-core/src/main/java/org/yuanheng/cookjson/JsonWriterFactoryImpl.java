@@ -24,40 +24,39 @@ import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.json.JsonException;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
+import javax.json.JsonWriter;
+import javax.json.JsonWriterFactory;
 
 /**
- * Json based generator.
- *
  * @author	Heng Yuan
  */
-class BsonGeneratorFactory implements JsonGeneratorFactory
+class JsonWriterFactoryImpl implements JsonWriterFactory
 {
 	private final Map<String, ?> m_config;
+	private final CookJsonHandler m_handler;
 
-	public BsonGeneratorFactory (Map<String, ?> config)
+	public JsonWriterFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
 	{
 		m_config = config;
+		m_handler = handler;
 	}
 
 	@Override
-	public JsonGenerator createGenerator (Writer writer)
+	public JsonWriter createWriter (Writer writer)
 	{
-		throw new JsonException ("BSON output is binary.");
+		return new JsonWriterImpl (m_handler.createGenerator (m_config, writer));
 	}
 
 	@Override
-	public JsonGenerator createGenerator (OutputStream os)
+	public JsonWriter createWriter (OutputStream os)
 	{
-		return new FastBsonGenerator (os);
+		return new JsonWriterImpl (m_handler.createGenerator (m_config, os));
 	}
 
 	@Override
-	public JsonGenerator createGenerator (OutputStream os, Charset charset)
+	public JsonWriter createWriter (OutputStream os, Charset charset)
 	{
-		return new FastBsonGenerator (os);
+		return new JsonWriterImpl (m_handler.createGenerator (m_config, os, charset));
 	}
 
 	@Override

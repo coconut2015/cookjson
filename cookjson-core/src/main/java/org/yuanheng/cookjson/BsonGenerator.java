@@ -37,7 +37,7 @@ import org.yuanheng.cookjson.value.CookJsonBinary;
  *
  * @author	Heng Yuan
  */
-public class FastBsonGenerator implements JsonGenerator
+public class BsonGenerator implements JsonGenerator
 {
 	private final BufferedOutputStream m_os;
 	private final byte[] m_bytes = new byte[8];
@@ -52,7 +52,7 @@ public class FastBsonGenerator implements JsonGenerator
 
 	private boolean m_useDouble = false;
 
-	public FastBsonGenerator (OutputStream os)
+	public BsonGenerator (OutputStream os)
 	{
 		m_os = new BufferedOutputStream (os);
 	}

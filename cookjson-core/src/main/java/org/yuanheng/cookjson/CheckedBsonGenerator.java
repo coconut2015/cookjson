@@ -28,7 +28,7 @@ import javax.json.stream.JsonGenerator;
 /**
  * @author	Heng Yuan
  */
-public class CheckedBsonGenerator extends FastBsonGenerator
+public class CheckedBsonGenerator extends BsonGenerator
 {
 	/**
 	 * @param	os

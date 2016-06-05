@@ -18,58 +18,45 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.OutputStream;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
+import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonGeneratorFactory;
 
 /**
  * @author	Heng Yuan
  */
-class BsonParserFactory implements JsonParserFactory
+class JsonGeneratorFactoryImpl implements JsonGeneratorFactory
 {
 	private final Map<String, ?> m_config;
+	private final CookJsonHandler m_handler;
 
-	public BsonParserFactory (Map<String, ?> config)
+	public JsonGeneratorFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
 	{
 		m_config = config;
+		m_handler = handler;
 	}
 
 	@Override
-	public JsonParser createParser (Reader reader)
+	public JsonGenerator createGenerator (Writer writer)
 	{
-		throw new JsonException ("BSON does not support Reader I/O.");
+		return m_handler.createGenerator (m_config, writer);
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is)
+	public JsonGenerator createGenerator (OutputStream os)
 	{
-		return new BsonParser (is);
+		return m_handler.createGenerator (m_config, os);
 	}
 
 	@Override
-	public JsonParser createParser (InputStream is, Charset charset)
+	public JsonGenerator createGenerator (OutputStream os, Charset charset)
 	{
-		return new BsonParser (is);
-	}
-
-	@Override
-	public JsonParser createParser (JsonObject obj)
-	{
-		return null;
-	}
-
-	@Override
-	public JsonParser createParser (JsonArray array)
-	{
-		return null;
+		return m_handler.createGenerator (m_config, os, charset);
 	}
 
 	@Override

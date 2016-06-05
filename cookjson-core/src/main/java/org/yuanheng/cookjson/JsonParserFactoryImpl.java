@@ -19,7 +19,6 @@
 package org.yuanheng.cookjson;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
@@ -33,31 +32,33 @@ import javax.json.stream.JsonParserFactory;
 /**
  * @author	Heng Yuan
  */
-public class TextJsonParserFactory implements JsonParserFactory
+class JsonParserFactoryImpl implements JsonParserFactory
 {
 	private final Map<String, ?> m_config;
+	private final CookJsonHandler m_handler;
 
-	public TextJsonParserFactory (Map<String, ?> config)
+	public JsonParserFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
 	{
 		m_config = config;
+		m_handler = handler;
 	}
 
 	@Override
 	public JsonParser createParser (Reader reader)
 	{
-		return TextJsonProvider.createParser (m_config, reader);
+		return m_handler.createParser (m_config, reader);
 	}
 
 	@Override
 	public JsonParser createParser (InputStream is)
 	{
-		return TextJsonProvider.createParser (m_config, is);
+		return m_handler.createParser (m_config, is);
 	}
 
 	@Override
 	public JsonParser createParser (InputStream is, Charset charset)
 	{
-		return TextJsonProvider.createParser (m_config, new InputStreamReader (is, charset));
+		return m_handler.createParser (m_config, is, charset);
 	}
 
 	@Override

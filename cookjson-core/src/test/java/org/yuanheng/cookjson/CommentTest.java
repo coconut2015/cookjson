@@ -42,8 +42,8 @@ public class CommentTest
 		File file2 = new File (f2.replace ('/', File.separatorChar));
 
 		HashMap<String, Object> config = new HashMap<String, Object> ();
-		config.put (TextJsonProvider.COMMENT, Boolean.TRUE);
-		JsonProvider provider = new TextJsonProvider ();
+		config.put (CookJsonProvider.COMMENT, Boolean.TRUE);
+		JsonProvider provider = new CookJsonProvider ();
 		StringWriter out1 = new StringWriter ();
 		JsonParser p1 = provider.createParserFactory (config).createParser (new FileInputStream (file1));
 		JsonGenerator g1 = new TextJsonGenerator (out1);

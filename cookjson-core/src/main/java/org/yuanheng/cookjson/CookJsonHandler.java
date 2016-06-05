@@ -18,51 +18,29 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.Map;
 
 import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
 
 /**
- * Json based generator.
- *
  * @author	Heng Yuan
  */
-public class TextJsonGeneratorFactory implements JsonGeneratorFactory
+interface CookJsonHandler
 {
-	private final Map<String, ?> m_config;
+	public CookJsonParser createParser (Map<String, ?> config, Reader reader);
 
-	public TextJsonGeneratorFactory (Map<String, ?> config)
-	{
-		m_config = config;
-	}
+	public CookJsonParser createParser (Map<String, ?> config, InputStream is);
 
-	@Override
-	public JsonGenerator createGenerator (Writer writer)
-	{
-		return TextJsonProvider.createGenerator (m_config, writer);
-	}
+	public CookJsonParser createParser (Map<String, ?> config, InputStream is, Charset charset);
 
-	@Override
-	public JsonGenerator createGenerator (OutputStream os)
-	{
-		return TextJsonProvider.createGenerator (m_config, os);
-	}
+	public JsonGenerator createGenerator (Map<String, ?> config, Writer writer);
 
-	@Override
-	public JsonGenerator createGenerator (OutputStream out, Charset charset)
-	{
-		return TextJsonProvider.createGenerator (m_config, new OutputStreamWriter (out, charset));
-	}
+	public JsonGenerator createGenerator (Map<String, ?> config, OutputStream os);
 
-	@Override
-	public Map<String, ?> getConfigInUse ()
-	{
-		return Collections.unmodifiableMap (m_config);
-	}
+	public JsonGenerator createGenerator (Map<String, ?> config, OutputStream os, Charset charset);
 }

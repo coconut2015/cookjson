@@ -125,18 +125,28 @@ public class ConvertJson
 		{
 			FileInputStream is = new FileInputStream (src);
 			JsonParser p;
-			JsonProvider textProvider = JsonProvider.provider ();
-			HashMap<String, Object> config = new HashMap<String, Object> ();
+			JsonProvider provider = JsonProvider.provider ();
+			HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+			bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+			if (useDouble)
+			{
+				bsonConfig.put (CookJsonProvider.USE_DOUBLE, Boolean.TRUE);
+			}
+
+			HashMap<String, Object> textConfig = new HashMap<String, Object> ();
 			if (pretty)
 			{
-				config.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+				textConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
 			}
 
 			if (srcBson)
-				p = new BsonParser (is);
+			{
+				JsonParserFactory f = provider.createParserFactory (bsonConfig);
+				p = f.createParser (is);
+			}
 			else
 			{
-				JsonParserFactory f = textProvider.createParserFactory (config);
+				JsonParserFactory f = provider.createParserFactory (textConfig);
 				p = f.createParser (is);
 			}
 	
@@ -144,15 +154,12 @@ public class ConvertJson
 			JsonGenerator g;
 			if (dstBson)
 			{
-				g = new CheckedBsonGenerator (os);
-				if (useDouble)
-				{
-					((CheckedBsonGenerator)g).setUseDouble (true);
-				}
+				JsonGeneratorFactory f = provider.createGeneratorFactory (bsonConfig);
+				g = f.createGenerator (os);
 			}
 			else
 			{
-				JsonGeneratorFactory f = textProvider.createGeneratorFactory (config);
+				JsonGeneratorFactory f = provider.createGeneratorFactory (textConfig);
 				g = f.createGenerator (os);
 			}
 			Utils.convert (p, g);

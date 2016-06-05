@@ -301,16 +301,16 @@ public class Utils
 				{
 					assert Debug.debug ("READ: " + e + " = " + p.getString ());
 					if (p instanceof BasicBsonParser &&
-						g instanceof FastBsonGenerator)
+						g instanceof BsonGenerator)
 					{
 						JsonValue v = ((BasicBsonParser) p).getValue ();
 						if (v instanceof CookJsonBinary)
 						{
 							byte[] bytes = ((CookJsonBinary) v).getBytes ();
 							if (name == null)
-								((FastBsonGenerator)g).write (bytes);
+								((BsonGenerator)g).write (bytes);
 							else
-								((FastBsonGenerator)g).write (name, bytes);
+								((BsonGenerator)g).write (name, bytes);
 							break;
 						}
 					}
