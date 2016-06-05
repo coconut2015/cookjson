@@ -34,14 +34,18 @@ import org.yuanheng.cookjson.value.CookJsonNumber;
 import org.yuanheng.cookjson.value.CookJsonString;
 
 /**
+ * This JsonParser adds the ability to allow parse JavaScript line and
+ * block comments.
+ *
  * @author	Heng Yuan
  */
 public class TextJsonParser implements CookJsonParser
 {
 	private final static int START = 1;
 	private final static int VALUE = 2;
-	private final static int COMMA = 3;
-	private final static int COLON = 4;
+	private final static int FIELD = 3;
+
+	private boolean m_allowComments;
 
 	private final Reader m_reader;
 	/** append buffer for storing output string */
@@ -100,8 +104,7 @@ public class TextJsonParser implements CookJsonParser
 
 	private void ioError (String msg)
 	{
-		JsonLocation location = getLocation ();
-		throw new JsonException ("Line " + location.getLineNumber () + ", column " + location.getColumnNumber () + ", offset " + location.getStreamOffset () + ": " + msg);
+		throw new JsonException ("Line " + m_line + ", column " + m_column + ", offset " + m_offset + ": " + msg);
 	}
 
 	private void unexpected (char ch)
@@ -124,6 +127,117 @@ public class TextJsonParser implements CookJsonParser
 		m_readMax = m_reader.read (m_readBuf);
 		if (m_readMax <= 0)
 			ioError ("unexpected eof.");
+	}
+
+	private void readLineComment () throws IOException
+	{
+		char[] buf = m_readBuf;
+		int len = 0;
+		for (;;)
+		{
+			int readPos = m_readPos;
+			int readMax = m_readMax;
+			while (readPos < readMax)
+			{
+				char ch = buf[readPos++];
+				++len;
+
+				if (ch == '\n')
+				{
+					m_offset += len;
+					m_column = 0;
+					++m_line;
+					m_readPos = readPos;
+					return;
+				}
+			}
+			fill ();
+		}
+	}
+
+	private void readBlockComment () throws IOException
+	{
+		char[] buf = m_readBuf;
+		int len = 0;
+		for (;;)
+		{
+			int readPos = m_readPos;
+			int readMax = m_readMax;
+			while (readPos < readMax)
+			{
+				char ch = buf[readPos++];
+				++len;
+
+				// switch is useful for scanning characters that are
+				// mostly handled as default.
+				switch (ch)
+				{
+					case '\n':
+					{
+						m_offset += len;
+						m_column = 0;
+						++m_line;
+						len = 0;
+						break;
+					}
+					case '*':
+					{
+						char nextChar;
+						if (readPos < readMax)
+						{
+							nextChar = buf[readPos + 1];
+						}
+						else
+						{
+							fill ();
+							readPos = m_readPos;
+							readMax = m_readMax;
+							nextChar = buf[readPos];
+						}
+						if (nextChar == '/')
+						{
+							m_offset += len;
+							m_column += len;
+							return;
+						}
+						break;
+					}
+				}
+			}
+			fill ();
+		}
+	}
+
+	private void readComment () throws IOException
+	{
+		char ch;
+		ch = read ();
+		if (ch == '/')
+			readLineComment ();
+		else if (ch == '*')
+			readBlockComment ();
+		else
+		{
+			--m_offset;
+			--m_column;
+			unexpected ('/');
+		}
+	}
+
+	/**
+	 * We do not want to add cost for handling comments.  So we embed the
+	 * comment handling in unexpected character handling.
+	 *
+	 * @param	ch
+	 *			the unexpected character just read
+	 * @throws	IOException
+	 * 			in case of error.
+	 */
+	private void scanUnexpected (char ch) throws IOException
+	{
+		if (!m_allowComments || ch != '/')
+			unexpected (ch);
+		readComment ();
 	}
 
 	private void readNull () throws IOException
@@ -417,203 +531,308 @@ public class TextJsonParser implements CookJsonParser
 		return null;	// should not get here.
 	}
 
+	private void expectArrayObject () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			// since we are only call at initiation.  We are mostly expecting
+			// '[' and '{', not anything else.
+			if (ch == '[')
+			{
+				pushState (true);
+				m_event = Event.START_ARRAY;
+				m_lastToken = START;
+				return;
+			}
+			if (ch == '{')
+			{
+				pushState (false);
+				m_event = Event.START_OBJECT;
+				m_lastToken = START;
+				return;
+			}
+			if (ch == ' ' || ch == '\t' || ch == '\r')
+				continue;
+			if (ch == '\n')
+			{
+				m_column = 0;
+				++m_line;
+				continue;
+			}
+			scanUnexpected (ch);
+		}
+	}
+
+	private boolean expectCommaObject () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			if (ch == ',')
+				return false;
+			if (ch == '}')
+			{
+				popState (false);
+				m_event = Event.END_OBJECT;
+				m_lastToken = VALUE;
+				return true;
+			}
+			if (ch == ' ' || ch == '\t' || ch == '\r')
+				continue;
+			if (ch == '\n')
+			{
+				m_column = 0;
+				++m_line;
+				continue;
+			}
+			scanUnexpected (ch);
+		}
+	}
+
+	private boolean expectCommaArray () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			if (ch == ',')
+				return false;
+			if (ch == ']')
+			{
+				popState (true);
+				m_event = Event.END_ARRAY;
+				m_lastToken = VALUE;
+				return true;
+			}
+			if (ch == ' ' || ch == '\t' || ch == '\r')
+				continue;
+			if (ch == '\n')
+			{
+				m_column = 0;
+				++m_line;
+				continue;
+			}
+			scanUnexpected (ch);
+		}
+	}
+
+	private void expectColon () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			if (ch == ':')
+				return;
+			if (ch == ' ' || ch == '\t' || ch == '\r')
+				continue;
+			if (ch == '\n')
+			{
+				m_column = 0;
+				++m_line;
+				continue;
+			}
+			scanUnexpected (ch);
+		}
+	}
+
+	private void expectKeyName () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			if (ch == '"')
+			{
+				saveLocation ();
+				readString ();
+				return;
+			}
+			if (ch == ' ' || ch == '\t' || ch == '\r')
+				continue;
+			if (ch == '\n')
+			{
+				m_column = 0;
+				++m_line;
+				continue;
+			}
+			scanUnexpected (ch);
+		}
+	}
+
+	private void expectValue () throws IOException
+	{
+		for (;;)
+		{
+			char ch = read ();
+			switch (ch)
+			{
+				case '\t':
+				case '\r':
+					break;
+				case '\n':
+					m_column = 0;
+					++m_line;
+					break;
+				case ' ':
+					break;
+				case '"':
+				{
+					saveLocation ();
+					readString ();
+					m_lastToken = VALUE;
+					m_event = Event.VALUE_STRING;
+					return;
+				}
+				case '-':
+				{
+					ch = read ();
+					if (ch >= '0' && ch <= '9')
+					{
+						append (ch);
+					}
+					else
+					{
+						unexpected (ch);
+					}
+
+					readNumber (ch);
+					m_event = Event.VALUE_NUMBER;
+					m_lastToken = VALUE;
+					return;
+				}
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
+				{
+					readNumber (ch);
+					m_event = Event.VALUE_NUMBER;
+					m_lastToken = VALUE;
+					return;
+				}
+				case '[':
+				{
+					pushState (true);
+					m_event = Event.START_ARRAY;
+					m_lastToken = START;
+					return;
+				}
+				case ']':
+				{
+					popState (true);
+					m_event = Event.END_ARRAY;
+					m_lastToken = VALUE;
+					return;
+				}
+				case 'f':
+				{
+					readFalse ();
+					m_event = Event.VALUE_FALSE;
+					m_lastToken = VALUE;
+					return;
+				}
+				case 'n':
+				{
+					readNull ();
+					m_event = Event.VALUE_NULL;
+					m_lastToken = VALUE;
+					return;
+				}
+				case 't':
+				{
+					readTrue ();
+					m_event = Event.VALUE_TRUE;
+					m_lastToken = VALUE;
+					return;
+				}
+				case '{':
+				{
+					pushState (false);
+					m_event = Event.START_OBJECT;
+					m_lastToken = START;
+					return;
+				}
+				case '}':
+				{
+					popState (false);
+					m_event = Event.END_OBJECT;
+					m_lastToken = VALUE;
+					return;
+				}
+				default:
+				{
+					scanUnexpected (ch);
+				}
+			}
+		}
+	}
+
 	@Override
 	public Event next ()
 	{
-		if (m_state == ParserState.END)
-			throw new NoSuchElementException ();
 		try
 		{
-			for (;;)
+			switch (m_state)
 			{
-				char ch = read ();
-				// It is very import to sort the cases.  It appears to have
-				// 5-10% improvement than some random order.
-				switch (ch)
+				case ParserState.INITIAL:
 				{
-					case '\t':
-					case '\r':
-						break;
-					case '\n':
-						m_column = 0;
-						++m_line;
-						break;
-					case ' ':
-						break;
-					case '"':
-					{
-						saveLocation ();
-						readString ();
-
-						if (m_state == ParserState.IN_OBJECT)
-						{
-							if (m_lastToken == START ||
-								m_lastToken == COMMA)
-							{
-								m_event = Event.KEY_NAME;
-								m_lastToken = VALUE;
-								return m_event;
-							}
-							else if (m_lastToken == COLON)
-							{
-								m_event = Event.VALUE_STRING;
-								m_lastToken = VALUE;
-								return m_event;
-							}
-						}
-						else if (m_state == ParserState.IN_ARRAY)
-						{
-							if (m_lastToken == START ||
-								m_lastToken == COMMA)
-							{
-								m_event = Event.VALUE_STRING;
-								m_lastToken = VALUE;
-								return m_event;
-							}
-						}
-						stateError ();
-						break;
-					}
-					case ',':
-					{
-						if (m_lastToken != VALUE)
-							stateError ();
-						m_lastToken = COMMA;
-						break;
-					}
-					case '-':
-					{
-						checkValueState (true);
-						ch = read ();
-						if (ch >= '0' && ch <= '9')
-						{
-							append (ch);
-						}
-						else
-						{
-							unexpected (ch);
-						}
-
-						readNumber (ch);
-						m_event = Event.VALUE_NUMBER;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-					case '8':
-					case '9':
-					{
-						checkValueState (true);
-						readNumber (ch);
-						m_event = Event.VALUE_NUMBER;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case ':':
-					{
-						if (m_event != Event.KEY_NAME ||
-							m_lastToken != VALUE)
-							stateError ();
-						m_lastToken = COLON;
-						break;
-					}
-					case '[':
-					{
-						checkValueState (true);
-						pushState (true);
-						m_event = Event.START_ARRAY;
-						m_lastToken = START;
-						return m_event;
-					}
-					case ']':
-					{
-						if (m_state != ParserState.IN_ARRAY)
-							stateError ();
-						if (m_states.isEmpty ())
-							m_state = ParserState.END;
-						popState ();
-						m_event = Event.END_ARRAY;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 'f':
-					{
-						checkValueState (true);
-						readFalse ();
-						m_event = Event.VALUE_FALSE;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 'n':
-					{
-						checkValueState (true);
-						readNull ();
-						m_event = Event.VALUE_NULL;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case 't':
-					{
-						checkValueState (true);
-						readTrue ();
-						m_event = Event.VALUE_TRUE;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					case '{':
-					{
-						checkValueState (true);
-						pushState (false);
-						m_event = Event.START_OBJECT;
-						m_lastToken = START;
-						return m_event;
-					}
-					case '}':
-					{
-						if (m_state != ParserState.IN_OBJECT)
-							stateError ();
-						if (m_states.isEmpty ())
-							m_state = ParserState.END;
-						popState ();
-						m_event = Event.END_ARRAY;
-						m_lastToken = VALUE;
-						return m_event;
-					}
-					default:
-						unexpected (ch);
+					expectArrayObject ();
+					return m_event;
 				}
+
+				case ParserState.IN_OBJECT:
+				{
+					int lastToken = m_lastToken;
+					if (lastToken == FIELD)
+					{
+						expectColon ();
+						expectValue ();
+						return m_event;
+					}
+
+					if (lastToken == VALUE)
+					{
+						// we now expect either ',' or '}'
+						if (expectCommaObject ())
+						{
+							return m_event;
+						}
+					}
+
+					expectKeyName ();
+					m_event = Event.KEY_NAME;
+					m_lastToken = FIELD;
+					m_event = Event.KEY_NAME;
+					return m_event;
+				}
+
+				case ParserState.IN_ARRAY:
+				{
+					if (m_lastToken == VALUE)
+					{
+						// we now expect either ',' or ']'
+						if (expectCommaArray ())
+						{
+							return m_event;
+						}
+					}
+					expectValue ();
+					return m_event;
+				}
+
+				case ParserState.END:
+					throw new NoSuchElementException ();
 			}
+			throw new IllegalStateException ();
 		}
 		catch (IOException ex)
 		{
 			throw new JsonException (ex.getMessage (), ex);
-		}
-	}
-
-	private void checkValueState (boolean initial)
-	{
-		switch (m_state)
-		{
-			case ParserState.INITIAL:
-				if (!initial)
-					stateError ();
-				break;
-			case ParserState.IN_ARRAY:
-				if (m_lastToken != START &&
-					m_lastToken != COMMA)
-					stateError ();
-				break;
-			case ParserState.IN_OBJECT:
-				if (m_lastToken != COLON)
-					stateError ();
-				break;
 		}
 	}
 
@@ -672,8 +891,8 @@ public class TextJsonParser implements CookJsonParser
 			case KEY_NAME:
 			case VALUE_STRING:
 			{
-				location.setColumnNumber (savedColumn - 1);	// minus 1 to account for '"'
-				location.setStreamOffset (savedOffset - 1);	// minus 1 to account for '"'
+				location.setColumnNumber (savedColumn - 1);	// minus 2 to account for '"'
+				location.setStreamOffset (savedOffset - 1);	// minus 2 to account for '"'
 				location.setLineNumber (savedLine);
 				return location;
 			}
@@ -721,8 +940,11 @@ public class TextJsonParser implements CookJsonParser
 		m_state = isArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
 	}
 
-	private void popState ()
+	private void popState (boolean isArrayEnd)
 	{
+		boolean isArray = m_state == ParserState.IN_ARRAY;
+		if (isArrayEnd != isArray)
+			throw new IllegalStateException ();
 		if (m_states.isEmpty ())
 			m_state = ParserState.END;
 		else
@@ -730,5 +952,22 @@ public class TextJsonParser implements CookJsonParser
 			boolean b = m_states.remove (m_states.size () - 1);
 			m_state = b ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
 		}
+	}
+
+	/**
+	 * @return	the allowComments
+	 */
+	public boolean isAllowComments ()
+	{
+		return m_allowComments;
+	}
+
+	/**
+	 * @param	allowComments
+	 *			the allowComments to set
+	 */
+	public void setAllowComments (boolean allowComments)
+	{
+		m_allowComments = allowComments;
 	}
 }
