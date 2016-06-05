@@ -60,7 +60,7 @@
 							<minimizeJar>true</minimizeJar>
 							<filters>
 								<filter>
-									<artifact>org.glassfish</artifact>
+									<artifact>org.yuanheng.cookjson</artifact>
 									<includes>
 										<include>**</include>
 									</includes>

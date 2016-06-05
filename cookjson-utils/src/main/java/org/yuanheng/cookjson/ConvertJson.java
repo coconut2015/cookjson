@@ -18,10 +18,16 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.util.HashMap;
 
+import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonGeneratorFactory;
 import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParserFactory;
 
 import org.apache.commons.cli.*;
 
@@ -119,11 +125,20 @@ public class ConvertJson
 		{
 			FileInputStream is = new FileInputStream (src);
 			JsonParser p;
-	
+			JsonProvider textProvider = JsonProvider.provider ();
+			HashMap<String, Object> config = new HashMap<String, Object> ();
+			if (pretty)
+			{
+				config.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+			}
+
 			if (srcBson)
 				p = new BsonParser (is);
 			else
-				p = new TextJsonParser (new InputStreamReader (is, "utf-8"));
+			{
+				JsonParserFactory f = textProvider.createParserFactory (config);
+				p = f.createParser (is);
+			}
 	
 			FileOutputStream os = new FileOutputStream (dst);
 			JsonGenerator g;
@@ -137,14 +152,8 @@ public class ConvertJson
 			}
 			else
 			{
-				if (pretty)
-				{
-					g = new PrettyTextJsonGenerator (new OutputStreamWriter (os, "utf-8"));
-				}
-				else
-				{
-					g = new TextJsonGenerator (new OutputStreamWriter (os, "utf-8"));
-				}
+				JsonGeneratorFactory f = textProvider.createGeneratorFactory (config);
+				g = f.createGenerator (os);
 			}
 			Utils.convert (p, g);
 			g.close ();
