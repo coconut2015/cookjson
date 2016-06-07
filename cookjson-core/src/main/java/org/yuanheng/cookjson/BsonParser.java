@@ -144,7 +144,9 @@ public class BsonParser implements CookJsonParser
 				case END_ARRAY:
 				case END_OBJECT:
 				{
-					m_inArrayStack.pop ();
+					boolean b = m_inArrayStack.pop ();
+					if (b)
+						e = Event.END_ARRAY;
 					break;
 				}
 				default:

@@ -21,16 +21,21 @@ package org.yuanheng.cookjson;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.Stack;
 
 import javax.json.JsonException;
-import javax.json.JsonNumber;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 
 import org.yuanheng.cookjson.value.*;
 
 /**
+ * This BSON parser treats Array and Document both as JSON objects.  This is
+ * because BSON's root is always a Document type.  As the result, to exactly
+ * match JSON's behavior, use BsonParser instead.  This parser only provides
+ * very basic document parsing service instead.
+ *
  * @author	Heng Yuan
  */
 public class BasicBsonParser implements CookJsonParser
@@ -39,7 +44,7 @@ public class BasicBsonParser implements CookJsonParser
 
 	private BsonField m_field = new BsonField ();
 	private Event m_event;
-	private JsonValue m_value;
+	private Object m_value;
 	private Stack<Integer> m_states = new Stack<Integer> ();
 	private int m_state = ParserState.INITIAL;
 	private JsonLocationImpl m_location = new JsonLocationImpl ();
@@ -91,45 +96,28 @@ public class BasicBsonParser implements CookJsonParser
 	@Override
 	public JsonValue getValue ()
 	{
-		try
+		switch (m_event)
 		{
-			switch (m_event)
+			case START_ARRAY:
+			case START_OBJECT:
+				return Utils.getValue (this);
+			case VALUE_STRING:
 			{
-				case START_ARRAY:
-				case START_OBJECT:
-					return Utils.getValue (this);
-				default:
-					break;
+				if (m_value instanceof byte[])
+					return new CookJsonBinary ((byte[]) m_value);
+				return new CookJsonString ((String) m_value);
 			}
-			switch (m_field.type)
-			{
-				case BsonType.Null:
-					return CookJsonNull.NULL;
-				case BsonType.Double:
-					return new CookJsonNumber (m_is.readDouble ());
-				case BsonType.Integer:
-					return new CookJsonNumber (m_is.readInt ());
-				case BsonType.DateTime:
-				case BsonType.TimeStamp:
-				case BsonType.Long:
-					return new CookJsonNumber (m_is.readLong ());
-				case BsonType.JavaScript:
-				case BsonType.Deprecated:
-				case BsonType.String:
-					return new CookJsonString (m_is.getStringValue ());
-				case BsonType.Boolean:
-					return m_is.readBoolean () ? CookJsonBoolean.TRUE : CookJsonBoolean.FALSE;
-				case BsonType.ObjectId:
-					return new CookJsonBinary (m_is.getObjectId ());
-				case BsonType.Binary:
-					return new CookJsonBinary (m_is.getBinary ());
-			}
+			case VALUE_NUMBER:
+				return new CookJsonNumber ((Number) m_value);
+			case VALUE_NULL:
+				return CookJsonNull.NULL;
+			case VALUE_TRUE:
+				return CookJsonBoolean.TRUE;
+			case VALUE_FALSE:
+				return CookJsonBoolean.FALSE;
+			default:
+				throw new IllegalStateException ();
 		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		throw new JsonException ("Cannot handle the BSON type: " + m_field.type);
 	}
 
 	private void getField () throws IOException
@@ -186,9 +174,8 @@ public class BasicBsonParser implements CookJsonParser
 					// close this field.
 					popState ();
 				}
-				m_event = Event.END_OBJECT;
 				m_value = null;
-				break;
+				return Event.END_OBJECT;
 			}
 			case BsonType.Array:	// we handle arrays pretty as objects
 			case BsonType.Document:
@@ -197,91 +184,102 @@ public class BasicBsonParser implements CookJsonParser
 					m_state != ParserState.IN_FIELD)
 					throw new IllegalStateException ();
 				pushState (ParserState.IN_OBJECT);
-				m_event = Event.START_OBJECT;
 				m_value = null;
 				m_is.readInt ();	// skip size;
 				// sets a temporary flag that indicates the object obtained
 				// was internally marked as Array.
 				m_objectIsArray = (type == BsonType.Array);
-				break;
+				return Event.START_OBJECT;
 			}
 			default:
 			{
-				// makes sure that we are dealing with values.
-				if (m_state != ParserState.IN_FIELD)
-					throw new IllegalStateException ();
 				popState ();	// closes the field
-				m_value = getValue ();
-				switch (m_value.getValueType ())
+				switch (m_field.type)
 				{
-					case TRUE:
-						m_event = Event.VALUE_TRUE;
-						break;
-					case FALSE:
-						m_event = Event.VALUE_FALSE;
-						break;
-					case NUMBER:
-						m_event = Event.VALUE_NUMBER;
-						break;
-					case NULL:
-						m_event = Event.VALUE_NULL;
-						break;
-					case STRING:
-						m_event = Event.VALUE_STRING;
-						break;
+					case BsonType.Null:
+						m_value = null;
+						return Event.VALUE_NULL;
+					case BsonType.Double:
+						m_value = m_is.readDouble ();
+						return Event.VALUE_NUMBER;
+					case BsonType.Integer:
+						m_value = m_is.readInt ();
+						return Event.VALUE_NUMBER;
+					case BsonType.DateTime:
+					case BsonType.TimeStamp:
+					case BsonType.Long:
+						m_value = m_is.readLong ();
+						return Event.VALUE_NUMBER;
+					case BsonType.JavaScript:
+					case BsonType.Deprecated:
+					case BsonType.String:
+						m_value = m_is.getStringValue ();
+						return Event.VALUE_STRING;
+					case BsonType.Boolean:
+						m_value = m_is.readBoolean ();
+						return ((Boolean)m_value) ? Event.VALUE_TRUE : Event.VALUE_FALSE;
+					case BsonType.ObjectId:
+						m_value = m_is.getObjectId ();
+						return Event.VALUE_STRING;
+					case BsonType.Binary:
+						m_value = m_is.getBinary ();
+						return Event.VALUE_STRING;
 					default:
 						throw new IllegalStateException ();	// should not get here.
 				}
 			}
 		}
-		return m_event;
 	}
 
 	@Override
 	public Event next ()
 	{
-		if (!hasNext ())
-			throw new IllegalStateException ();
 		try
 		{
-			assert Debug.debug ("-- STATE: " + m_state);
+//			assert Debug.debug ("-- STATE: " + m_state);
 			switch (m_state)
 			{
+				case ParserState.END:
+					throw new NoSuchElementException ();
 				case ParserState.INITIAL:
 				{
 					m_location.setStreamOffset (0);
 					// we need to setup as a nameless document
 					m_field.type = BsonType.Document;
 					m_field.name = null;
-					return getEventFromType (m_field.type);
+					m_event = getEventFromType (m_field.type);
+					break;
 				}
 				case ParserState.IN_FIELD:
 				{
 					// get the value
-					return getEventFromType (m_field.type);
+					m_event = getEventFromType (m_field.type);
+					break;
 				}
 				case ParserState.IN_OBJECT:
 				case ParserState.END_OBJECT:
 				{
 					getField ();
-					assert Debug.debug ("FIELD: " + m_field);
+//					assert Debug.debug ("FIELD: " + m_field);
 					if (m_field.name != null)
 					{
 						pushState (ParserState.IN_FIELD);
 						m_event = Event.KEY_NAME;
-						m_value = new CookJsonString (m_field.name);
+						m_value = m_field.name;
 					}
 					else
 					{
-						return getEventFromType (m_field.type);
+						m_event = getEventFromType (m_field.type);
 					}
-					return m_event;
+					break;
 				}
 				default:
 				{
 					throw new IllegalStateException ();
 				}
 			}
+//			assert Debug.debug ("-- EVENT: " + m_event);
+			return m_event;
 		}
 		catch (IOException ex)
 		{
@@ -292,11 +290,16 @@ public class BasicBsonParser implements CookJsonParser
 	@Override
 	public String getString ()
 	{
-		if (m_event != Event.VALUE_STRING &&
-			m_event != Event.VALUE_NUMBER &&
-			m_event != Event.KEY_NAME)
-			throw new IllegalStateException ();
-		return m_value.toString ();
+		switch (m_event)
+		{
+			case KEY_NAME:
+			case VALUE_STRING:
+				return (String) m_value;
+			case VALUE_NUMBER:
+				return m_value.toString ();
+			default:
+				throw new IllegalStateException ();
+		}
 	}
 
 	@Override
@@ -304,7 +307,7 @@ public class BasicBsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw new IllegalStateException ();
-		return ((JsonNumber)m_value).isIntegral ();
+		return !(m_value instanceof Double);
 	}
 
 	@Override
@@ -312,7 +315,7 @@ public class BasicBsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw new IllegalStateException ();
-		return ((JsonNumber)m_value).intValue ();
+		return ((Number)m_value).intValue ();
 	}
 
 	@Override
@@ -320,7 +323,7 @@ public class BasicBsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw new IllegalStateException ();
-		return ((JsonNumber)m_value).longValue ();
+		return ((Number)m_value).longValue ();
 	}
 
 	@Override
@@ -328,7 +331,11 @@ public class BasicBsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw new IllegalStateException ();
-		return ((JsonNumber)m_value).bigDecimalValue ();
+		if (m_value instanceof Integer)
+			return new BigDecimal ((Integer)m_value);
+		if (m_value instanceof Long)
+			return new BigDecimal ((Long)m_value);
+		return new BigDecimal ((Double)m_value);
 	}
 
 	@Override

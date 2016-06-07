@@ -67,18 +67,21 @@ public class Utils
 		Stack<String> nameStack = new Stack<String> ();
 
 		structStack.push (struct);
+//		Debug.debug ("push " + struct.getClass ());
 		while (p.hasNext ())
 		{
 			Event e = p.next ();
 			JsonValue value = null;
-			assert Debug.debug ("READ: " + e);
+//			Debug.debug ("READ: " + e);
 			switch (e)
 			{
 				case START_ARRAY:
 					structStack.push (new CookJsonArray ());
+//					Debug.debug ("push array");
 					continue;
 				case START_OBJECT:
 					structStack.push (new CookJsonObject ());
+//					Debug.debug ("push object");
 					continue;
 				case KEY_NAME:
 					nameStack.push (p.getString ());
@@ -96,7 +99,10 @@ public class Utils
 				{
 					value = structStack.pop ();
 					if (!(value instanceof JsonObject))
+					{
+//						Debug.debug ("invalid value: " + value.getClass ());
 						throw new IllegalStateException ();
+					}
 					if (structStack.isEmpty ())
 						return;	// done
 					break;
@@ -168,7 +174,7 @@ public class Utils
 			switch (e)
 			{
 				case START_ARRAY:
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					if (name == null)
 						g.writeStartArray ();
 					else
@@ -178,7 +184,7 @@ public class Utils
 					}
 					break;
 				case START_OBJECT:
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					if (name == null)
 						g.writeStartObject ();
 					else
@@ -188,18 +194,18 @@ public class Utils
 					}
 					break;
 				case KEY_NAME:
-					assert Debug.debug ("READ: " + e + " = " + p.getString ());
+//					assert Debug.debug ("READ: " + e + " = " + p.getString ());
 					name = p.getString ();
 					break;
 				case END_ARRAY:
 				case END_OBJECT:
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					g.writeEnd ();
 					name = null;
 					break;
 				case VALUE_TRUE:
 				{
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					if (name == null)
 					{
 						g.write (true);
@@ -213,7 +219,7 @@ public class Utils
 				}
 				case VALUE_FALSE:
 				{
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					if (name == null)
 					{
 						g.write (false);
@@ -227,7 +233,7 @@ public class Utils
 				}
 				case VALUE_NULL:
 				{
-					assert Debug.debug ("READ: " + e);
+//					assert Debug.debug ("READ: " + e);
 					if (name == null)
 					{
 						g.writeNull ();
@@ -242,7 +248,7 @@ public class Utils
 				case VALUE_NUMBER:
 				{
 					BigDecimal value = p.getBigDecimal ();
-					assert Debug.debug ("READ: " + e + " = " + value);
+//					assert Debug.debug ("READ: " + e + " = " + value);
 					if (p.isIntegralNumber ())
 					{
 						try
@@ -301,7 +307,7 @@ public class Utils
 				}
 				case VALUE_STRING:
 				{
-					assert Debug.debug ("READ: " + e + " = " + p.getString ());
+//					assert Debug.debug ("READ: " + e + " = " + p.getString ());
 					if (p instanceof BasicBsonParser &&
 						g instanceof BsonGenerator)
 					{

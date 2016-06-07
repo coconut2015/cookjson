@@ -50,7 +50,7 @@ public class BsonGenerator implements JsonGenerator
 
 	private boolean m_validateName;
 
-	private boolean m_useDouble = false;
+	private boolean m_useDouble;
 
 	public BsonGenerator (OutputStream os)
 	{
@@ -59,7 +59,7 @@ public class BsonGenerator implements JsonGenerator
 
 	public void setUseDouble (boolean b)
 	{
-		m_useDouble = true;
+		m_useDouble = b;
 	}
 
 	private void writeCString (String name) throws IOException
@@ -285,7 +285,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject ()
 	{
-		assert Debug.debug ("WRITE: START_OBJECT");
+//		assert Debug.debug ("WRITE: START_OBJECT");
 		if (m_state == GeneratorState.INITIAL)
 			m_name = "";
 		else
@@ -297,8 +297,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject (String name)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: START_OBJECT");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: START_OBJECT");
 		m_name = name;
 		m_validateName = true;
 		return writeObject (false);
@@ -307,7 +307,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray ()
 	{
-		assert Debug.debug ("WRITE: START_ARRAY");
+//		assert Debug.debug ("WRITE: START_ARRAY");
 		if (m_state == GeneratorState.INITIAL)
 			m_name = "";
 		else
@@ -319,8 +319,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray (String name)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: START_ARRAY");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: START_ARRAY");
 		m_name = name;
 		m_validateName = true;
 		return writeArray (false);
@@ -329,8 +329,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, JsonValue value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: JsonValue");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: JsonValue");
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -338,8 +338,8 @@ public class BsonGenerator implements JsonGenerator
 
 	public JsonGenerator write (String name, byte[] value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_BINARY");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_BINARY");
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -348,8 +348,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, String value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_STRING");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_STRING");
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -358,8 +358,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, BigInteger value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value.toString ());
@@ -368,8 +368,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, BigDecimal value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		m_name = name;
 		m_validateName = true;
 		if (m_useDouble)
@@ -380,8 +380,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, int value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -390,8 +390,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, long value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -400,8 +400,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, double value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -410,8 +410,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, boolean value)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
 		m_name = name;
 		m_validateName = true;
 		return writeValue (value);
@@ -420,8 +420,8 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeNull (String name)
 	{
-		assert Debug.debug ("WRITE: KEY_NAME: " + name);
-		assert Debug.debug ("WRITE: VALUE_NULL");
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_NULL");
 		m_name = name;
 		m_validateName = true;
 		return writeNullValue ();
@@ -430,8 +430,9 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeEnd ()
 	{
-		int state = popState ();
-		assert Debug.debug ("WRITE: " + (state == ParserState.IN_ARRAY ? "END_ARRAY" : "END_OBJECT"));
+		popState ();
+//		int state = popState ();
+//		assert Debug.debug ("WRITE: " + (state == ParserState.IN_ARRAY ? "END_ARRAY" : "END_OBJECT"));
 		try
 		{
 			m_os.write (0);
@@ -446,7 +447,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (JsonValue value)
 	{
-		assert Debug.debug ("WRITE: JsonValue");
+//		assert Debug.debug ("WRITE: JsonValue");
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -454,7 +455,7 @@ public class BsonGenerator implements JsonGenerator
 
 	public JsonGenerator write (byte[] value)
 	{
-		assert Debug.debug ("WRITE: VALUE_BINARY");
+//		assert Debug.debug ("WRITE: VALUE_BINARY");
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -463,7 +464,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String value)
 	{
-		assert Debug.debug ("WRITE: VALUE_STRING");
+//		assert Debug.debug ("WRITE: VALUE_STRING");
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -472,7 +473,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (BigDecimal value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		if (m_useDouble)
@@ -483,7 +484,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (BigInteger value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		if (m_useDouble)
@@ -494,7 +495,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (int value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -503,7 +504,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (long value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -512,7 +513,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (double value)
 	{
-		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
+//		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -521,7 +522,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (boolean value)
 	{
-		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
+//		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeValue (value);
@@ -530,7 +531,7 @@ public class BsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeNull ()
 	{
-		assert Debug.debug ("WRITE: VALUE_NULL");
+//		assert Debug.debug ("WRITE: VALUE_NULL");
 		m_name = getIndex ();
 		m_validateName = false;
 		return writeNullValue ();

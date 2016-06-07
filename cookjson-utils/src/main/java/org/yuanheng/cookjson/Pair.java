@@ -29,4 +29,10 @@ class Pair implements Comparable<Pair>
 		long diff = offset - o.offset;
 		return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
 	}
+
+	@Override
+	public String toString ()
+	{
+		return offset + ": " + size;
+	}
 }

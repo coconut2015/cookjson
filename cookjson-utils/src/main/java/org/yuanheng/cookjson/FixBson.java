@@ -163,6 +163,12 @@ public class FixBson
 
 		Arrays.sort (pa);
 
+		// debugging dump
+//		for (Pair pair : pa)
+//		{
+//			System.out.println (pair);
+//		}
+
 		byte[] bytes = new byte[4];
 		ByteBuffer buffer = ByteBuffer.wrap (bytes);
 		RandomAccessFile f = new RandomAccessFile (file, "rw");
