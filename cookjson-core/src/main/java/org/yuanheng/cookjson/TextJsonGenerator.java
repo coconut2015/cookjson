@@ -53,7 +53,7 @@ public class TextJsonGenerator implements JsonGenerator
 	/**
 	 * If the name is already being escaped.
 	 */
-	boolean m_keyNameEscaped = true;
+	boolean m_keyNameEscaped;
 	/**
 	 * The output writer.
 	 */
@@ -97,25 +97,62 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			Writer out = m_out;
 			if (m_first)
 				m_first = false;
 			else
-				m_out.write (',');
-			if (m_name != null)
+				out.write (',');
+			String name = m_name;
+			if (name != null)
 			{
 				if (m_keyNameEscaped)
 				{
-					m_out.write (QuoteString.quote (m_name));
+					out.write (name);
 				}
 				else
 				{
-					m_out.write ('"');
-					m_out.write (m_name);
-					m_out.write ('"');
+					Quote.quote (out, name);
 				}
-				m_out.write (":");
+				out.write (":");
 			}
-			m_out.write (value);
+			out.write (value);
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+		return this;
+	}
+
+	/**
+	 * Quote a string value to the Json.
+	 * @param	value
+	 * 			the string to be quoted and written.
+	 * @return	this
+	 */
+	JsonGenerator quoteValue (String value)
+	{
+		try
+		{	
+			Writer out = m_out;
+			if (m_first)
+				m_first = false;
+			else
+				out.write (',');
+			String name = m_name;
+			if (name != null)
+			{
+				if (m_keyNameEscaped)
+				{
+					out.write (name);
+				}
+				else
+				{
+					Quote.quote (out, name);
+				}
+				out.write (":");
+			}
+			Quote.quote (out, value);
 		}
 		catch (IOException ex)
 		{
@@ -168,7 +205,7 @@ public class TextJsonGenerator implements JsonGenerator
 			case NUMBER:
 				return writeValue (value.toString ());
 			case STRING:
-				return writeValue (QuoteString.quote (value.toString ()));
+				return quoteValue (value.toString ());
 			case TRUE:
 				return writeValue ("true");
 			case FALSE:
@@ -228,7 +265,7 @@ public class TextJsonGenerator implements JsonGenerator
 	public JsonGenerator write (String name, String value)
 	{
 		m_name = name;
-		return writeValue (QuoteString.quote (value));
+		return quoteValue (value);
 	}
 
 	@Override
@@ -316,7 +353,7 @@ public class TextJsonGenerator implements JsonGenerator
 	public JsonGenerator write (String value)
 	{
 		m_name = null;
-		return writeValue (QuoteString.quote (value));
+		return quoteValue (value);
 	}
 
 	@Override

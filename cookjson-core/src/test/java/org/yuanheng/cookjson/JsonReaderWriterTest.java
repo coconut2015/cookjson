@@ -68,6 +68,8 @@ public class JsonReaderWriterTest
 		// Because JsonObject's name ordering is somewhat random,
 		// we cannot do string comparison.  But we can compare the
 		// string length which should be equal.
+		System.out.println (str1);
+		System.out.println (str2);
 		Assert.assertEquals (str1.length (), str2.length ());
 	}
 }

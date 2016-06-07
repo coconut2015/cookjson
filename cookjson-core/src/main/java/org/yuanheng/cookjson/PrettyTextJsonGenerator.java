@@ -57,36 +57,65 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 	{
 		try
 		{
+			Writer out = m_out;
 			if (m_first)
 				m_first = false;
 			else
-				m_out.write (',');
+				out.write (',');
 
 			if (m_state != GeneratorState.INITIAL)
 			{
 				// indent the value
-				m_out.write ('\n');
+				out.write ('\n');
 				int indents = m_states.size () + 1;
 				String indent = m_indent;
 				for (int i = 0; i < indents; ++i)
-					m_out.write (indent);
+					out.write (indent);
 			}
 
 			if (m_name != null)
 			{
 				if (m_keyNameEscaped)
 				{
-					m_out.write (QuoteString.quote (m_name));
+					out.write (m_name);
 				}
 				else
 				{
-					m_out.write ('"');
-					m_out.write (m_name);
-					m_out.write ('"');
+					Quote.quote (out, m_name);
 				}
-				m_out.write (" : ");
+				out.write (" : ");
 			}
-			m_out.write (value);
+			out.write (value);
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+		return this;
+	}
+
+	JsonGenerator quoteValue (String value)
+	{
+		try
+		{	
+			Writer out = m_out;
+			if (m_first)
+				m_first = false;
+			else
+				out.write (',');
+			if (m_name != null)
+			{
+				if (m_keyNameEscaped)
+				{
+					out.write (m_name);
+				}
+				else
+				{
+					Quote.quote (out, m_name);
+				}
+				out.write (":");
+			}
+			Quote.quote (out, value);
 		}
 		catch (IOException ex)
 		{
@@ -102,12 +131,13 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 		{
 			try
 			{
+				Writer out = m_out;
 				// indent the value
-				m_out.write ('\n');
+				out.write ('\n');
 				int indents = m_states.size ();
 				String indent = m_indent;
 				for (int i = 0; i < indents; ++i)
-					m_out.write (indent);
+					out.write (indent);
 			}
 			catch (IOException ex)
 			{

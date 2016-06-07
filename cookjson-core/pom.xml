@@ -44,13 +44,6 @@
 			<version>2.7.4</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.yuanheng.cookcc</groupId>
-			<artifactId>cookcc</artifactId>
-			<version>0.4</version>
-			<systemPath>${project.basedir}/lib/cookcc-latest.jar</systemPath>
-			<scope>system</scope>
-		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -64,28 +57,6 @@
 					<target>1.6</target>
 				</configuration>
 			</plugin>
-			<!--
-			<plugin>
-				<artifactId>maven-antrun-plugin</artifactId>
-				<version>1.8</version>
-				<executions>
-					<execution>
-						<id>default-cli</id>
-						<phase>generate-sources</phase>
-						<configuration>
-							<target name="CookCC Code Generation">
-								<taskdef name="cookcc" classname="org.yuanheng.cookcc.ant.Task"
-									classpath="${project.basedir}/lib/cookcc-latest.jar" />
-								<cookcc srcdir="${project.basedir}/src/main/java/" src="org/yuanheng/cookjson/QuoteString.java" />
-							</target>
-						</configuration>
-						<goals>
-							<goal>run</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			-->
 		</plugins>
 	</build>
 </project>
