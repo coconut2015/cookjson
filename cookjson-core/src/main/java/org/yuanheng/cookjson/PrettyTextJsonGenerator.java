@@ -53,75 +53,25 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 	}
 
 	@Override
-	JsonGenerator writeValue (String value)
+	void writeName (String name) throws IOException
 	{
-		try
-		{
-			Writer out = m_out;
-			if (m_first)
-				m_first = false;
-			else
-				out.write (',');
+		if (m_first)
+			m_first = false;
+		else
+			w (',');
 
-			if (m_state != GeneratorState.INITIAL)
-			{
-				// indent the value
-				out.write ('\n');
-				int indents = m_states.size () + 1;
-				String indent = m_indent;
-				for (int i = 0; i < indents; ++i)
-					out.write (indent);
-			}
+		// indent the value
+		w ('\n');
+		int indents = m_states.size ();
+		String indent = m_indent;
+		for (int i = 0; i < indents; ++i)
+			w (indent);
 
-			if (m_name != null)
-			{
-				if (m_keyNameEscaped)
-				{
-					out.write (m_name);
-				}
-				else
-				{
-					Quote.quote (out, m_name);
-				}
-				out.write (" : ");
-			}
-			out.write (value);
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		return this;
-	}
-
-	JsonGenerator quoteValue (String value)
-	{
-		try
-		{	
-			Writer out = m_out;
-			if (m_first)
-				m_first = false;
-			else
-				out.write (',');
-			if (m_name != null)
-			{
-				if (m_keyNameEscaped)
-				{
-					out.write (m_name);
-				}
-				else
-				{
-					Quote.quote (out, m_name);
-				}
-				out.write (":");
-			}
-			Quote.quote (out, value);
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		return this;
+		if (m_keyNameEscaped)
+			w (name);
+		else
+			quote (name);
+		w (" : ");
 	}
 
 	@Override
@@ -131,13 +81,12 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 		{
 			try
 			{
-				Writer out = m_out;
 				// indent the value
-				out.write ('\n');
+				w ('\n');
 				int indents = m_states.size ();
 				String indent = m_indent;
 				for (int i = 0; i < indents; ++i)
-					out.write (indent);
+					w (indent);
 			}
 			catch (IOException ex)
 			{

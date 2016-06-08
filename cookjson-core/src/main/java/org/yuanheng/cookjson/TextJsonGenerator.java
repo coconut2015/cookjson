@@ -18,11 +18,14 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Stack;
 
 import javax.json.JsonArray;
 import javax.json.JsonException;
@@ -46,11 +49,6 @@ import javax.json.stream.JsonGenerator;
 public class TextJsonGenerator implements JsonGenerator
 {
 	/**
-	 * Current key name being worked on.  null if we are dealing with an
-	 * array.
-	 */
-	String m_name;
-	/**
 	 * If the name is already being escaped.
 	 */
 	boolean m_keyNameEscaped;
@@ -61,7 +59,7 @@ public class TextJsonGenerator implements JsonGenerator
 	/**
 	 * Saved state.
 	 */
-	final Stack<Integer> m_states = new Stack<Integer> ();
+	final ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
 	/**
 	 * The current state.
 	 * <p>
@@ -75,141 +73,298 @@ public class TextJsonGenerator implements JsonGenerator
 	 */
 	boolean m_first = true;
 
+	/**
+	 * Internal write buffer.  We manually buffer it rather than
+	 * using BufferedWriter due to slight performance improvement.
+	 */
+	final int m_max = 8192;
+	char[] m_buffer = new char[m_max];
+	/** Buffer position */
+	int m_pos;
+
 	public TextJsonGenerator (OutputStream os)
 	{
-		m_out = new BufferedWriter (new OutputStreamWriter (os, BOM.utf8));
+		m_out = new OutputStreamWriter (os, BOM.utf8);
 	}
 
 	public TextJsonGenerator (Writer out)
 	{
-		if (!(out instanceof PrintWriter || out instanceof BufferedWriter))
-			out = new BufferedWriter (out);
 		m_out = out;
 	}
 
-	/**
-	 * Write a raw string value to the Json.
-	 * @param	value
-	 * 			the raw string value.
-	 * @return	this
-	 */
-	JsonGenerator writeValue (String value)
+	void writeName (String name) throws IOException
 	{
-		try
-		{
-			Writer out = m_out;
-			if (m_first)
-				m_first = false;
-			else
-				out.write (',');
-			String name = m_name;
-			if (name != null)
-			{
-				if (m_keyNameEscaped)
-				{
-					out.write (name);
-				}
-				else
-				{
-					Quote.quote (out, name);
-				}
-				out.write (":");
-			}
-			out.write (value);
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		return this;
+		if (m_first)
+			m_first = false;
+		else
+			w (',');
+		if (m_keyNameEscaped)
+			w (name);
+		else
+			quote (name);
+		w (':');
 	}
 
-	/**
-	 * Quote a string value to the Json.
-	 * @param	value
-	 * 			the string to be quoted and written.
-	 * @return	this
-	 */
-	JsonGenerator quoteValue (String value)
+	void quote (String str) throws IOException
 	{
-		try
-		{	
-			Writer out = m_out;
-			if (m_first)
-				m_first = false;
-			else
-				out.write (',');
-			String name = m_name;
-			if (name != null)
-			{
-				if (m_keyNameEscaped)
-				{
-					out.write (name);
-				}
-				else
-				{
-					Quote.quote (out, name);
-				}
-				out.write (":");
-			}
-			Quote.quote (out, value);
-		}
-		catch (IOException ex)
+		int strLength = str.length ();
+		char[] esc = null;
+		int start = 0;
+		int i;
+		w ('"');
+		for (i = 0; i < strLength; ++i)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			char ch = str.charAt (i);
+			// most frequent chars are lower case letters.
+			if (ch > '\\')
+				continue;
+			// upper case letters and numbers are pretty frequent too
+			else if (ch > '"')
+			{
+				if (ch < '\\')
+					continue;
+				// handle '\\' case
+				int len = i - start + 1;
+				w (str, start, len);
+				start = i;
+			}
+			else if (ch >= ' ')
+			{
+				if (ch < '"')
+					continue;
+				// handle '"' case
+				int len = i - start;
+				if (len > 0)
+				{
+					w (str, start, len);
+				}
+				w ('\\');
+				start = i;
+			}
+			else
+			{
+				int len = i - start;
+				if (len > 0)
+				{
+					w (str, start, len);
+				}
+				start = i + 1;
+				// handle the escape sequences
+				if (esc == null)
+				{
+					esc = new char[6];
+					esc[0] = '\\';
+					esc[2] = '0';
+					esc[3] = '0';
+				}
+				switch (ch)
+				{
+					case '\b':	// 0x08
+					{
+						esc[1] = 'b';
+						w (esc, 0, 2);
+						break;
+					}
+					case '\t':	// 0x09
+					{
+						esc[1] = 't';
+						w (esc, 0, 2);
+						break;
+					}
+					case '\n':	// 0x0a
+					{
+						esc[1] = 'n';
+						w (esc, 0, 2);
+						break;
+					}
+					case '\r':	// 0x0d
+					{
+						esc[1] = 'r';
+						w (esc, 0, 2);
+						break;
+					}
+					case '\f':	// 0x0c
+					{
+						esc[1] = 'f';
+						w (esc, 0, 2);
+						break;
+					}
+					default:
+					{
+						esc[1] = 'u';
+						esc[4] = Quote.hex[(ch >> 4) & 0x0f];
+						esc[5] = Quote.hex[ch & 0x0f];
+						w (esc, 0, 6);
+						break;
+					}
+				}
+			}
 		}
-		return this;
+		int len = i - start;
+		if (len > 0)
+		{
+			w (str, start, len);
+		}
+		w ('"');
+	}
+
+	/* chars length is very small comparing to m_max */
+	void w (char[] chars, int offset, int length) throws IOException
+	{
+		int pos = m_pos;
+		char[] buf = m_buffer;
+		if (pos + length < m_max)
+		{
+			for (int i = 0; i < length; ++i)
+				buf[pos++] = chars[offset++];
+			m_pos = pos;
+			return;
+		}
+		{
+			int len = m_max - pos;
+			for (int i = 0; i < len; ++i)
+				buf[pos++] = chars[offset++];
+			m_out.write (buf, 0, m_max);
+			length -= len;
+		}
+		while (length > m_max)
+		{
+			m_out.write (chars, offset, m_max);
+			offset += m_max;
+			length -= m_max;
+		}
+
+		for (int i = 0; i < length; ++i)
+			buf[i] = chars[i];
+		m_pos = pos;
+	}
+
+	void w (String str) throws IOException
+	{
+		w (str, 0, str.length ());
+	}
+
+	void w (String str, int offset, int length) throws IOException
+	{
+		int pos = m_pos;
+		char[] buf = m_buffer;
+		if (pos + length < m_max)
+		{
+			str.getChars (offset, offset + length, buf, pos);
+			m_pos += length;
+			return;
+		}
+		{
+			int len = m_max - pos;
+			str.getChars (offset, offset + len, buf, pos);
+			m_out.write (buf, 0, m_max);
+			offset += len;
+			length -= len;
+			pos = 0;
+		}
+		while (length > m_max)
+		{
+			m_out.write (str, offset, m_max);
+			offset += m_max;
+			length -= m_max;
+		}
+		if (length > 0)
+		{
+			str.getChars (offset, offset + length, buf, 0);
+		}
+		m_pos = length;
+	}
+
+	void w (char ch) throws IOException
+	{
+		char[] buf = m_buffer;
+		int pos = m_pos;
+		buf[pos++] = ch;
+		if (pos >= buf.length)
+		{
+			m_out.write (buf, 0, pos);
+			m_pos = 0;
+		}
+		else
+		{
+			m_pos = pos;
+		}
 	}
 
 	private JsonGenerator writeValue (JsonValue value)
 	{
-		switch (value.getValueType ())
+		try
 		{
-			case ARRAY:
+			switch (value.getValueType ())
 			{
-				JsonArray array = (JsonArray) value;
-				if (m_name == null)
-					writeStartArray ();
-				else
-					writeStartArray (m_name);
-				for (JsonValue v : array)
+				case ARRAY:
 				{
-					if (v == null)
-						writeNull ();
-					else
-						write (v);
+					JsonArray array = (JsonArray) value;
+					w ('[');
+					m_first = true;
+					for (JsonValue v : array)
+					{
+						if (m_first)
+							m_first = false;
+						else
+							w (',');
+						if (v == null)
+							w ("null");
+						else
+							writeValue (v);
+					}
+					w (']');
+					m_first = false;
+					break;
 				}
-				writeEnd ();
-				break;
-			}
-			case OBJECT:
-			{
-				JsonObject obj = (JsonObject) value;
-				if (m_name == null)
-					writeStartObject ();
-				else
-					writeStartObject (m_name);
-				for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
+				case OBJECT:
 				{
-					JsonValue v = entry.getValue ();
-					if (v == null)
-						writeNull (entry.getKey ());
-					else
-						write (entry.getKey (), v);
+					JsonObject obj = (JsonObject) value;
+					w ('{');
+					m_first = true;
+					for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
+					{
+						JsonValue v = entry.getValue ();
+						writeName (entry.getKey ());
+						if (v == null)
+							w ("null");
+						else
+							writeValue (v);
+					}
+					w ('}');
+					m_first = false;
+					break;
 				}
-				writeEnd ();
-				break;
+				case NULL:
+				{
+					w ("null");
+					break;
+				}
+				case NUMBER:
+				{
+					w (value.toString ());
+					break;
+				}
+				case STRING:
+				{
+					quote (value.toString ());
+					break;
+				}
+				case TRUE:
+				{
+					w ("true");
+					break;
+				}
+				case FALSE:
+				{
+					w ("false");
+					break;
+				}
 			}
-			case NULL:
-				return writeValue ("null");
-			case NUMBER:
-				return writeValue (value.toString ());
-			case STRING:
-				return quoteValue (value.toString ());
-			case TRUE:
-				return writeValue ("true");
-			case FALSE:
-				return writeValue ("false");
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -217,123 +372,213 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject ()
 	{
-		m_name = null;
-		writeValue ("{");
-		pushState (GeneratorState.IN_OBJECT);
-		m_first = true;
-		return this;
+		try
+		{
+			w ('{');
+			pushState (false);
+			m_first = true;
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator writeStartObject (String name)
 	{
-		m_name = name;
-		writeValue ("{");
-		pushState (GeneratorState.IN_OBJECT);
-		m_first = true;
-		return this;
+		try
+		{
+			writeName (name);
+			w ('{');
+			pushState (false);
+			m_first = true;
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator writeStartArray ()
 	{
-		m_name = null;
-		writeValue ("[");
-		pushState (GeneratorState.IN_ARRAY);
-		m_first = true;
-		return this;
+		try
+		{
+			w ('[');
+			pushState (true);
+			m_first = true;
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator writeStartArray (String name)
 	{
-		m_name = name;
-		writeValue ("[");
-		pushState (GeneratorState.IN_ARRAY);
-		m_first = true;
-		return this;
+		try
+		{
+			writeName (name);
+			w ('[');
+			pushState (true);
+			m_first = true;
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, JsonValue value)
 	{
-		m_name = name;
-		return writeValue (value);
+		try
+		{
+			writeName (name);
+			writeValue (value);
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, String value)
 	{
-		m_name = name;
-		return quoteValue (value);
+		try
+		{
+			writeName (name);
+			quote (value);
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, BigInteger value)
 	{
-		m_name = name;
-		return writeValue (value.toString ());
+		try
+		{
+			writeName (name);
+			w (value.toString ());
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, BigDecimal value)
 	{
-		m_name = name;
-		return writeValue (value.toString ());
+		try
+		{
+			writeName (name);
+			w (value.toString ());
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, int value)
 	{
-		m_name = name;
-		return writeValue (Integer.toString (value));
+		try
+		{
+			writeName (name);
+			w (Integer.toString (value));
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, long value)
 	{
-		m_name = name;
-		return writeValue (Long.toString (value));
+		try
+		{
+			writeName (name);
+			w (Long.toString (value));
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, double value)
 	{
-		m_name = name;
-		return writeValue (Double.toString (value));
+		try
+		{
+			writeName (name);
+			w (Double.toString (value));
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator write (String name, boolean value)
 	{
-		m_name = name;
-		return writeValue (Boolean.toString (value));
+		try
+		{
+			writeName (name);
+			w (value ? "true" : "false");
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator writeNull (String name)
 	{
-		m_name = name;
-		return writeValue ("null");
+		try
+		{
+			writeName (name);
+			w ("null");
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
 	public JsonGenerator writeEnd ()
 	{
-		int state = popState ();
-		String str;
+		boolean isArray = popState ();
 		m_first = false;
-		if (state == GeneratorState.IN_ARRAY)
-			str = "]";
-		else if (state == GeneratorState.IN_OBJECT)
-			str = "}";
-		else
-		{
-			throw new IllegalStateException ();
-		}
+		char ch = isArray ? ']' : '}';
 		try
 		{
-			m_out.write (str);
+			w (ch);
 		}
 		catch (IOException ex)
 		{
@@ -345,64 +590,151 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (JsonValue value)
 	{
-		m_name = null;
 		return writeValue (value);
 	}
 
 	@Override
 	public JsonGenerator write (String value)
 	{
-		m_name = null;
-		return quoteValue (value);
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			quote (value);
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (BigDecimal value)
 	{
-		m_name = null;
-		return writeValue (value.toString ());
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (value.toString ());
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (BigInteger value)
 	{
-		m_name = null;
-		return writeValue (value.toString ());
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (value.toString ());
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (int value)
 	{
-		m_name = null;
-		return writeValue (Integer.toString (value));
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (Integer.toString (value));
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (long value)
 	{
-		m_name = null;
-		return writeValue (Long.toString (value));
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (Long.toString (value));
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (double value)
 	{
-		m_name = null;
-		return writeValue (Double.toString (value));
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (Double.toString (value));
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator write (boolean value)
 	{
-		m_name = null;
-		return writeValue (Boolean.toString (value));
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w (value ? "true" : "false");
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
 	public JsonGenerator writeNull ()
 	{
-		m_name = null;
-		return writeValue ("null");
+		try
+		{
+			if (m_first)
+				m_first = false;
+			else
+				w (',');
+			w ("null");
+		}
+		catch (IOException ex)
+		{
+			ex.printStackTrace();
+		}
+		return this;
 	}
 
 	@Override
@@ -410,6 +742,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			flush ();
 			m_out.close ();
 		}
 		catch (IOException ex)
@@ -423,6 +756,11 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			if (m_pos > 0)
+			{
+				m_out.write (m_buffer, 0, m_pos);
+				m_pos = 0;
+			}
 			m_out.flush ();
 		}
 		catch (IOException ex)
@@ -431,26 +769,16 @@ public class TextJsonGenerator implements JsonGenerator
 		}
 	}
 
-	void pushState (int state)
+	void pushState (boolean isArray)
 	{
-		if (m_state == GeneratorState.INITIAL)
-			m_state = state;
-		else
-		{
-			m_states.push (m_state);
-			m_state = state;
-		}
+		m_states.add (isArray);
 	}
 
-	int popState ()
+	boolean popState ()
 	{
-		int oldState = m_state;
-
 		if (m_states.isEmpty ())
 			m_state = GeneratorState.END;
-		else
-			m_state = m_states.pop ();
-		return oldState;
+		return m_states.remove (m_states.size () - 1);
 	}
 
 	void validateAction (int action)
