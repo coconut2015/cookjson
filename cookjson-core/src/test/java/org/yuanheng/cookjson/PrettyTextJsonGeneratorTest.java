@@ -56,5 +56,7 @@ public class PrettyTextJsonGeneratorTest
 	public void test () throws IOException
 	{
 		testFile ("../tests/data/complex1_pretty.json");
+		testFile ("../tests/data/nested1.json");
+		testFile ("../tests/data/nested2.json");
 	}
 }

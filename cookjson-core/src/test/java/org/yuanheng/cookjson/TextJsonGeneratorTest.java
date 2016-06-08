@@ -65,5 +65,7 @@ public class TextJsonGeneratorTest
 		testFile ("../tests/data/double.json");
 		testFile ("../tests/data/empty.json");
 		testFile ("../tests/data/long.json");
+		testFile ("../tests/data/nested1.json");
+		testFile ("../tests/data/nested2.json");
 	}
 }

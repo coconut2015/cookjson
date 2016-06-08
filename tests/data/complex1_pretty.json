@@ -1,0 +1,28 @@
+{
+	"a" : 1234.1234,
+	"b" : 1234,
+	"int" : 123456789,
+	"long" : 123456789012345,
+	"boolean" : true,
+	"boolean2" : false,
+	"null" : null,
+	"john" : "The quick brown fox jumps over the lazy dog",
+	"doe" : 1,
+	"strange" : {
+		"id" : 5555,
+		"customer" : "john...",
+		"price" : [
+			1,
+			2,
+			3
+		]
+	},
+	"empty1" : {},
+	"notEmpty1" : [
+		1,
+		"abc",
+		123.45
+	],
+	"empty2" : [],
+	"notEmpyt2" : "abc\"as\\asdf\\"
+}
