@@ -92,6 +92,14 @@ public class TextJsonGenerator implements JsonGenerator
 		m_out = out;
 	}
 
+	void writeComma () throws IOException
+	{
+		if (m_first)
+			m_first = false;
+		else
+			w (',');
+	}
+
 	void writeName (String name) throws IOException
 	{
 		if (m_first)
@@ -374,6 +382,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			writeComma ();
 			w ('{');
 			pushState (false);
 			m_first = true;
@@ -407,6 +416,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			writeComma ();
 			w ('[');
 			pushState (true);
 			m_first = true;
@@ -598,10 +608,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			quote (value);
 		}
 		catch (IOException ex)
@@ -616,10 +623,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (value.toString ());
 		}
 		catch (IOException ex)
@@ -634,10 +638,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (value.toString ());
 		}
 		catch (IOException ex)
@@ -652,10 +653,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (Integer.toString (value));
 		}
 		catch (IOException ex)
@@ -670,10 +668,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (Long.toString (value));
 		}
 		catch (IOException ex)
@@ -688,10 +683,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (Double.toString (value));
 		}
 		catch (IOException ex)
@@ -706,10 +698,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w (value ? "true" : "false");
 		}
 		catch (IOException ex)
@@ -724,10 +713,7 @@ public class TextJsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			if (m_first)
-				m_first = false;
-			else
-				w (',');
+			writeComma ();
 			w ("null");
 		}
 		catch (IOException ex)

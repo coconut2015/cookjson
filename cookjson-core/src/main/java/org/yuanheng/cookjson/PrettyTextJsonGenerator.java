@@ -75,6 +75,33 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 	}
 
 	@Override
+	void writeComma () throws IOException
+	{
+		if (m_first)
+		{
+			m_first = false;
+			int indents = m_states.size ();
+			if (indents == 0)
+				return;
+			w ('\n');
+			String indent = m_indent;
+			for (int i = 0; i < indents; ++i)
+				w (indent);
+		}
+		else
+		{
+			w (',');
+
+			// indent the value
+			w ('\n');
+			int indents = m_states.size ();
+			String indent = m_indent;
+			for (int i = 0; i < indents; ++i)
+				w (indent);
+		}
+	}
+
+	@Override
 	public JsonGenerator writeEnd ()
 	{
 		if (!m_first)
@@ -85,7 +112,7 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 				w ('\n');
 				int indents = m_states.size ();
 				String indent = m_indent;
-				for (int i = 0; i < indents; ++i)
+				for (int i = 1; i < indents; ++i)
 					w (indent);
 			}
 			catch (IOException ex)
