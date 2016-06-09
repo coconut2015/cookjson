@@ -77,10 +77,13 @@ public class TextJsonGenerator implements JsonGenerator
 	 * Internal write buffer.  We manually buffer it rather than
 	 * using BufferedWriter due to slight performance improvement.
 	 */
-	final int m_max = 8192;
-	char[] m_buffer = new char[m_max];
+	final static int m_max = 8192;
+	char[] m_buffer = new char[m_max + 1];	// +1 so that our single char padding logic is simpler
 	/** Buffer position */
 	int m_pos;
+
+	final static int m_valueLen = 13;
+	char[] m_valueBuffer;
 
 	public TextJsonGenerator (OutputStream os)
 	{
@@ -116,7 +119,7 @@ public class TextJsonGenerator implements JsonGenerator
 	void quote (String str) throws IOException
 	{
 		int strLength = str.length ();
-		char[] esc = null;
+		char[] esc = m_valueBuffer;
 		int start = 0;
 		int i;
 		w ('"');
@@ -160,7 +163,8 @@ public class TextJsonGenerator implements JsonGenerator
 				// handle the escape sequences
 				if (esc == null)
 				{
-					esc = new char[6];
+					esc = new char[m_valueLen];
+					m_valueBuffer = esc;
 					esc[0] = '\\';
 					esc[2] = '0';
 					esc[3] = '0';
@@ -297,6 +301,46 @@ public class TextJsonGenerator implements JsonGenerator
 		{
 			m_pos = pos;
 		}
+	}
+
+	void wi (int value) throws IOException
+	{
+		char[] buf = m_valueBuffer;
+		if (buf == null)
+		{
+			buf = new char[m_valueLen];
+			m_valueBuffer = buf;
+		}
+
+		int pos = m_valueLen;
+		boolean negative;
+		if (value < 0)
+		{
+			if (value == Integer.MIN_VALUE)
+			{
+				// this value cannot be negated.  So just print it out
+				// and return.
+				w ("-2147483648");
+				return;
+			}
+			negative = true;
+			value = -value;
+		}
+		else
+			negative = false;
+		char[] digits = Quote.hex;
+		// use do-while to generate at least 1 digit.
+		do
+		{
+			int v = value / 10;
+			int r = value - v * 10;
+			value = v;
+			buf[--pos] = digits[r];
+		}
+		while (value > 0);
+		if (negative)
+			buf[--pos] = '-';
+		w (buf, pos, m_valueLen - pos);
 	}
 
 	private JsonGenerator writeValue (JsonValue value)
@@ -511,7 +555,7 @@ public class TextJsonGenerator implements JsonGenerator
 		try
 		{
 			writeName (name);
-			w (Integer.toString (value));
+			wi (value);
 			return this;
 		}
 		catch (IOException ex)
@@ -654,7 +698,7 @@ public class TextJsonGenerator implements JsonGenerator
 		try
 		{
 			writeComma ();
-			w (Integer.toString (value));
+			wi (value);
 		}
 		catch (IOException ex)
 		{

@@ -110,9 +110,9 @@ public class TextJsonGeneratorPerformanceTest
 				return;
 		}
 
-//		String jsonFile = "../tests/data/large.json";
-		String jsonFile = "../tests/data/string.json";
-//		String jsonFile = "../tests/data/number2.json";
+		String jsonFile = "../tests/data/large.json";
+//		String jsonFile = "../tests/data/string.json";
+//		String jsonFile = "../tests/data/number.json";
 		jsonFile.replace ('/', File.separatorChar);
 
 		JsonParser p;
