@@ -292,7 +292,7 @@ public class TextJsonGenerator implements JsonGenerator
 		char[] buf = m_buffer;
 		int pos = m_pos;
 		buf[pos++] = ch;
-		if (pos >= buf.length)
+		if (pos >= m_max)
 		{
 			m_out.write (buf, 0, pos);
 			m_pos = 0;
