@@ -917,9 +917,9 @@ public class TextJsonParser implements CookJsonParser
 			case KEY_NAME:
 			case VALUE_STRING:
 			{
-				location.setColumnNumber (savedColumn - 1);	// minus 2 to account for '"'
-				location.setStreamOffset (savedOffset - 1);	// minus 2 to account for '"'
-				location.setLineNumber (savedLine);
+				location.m_columnNumber = savedColumn - 1;	// minus 2 to account for '"'
+				location.m_streamOffset = savedOffset - 1;	// minus 2 to account for '"'
+				location.m_lineNumber = savedLine;
 				return location;
 			}
 			case VALUE_FALSE:
@@ -930,9 +930,9 @@ public class TextJsonParser implements CookJsonParser
 				diff = 4;
 				break;
 		}
-		location.setColumnNumber (m_column - diff);
-		location.setStreamOffset (m_offset - diff);
-		location.setLineNumber (m_line);
+		location.m_columnNumber = m_column - diff;
+		location.m_streamOffset = m_offset - diff;
+		location.m_lineNumber = m_line;
 		return location;
 	}
 

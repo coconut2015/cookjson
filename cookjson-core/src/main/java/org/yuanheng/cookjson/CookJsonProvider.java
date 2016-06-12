@@ -43,11 +43,15 @@ public class CookJsonProvider extends JsonProvider
 	/** Specifies BSON format */
 	public final static String FORMAT_BSON = "bson";
 
+	// ---- JSON options
 	/** If the value is true, allows line/block comments in the file. */
 	public final static String COMMENT = "comment";
 
+	// ---- BSON options
 	/** If the value is true, stores BigDecimal / BigInteger as double. */
 	public final static String USE_DOUBLE = "useDouble";
+	/** If the value is true, root Document is treated as Array. */
+	public final static String ROOT_AS_ARRAY = "rootAsArray";
 
 	@Override
 	public JsonParser createParser (Reader reader)

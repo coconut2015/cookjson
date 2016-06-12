@@ -84,6 +84,7 @@ public class JsonPathProviderTest
 		JsonProvider p = JsonProvider.provider ();
 		HashMap<String, Object> readConfig = new HashMap<String, Object> ();
 		readConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		readConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
 		JsonReaderFactory rf = p.createReaderFactory (readConfig);
 		JsonReader reader = rf.createReader (new FileInputStream (file));
 		JsonStructure obj = reader.read ();

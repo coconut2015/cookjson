@@ -18,143 +18,56 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.Stack;
+import java.util.ArrayList;
+import java.util.NoSuchElementException;
 
+import javax.json.JsonException;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 
+import org.yuanheng.cookjson.value.*;
+
 /**
- * This JsonParser is used to handle the Array behavior of BSON.
- * <p/>
- * In BSON, arrays are stored as objects with "0", "1", ... etc as KEY_NAME.
- * So we want to detect this behavior by checking if "0" is the first
- * element's KEY_NAME.  If so, we return array type instead of object type.
+ * This BSON parser has the option of treating the root document as array.
  *
  * @author	Heng Yuan
  */
 public class BsonParser implements CookJsonParser
 {
-	private final CookJsonParser m_parser;
-	private Stack<Boolean> m_inArrayStack = new Stack<Boolean> ();
+	private final BsonInputStream m_is;
+
+	private BsonField m_field = new BsonField ();
 	private Event m_event;
-	private String m_keyName;
-	private Event m_emptyObject;
+	private Object m_value;
+	private ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
+	private int m_state = ParserState.INITIAL;
+	private JsonLocationImpl m_location = new JsonLocationImpl ();
+	private boolean m_inArray;
+
+	private boolean m_rootAsArray;
 
 	public BsonParser (InputStream is)
 	{
-		m_parser = new BasicBsonParser (is);
-	}
+		m_is = new BsonInputStream (is);
 
-	public BsonParser (CookJsonParser parser)
-	{
-		m_parser = parser;
+		// neither column number and line number are meaningful
+		// set them to unknown.
+		m_location.m_columnNumber = -1;
+		m_location.m_lineNumber = -1;
 	}
 
 	@Override
 	public boolean hasNext ()
 	{
-		if (m_keyName == null)
-			return m_parser.hasNext ();
-		return true;
+		return m_state != ParserState.END;
 	}
 
 	@Override
 	public Event getEvent ()
 	{
-		return m_event;
-	}
-
-	@Override
-	public Event next ()
-	{
-		// clear the saved keyName when we move pass it.
-		if (m_event == Event.KEY_NAME &&
-			m_keyName != null)
-		{
-			m_keyName = null;
-		}
-
-		if (m_event == Event.START_OBJECT &&
-			m_keyName != null)
-		{
-			// use the saved key name
-			m_event = Event.KEY_NAME;
-		}
-		else if (m_emptyObject != null &&
-				 (m_event == Event.START_OBJECT ||
-				  m_event == Event.START_ARRAY))
-		{
-			m_event = m_emptyObject;
-			m_emptyObject = null;
-		}
-		else
-		{
-			Event e = m_parser.next ();
-
-			switch (e)
-			{
-				case START_OBJECT:
-				{
-					// check if we are dealing with an array
-					Event e2 = m_parser.next ();
-					if (e2 != Event.KEY_NAME)
-					{
-						if (e2 == Event.END_OBJECT)
-						{
-							if ((m_parser instanceof BasicBsonParser) &&
-								((BasicBsonParser)m_parser).isObjectIsArray ())
-							{
-								e = Event.START_ARRAY;
-								m_emptyObject = Event.END_ARRAY;
-							}
-							else
-							{
-								m_emptyObject = Event.END_OBJECT;
-							}
-							break;
-						}
-						else
-							throw new IllegalStateException ();
-					}
-					String keyName = m_parser.getString ();
-					if ("0".equals (keyName))
-					{
-						m_keyName = null;
-						e = Event.START_ARRAY;
-						m_inArrayStack.push (Boolean.TRUE);
-					}
-					else
-					{
-						m_keyName = keyName;
-						e = Event.START_OBJECT;
-						m_inArrayStack.push (Boolean.FALSE);
-					}
-					break;
-				}
-				case KEY_NAME:
-				{
-					if (Boolean.TRUE == m_inArrayStack.peek ())
-					{
-						return next ();
-					}
-					break;
-				}
-				case END_ARRAY:
-				case END_OBJECT:
-				{
-					boolean b = m_inArrayStack.pop ();
-					if (b)
-						e = Event.END_ARRAY;
-					break;
-				}
-				default:
-					break;
-			}
-
-			m_event = e;
-		}
 		return m_event;
 	}
 
@@ -166,60 +79,294 @@ public class BsonParser implements CookJsonParser
 			case START_ARRAY:
 			case START_OBJECT:
 				return Utils.getValue (this);
+			case VALUE_STRING:
+			{
+				if (m_value instanceof byte[])
+					return new CookJsonBinary ((byte[]) m_value);
+				return new CookJsonString ((String) m_value);
+			}
+			case VALUE_NUMBER:
+				return new CookJsonNumber ((Number) m_value);
+			case VALUE_NULL:
+				return CookJsonNull.NULL;
+			case VALUE_TRUE:
+				return CookJsonBoolean.TRUE;
+			case VALUE_FALSE:
+				return CookJsonBoolean.FALSE;
 			default:
-				return m_parser.getValue ();
+				throw new IllegalStateException ();
+		}
+	}
+
+	private void getField () throws IOException
+	{
+		m_location.m_streamOffset= m_is.getLocation ();
+		BsonField field = m_field;
+		field.type = m_is.read () & 0xff;
+		if (field.type == 0)
+			field.name = null;
+		else
+			field.name = m_is.readCString ();
+
+		// we treat Code w/ scope as Objects.  Not tested.
+		switch (field.type)
+		{
+			case BsonType.JavaScriptScope:
+			{
+				// skip the following two fields
+				m_is.readInt ();		// size
+				m_is.getStringValue ();	// scope?
+				getField ();
+				break;
+			}
+			case BsonType.MinKey:
+			case BsonType.MaxKey:
+			{
+				// for min/max key, we simply skip it.
+				getField ();
+				return;
+			}
+			default:
+			{
+				if (field.type >= 128 && field.type <= 255)
+				{
+					throw new IOException ("Cannot handle user defined type.");
+				}
+			}
+		}
+	}
+
+	private Event getEventFromType (int type) throws IOException
+	{
+		switch (type)
+		{
+			case 0:
+			{
+				Boolean b = m_states.remove (m_states.size () - 1);
+				m_value = null;
+				if (m_states.isEmpty ())
+					m_state = ParserState.END;
+				else
+				{
+					m_inArray = m_states.get (m_states.size () - 1);
+					m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				}
+				if (b)
+					return Event.END_ARRAY;
+				return Event.END_OBJECT;
+			}
+			case BsonType.Array:
+			{
+				m_states.add (Boolean.TRUE);
+				m_inArray = true;
+				m_state = ParserState.IN_ARRAY;
+				m_value = null;
+				m_is.readInt ();	// skip size;
+				// sets a temporary flag that indicates the object obtained
+				// was internally marked as Array.
+				return Event.START_ARRAY;
+			}
+			case BsonType.Document:
+			{
+				m_states.add (Boolean.FALSE);
+				m_inArray = false;
+				m_state = ParserState.IN_OBJECT;
+				m_value = null;
+				m_is.readInt ();	// skip size;
+				// sets a temporary flag that indicates the object obtained
+				// was internally marked as Array.
+				return Event.START_OBJECT;
+			}
+			case BsonType.Null:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = null;
+				return Event.VALUE_NULL;
+			case BsonType.Double:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.readDouble ();
+				return Event.VALUE_NUMBER;
+			case BsonType.Integer:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.readInt ();
+				return Event.VALUE_NUMBER;
+			case BsonType.DateTime:
+			case BsonType.TimeStamp:
+			case BsonType.Long:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.readLong ();
+				return Event.VALUE_NUMBER;
+			case BsonType.JavaScript:
+			case BsonType.Deprecated:
+			case BsonType.String:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.getStringValue ();
+				return Event.VALUE_STRING;
+			case BsonType.Boolean:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.readBoolean ();
+				return ((Boolean)m_value) ? Event.VALUE_TRUE : Event.VALUE_FALSE;
+			case BsonType.ObjectId:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.getObjectId ();
+				return Event.VALUE_STRING;
+			case BsonType.Binary:
+				m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+				m_value = m_is.getBinary ();
+				return Event.VALUE_STRING;
+			default:
+				throw new IllegalStateException ();	// should not get here.
+		}
+	}
+
+	@Override
+	public Event next ()
+	{
+		try
+		{
+//			Debug.debug ("-- STATE: " + m_state);
+			switch (m_state)
+			{
+				case ParserState.END:
+					throw new NoSuchElementException ();
+				case ParserState.INITIAL:
+				{
+					// we need to setup as a nameless document
+					// by default, BSON's root is a Document.
+					m_state = m_rootAsArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+					m_field.type = m_rootAsArray ? BsonType.Array : BsonType.Document;
+					m_field.name = null;
+					m_event = getEventFromType (m_field.type);
+					break;
+				}
+				case ParserState.IN_FIELD:
+				{
+					// get the value
+					m_event = getEventFromType (m_field.type);
+					break;
+				}
+				case ParserState.IN_ARRAY:
+				{
+					// get the field
+					getField ();
+					// skip the name for array.
+					m_event = getEventFromType (m_field.type);
+					break;
+				}
+				case ParserState.IN_OBJECT:
+				{
+					getField ();
+//					Debug.debug ("FIELD: " + m_field);
+					m_event = Event.KEY_NAME;
+					m_value = m_field.name;
+					m_state = ParserState.IN_FIELD;
+					break;
+				}
+				default:
+				{
+					throw new IllegalStateException ();
+				}
+			}
+//			Debug.debug ("-- EVENT: " + m_event + ", value = " + m_value);
+			return m_event;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
 		}
 	}
 
 	@Override
 	public String getString ()
 	{
-		if (m_event == Event.KEY_NAME &&
-			m_keyName != null)
+		switch (m_event)
 		{
-			return m_keyName;
+			case KEY_NAME:
+			case VALUE_STRING:
+				return (String) m_value;
+			case VALUE_NUMBER:
+				return m_value.toString ();
+			default:
+				throw new IllegalStateException ();
 		}
-		else if (m_event == Event.START_OBJECT &&
-				 m_keyName != null)
-		{
-			throw new IllegalStateException ();
-		}
-		return m_parser.getString ();
 	}
 
 	@Override
 	public boolean isIntegralNumber ()
 	{
-		return m_parser.isIntegralNumber ();
+		if (m_event != Event.VALUE_NUMBER)
+			throw new IllegalStateException ();
+		return !(m_value instanceof Double);
 	}
 
 	@Override
 	public int getInt ()
 	{
-		return m_parser.getInt ();
+		if (m_event != Event.VALUE_NUMBER)
+			throw new IllegalStateException ();
+		return ((Number)m_value).intValue ();
 	}
 
 	@Override
 	public long getLong ()
 	{
-		return m_parser.getLong ();
+		if (m_event != Event.VALUE_NUMBER)
+			throw new IllegalStateException ();
+		return ((Number)m_value).longValue ();
 	}
 
 	@Override
 	public BigDecimal getBigDecimal ()
 	{
-		return m_parser.getBigDecimal ();
+		if (m_event != Event.VALUE_NUMBER)
+			throw new IllegalStateException ();
+		if (m_value instanceof Integer)
+			return new BigDecimal ((Integer)m_value);
+		if (m_value instanceof Long)
+			return new BigDecimal ((Long)m_value);
+		return new BigDecimal ((Double)m_value);
 	}
 
 	@Override
 	public JsonLocation getLocation ()
 	{
-		return m_parser.getLocation ();
+		return m_location;
 	}
 
 	@Override
 	public void close ()
 	{
-		m_parser.close ();
+		try
+		{
+			m_states.clear ();
+			m_is.close ();
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+	}
+
+	/**
+	 * Gets the status of treating root as array.
+	 * @return	the status of treating root as array.
+	 */
+	public boolean isRootAsArray ()
+	{
+		return m_rootAsArray;
+	}
+
+	/**
+	 * Treats the root as Array rather than Document.
+	 * <p>
+	 * By default, the root is treated as Document (Object in JSON).  With
+	 * this flag set, the root is treated as array, and field names are
+	 * ignored as the result.
+	 *
+	 * @param	b
+	 *			true or false.
+	 */
+	public void setRootAsArray (boolean b)
+	{
+		m_rootAsArray = b;
 	}
 }

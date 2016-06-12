@@ -44,6 +44,12 @@
 			<version>2.7.4</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>de.undercouch</groupId>
+			<artifactId>bson4jackson</artifactId>
+			<version>2.7.0</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -56,6 +62,19 @@
 					<source>1.6</source>
 					<target>1.6</target>
 				</configuration>
+				<executions>
+					<execution>
+						<id>test-compile</id>
+						<phase>process-test-sources</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<source>1.6</source>
+							<target>1.6</target>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

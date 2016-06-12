@@ -308,10 +308,10 @@ public class Utils
 				case VALUE_STRING:
 				{
 //					assert Debug.debug ("READ: " + e + " = " + p.getString ());
-					if (p instanceof BasicBsonParser &&
+					if (p instanceof BsonParser &&
 						g instanceof BsonGenerator)
 					{
-						JsonValue v = ((BasicBsonParser) p).getValue ();
+						JsonValue v = ((BsonParser) p).getValue ();
 						if (v instanceof CookJsonBinary)
 						{
 							byte[] bytes = ((CookJsonBinary) v).getBytes ();

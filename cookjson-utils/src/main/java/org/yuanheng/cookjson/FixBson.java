@@ -38,7 +38,7 @@ import org.apache.commons.cli.*;
  */
 public class FixBson
 {
-	public static void getOffsets (JsonParser p, ArrayList<Pair> pairs) throws IOException
+	private static void getOffsets (JsonParser p, ArrayList<Pair> pairs) throws IOException
 	{
 		long offset;
 		long start;
@@ -53,6 +53,7 @@ public class FixBson
 			Event e = p.next ();
 			switch (e)
 			{
+				case START_ARRAY:
 				case START_OBJECT:
 					if (firstObject)
 					{
@@ -70,6 +71,7 @@ public class FixBson
 						matches.push (offset - 4);
 					}
 					break;
+				case END_ARRAY:
 				case END_OBJECT:
 					offset = p.getLocation ().getStreamOffset () + 1;
 					if (justStarted)
@@ -87,6 +89,15 @@ public class FixBson
 					pairs.add (pair);
 					break;
 				default:
+					// value cases
+					if (justStarted)
+					{
+						// we can only get here if we area dealing with
+						// array.
+						justStarted = false;
+						offset = p.getLocation ().getStreamOffset ();
+						matches.push (offset - 4);
+					}
 					break;
 			}
 		}
@@ -98,6 +109,41 @@ public class FixBson
 		HelpFormatter formatter = new HelpFormatter ();
 		formatter.printHelp (pw, 78, "fixbson [options] [file]", null, options, 2, HelpFormatter.DEFAULT_DESC_PAD, null);
 		pw.flush ();
+	}
+
+	public static void fix (File file) throws IOException
+	{
+		FileInputStream is = new FileInputStream (file);
+		JsonParser p = new BsonParser (is);
+
+		ArrayList<Pair> pairs = new ArrayList<Pair> ();
+
+		// compute the offsets and sizes need to be updated.
+		getOffsets (p, pairs);
+		p.close ();
+
+		// sort the pairs
+		Pair[] pa = pairs.toArray (new Pair[pairs.size ()]);
+
+		Arrays.sort (pa);
+
+		// debugging dump
+//		for (Pair pair : pa)
+//		{
+//			System.out.println (pair);
+//		}
+
+		byte[] bytes = new byte[4];
+		ByteBuffer buffer = ByteBuffer.wrap (bytes);
+		RandomAccessFile f = new RandomAccessFile (file, "rw");
+		FileChannel channel = f.getChannel ();
+		for (int i = 0; i < pairs.size (); ++i)
+		{
+			Utils.setInt (bytes, pa[i].size);
+			channel.write (buffer, pa[i].offset);
+			buffer.position (0);
+		}
+		f.close ();
 	}
 
 	public static void main (String[] args) throws Exception
@@ -149,36 +195,6 @@ public class FixBson
 			System.exit (1);
 		}
 
-		FileInputStream is = new FileInputStream (file);
-		JsonParser p = new BasicBsonParser (is);
-
-		ArrayList<Pair> pairs = new ArrayList<Pair> ();
-
-		// compute the offsets and sizes need to be updated.
-		getOffsets (p, pairs);
-		p.close ();
-
-		// sort the pairs
-		Pair[] pa = pairs.toArray (new Pair[pairs.size ()]);
-
-		Arrays.sort (pa);
-
-		// debugging dump
-//		for (Pair pair : pa)
-//		{
-//			System.out.println (pair);
-//		}
-
-		byte[] bytes = new byte[4];
-		ByteBuffer buffer = ByteBuffer.wrap (bytes);
-		RandomAccessFile f = new RandomAccessFile (file, "rw");
-		FileChannel channel = f.getChannel ();
-		for (int i = 0; i < pairs.size (); ++i)
-		{
-			Utils.setInt (bytes, pa[i].size);
-			channel.write (buffer, pa[i].offset);
-			buffer.position (0);
-		}
-		f.close ();
+		fix (file);
 	}
 }

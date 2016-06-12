@@ -51,7 +51,7 @@ public class FixBsonTest
 		g.close ();
 
 		// then fix it
-		FixBson.main (new String[]{ dstFile.getPath () });
+		FixBson.fix (dstFile);
 	}
 
 	@Test

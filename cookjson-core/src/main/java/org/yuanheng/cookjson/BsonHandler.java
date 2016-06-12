@@ -53,7 +53,13 @@ class BsonHandler implements CookJsonHandler
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is)
 	{
-		return new BsonParser (is);
+		boolean rootAsArray = false;
+		Object obj = config.get (CookJsonProvider.ROOT_AS_ARRAY);
+		if (obj != null)
+			rootAsArray = "true".equals (obj.toString ());
+		BsonParser p = new BsonParser (is);
+		p.setRootAsArray (rootAsArray);
+		return p;
 	}
 
 	@Override

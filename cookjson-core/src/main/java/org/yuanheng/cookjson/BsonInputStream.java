@@ -18,17 +18,21 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+
+import javax.json.JsonException;
 
 /**
  * @author Heng Yuan
  */
 class BsonInputStream
 {
-	private final byte[] m_bytes = new byte[8];
+	final static int m_max = 8192;
+	private final byte[] m_buffer = new byte[m_max];
+	private int m_readPos;
+	private int m_readMax;
 	private InputStream m_is;
 	private byte[] m_strBuffer;
 
@@ -36,22 +40,52 @@ class BsonInputStream
 
 	public BsonInputStream (InputStream is)
 	{
-		if (is instanceof BufferedInputStream)
-			m_is = is;
-		else
-			m_is = new BufferedInputStream (is);
+		m_is = is;
+	}
+
+	private void fill () throws IOException
+	{
+		m_readPos = 0;
+		m_readMax = m_is.read (m_buffer);
+		if (m_readMax <= 0)
+			ioError ("unexpected eof.");
+	}
+
+	private void ioError (String msg)
+	{
+		throw new JsonException ("Offset " + m_location + ": " + msg);
 	}
 
 	public void readFully (byte[] b) throws IOException
 	{
-		readFully (b, 0, b.length);
-	}
+		int off = 0;
+		int len = b.length;
 
-	public void readFully (byte[] b, int off, int len) throws IOException
-	{
 		m_location += len;
+
+		byte[] buf = m_buffer;
+		int readPos = m_readPos;
+
+		// see if we have the chars in the buffer
+		if (readPos + len < m_readMax)
+		{
+			for (int i = 0; i < len; ++i)
+				b[i] = buf[readPos++];
+			m_readPos = readPos;
+			return;
+		}
+
+		// okay we don't, copy what we have to b
+		int readMax = m_readMax;
+		while (readPos < readMax)
+		{
+			b[off++] = buf[readPos++];
+		}
+
+		// now read the rest directly into b;
 		int readSize;
 		InputStream is = m_is;
+		len -= off;
 		do
 		{
 			readSize = is.read (b, off, len);
@@ -61,48 +95,39 @@ class BsonInputStream
 			len -= readSize;
 		}
 		while (len > 0);
+
+		// indicates that we do not have anything buffered;
+		m_readPos = 0;
+		m_readMax = 0;
 	}
 
 	public boolean readBoolean () throws IOException
 	{
-		int b;
-		if ((b = m_is.read ()) < 0)
-			throw new EOFException ();
+		if (m_readPos >= m_readMax)
+			fill ();
 		++m_location;
-		return b != 0;
+		return m_buffer[m_readPos++] != 0;
 	}
 
-	public byte readByte () throws IOException
+	public byte read () throws IOException
 	{
-		int b;
-		if ((b = m_is.read ()) < 0)
-			throw new EOFException ();
+		if (m_readPos >= m_readMax)
+			fill ();
 		++m_location;
-		return (byte) b;
+		return m_buffer[m_readPos++];
 	}
 
 	public int readInt () throws IOException
 	{
-		byte[] bytes = m_bytes;
-		readFully (bytes, 0, 4);
-		return (bytes[0] & 0xff) |
-			   ((bytes[1] & 0xff) << 8) |
-			   ((bytes[2] & 0xff) << 16) |
-			   ((bytes[3] & 0xff) << 24);
+		return (read () & 0xff) |
+			   ((read () & 0xff) << 8) |
+			   ((read () & 0xff) << 16) |
+			   ((read () & 0xff) << 24);
 	}
 
 	public long readLong () throws IOException
 	{
-		byte[] bytes = m_bytes;
-		readFully (bytes, 0, 8);
-		return (long)(bytes[0] & 0xff) |
-			   (((long)(bytes[1] & 0xff)) << 8) |
-			   (((long)(bytes[2] & 0xff)) << 16) |
-			   (((long)(bytes[3] & 0xff)) << 24) |
-			   (((long)(bytes[4] & 0xff)) << 32) |
-			   (((long)(bytes[5] & 0xff)) << 40) |
-			   (((long)(bytes[6] & 0xff)) << 48) |
-			   (((long)(bytes[7] & 0xff)) << 56);
+		return ((long)readInt () & 0xffffffffL) | ((long)readInt () << 32);
 	}
 
 	public double readDouble () throws IOException
@@ -112,36 +137,46 @@ class BsonInputStream
 
 	public String readCString () throws IOException
 	{
-		byte[] buffer = m_strBuffer;
-		if (buffer == null)
+		byte[] strBuf = m_strBuffer;
+		if (strBuf == null)
 		{
-			buffer = new byte[200];
-			m_strBuffer = buffer;
+			strBuf = new byte[200];
+			m_strBuffer = strBuf;
 		}
+		int bufferLen = strBuf.length;
 
 		int pos = 0;
+		byte[] buf = m_buffer;
 
-		int ch;
-		InputStream is = m_is;
-
-		while ((ch = is.read ()) >= 0)
+loop:
+		for (;;)
 		{
-			if (ch == '\0')
-				break;
-			if (pos >= buffer.length)
+			int readPos = m_readPos;
+			int readMax = m_readMax;
+			while (readPos < readMax)
 			{
-				byte[] newBuffer = new byte[buffer.length + buffer.length / 2];
-				System.arraycopy (buffer, 0, newBuffer, 0, pos);
-				buffer = newBuffer;
+				byte b = buf[readPos++];
+				if (b == 0)
+				{
+					m_readPos = readPos;
+					break loop;
+				}
+				if (pos >= bufferLen)
+				{
+					bufferLen += bufferLen / 2;
+					byte[] newBuffer = new byte[bufferLen];
+					System.arraycopy (strBuf, 0, newBuffer, 0, pos);
+					strBuf = newBuffer;
+					m_strBuffer = strBuf;
+				}
+				strBuf[pos++] = b;
 			}
-			buffer[pos++] = (byte) ch;
+			fill ();
 		}
-		if ((ch == -1) && (pos == 0))
-			throw new EOFException ();
 		m_location += pos + 1;		// +1 for terminating null.
 		if (pos == 0)
 			return "";
-		return new String (buffer, 0, pos, BOM.utf8);
+		return new String (strBuf, 0, pos, BOM.utf8);
 	}
 
 	public String getStringValue () throws IOException
@@ -155,7 +190,7 @@ class BsonInputStream
 	public byte[] getBinary () throws IOException
 	{
 		int size = readInt ();
-		readByte ();	// binary subtype
+		read ();	// binary subtype
 		byte[] bytes = new byte[size];
 		readFully (bytes);
 		return bytes;

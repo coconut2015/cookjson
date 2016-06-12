@@ -37,10 +37,9 @@ public class BsonReaderTest
 {
 	private JsonStructure readModel (File file, HashMap<String, Object> config) throws IOException
 	{
-//		JsonProvider provider = new CookJsonProvider ();
-//		JsonReaderFactory rf = provider.createReaderFactory (config);
-//		JsonReader reader = rf.createReader (new FileInputStream (file));
-		JsonReader reader = new JsonReaderImpl (new BsonParser (new FileInputStream (file)));
+		BsonParser p = new BsonParser (new FileInputStream (file));
+		p.setRootAsArray (true);
+		JsonReader reader = new JsonReaderImpl (p);
 		JsonStructure obj = reader.read ();
 		reader.close ();
 		return obj;
@@ -78,6 +77,7 @@ public class BsonReaderTest
 
 		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
 		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
 
 		JsonStructure value = readModel (file1, bsonConfig);
 		String str1 = writeModel (value);

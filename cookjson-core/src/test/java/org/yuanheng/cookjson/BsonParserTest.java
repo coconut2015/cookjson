@@ -41,7 +41,8 @@ public class BsonParserTest
 		File file2 = new File (f2.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		JsonParser p1 = new BsonParser (new FileInputStream (file1));
+		BsonParser p1 = new BsonParser (new FileInputStream (file1));
+		p1.setRootAsArray (true);
 		TextJsonGenerator g1 = new TextJsonGenerator (out1);
 		Utils.convert (p1, g1);
 		p1.close ();

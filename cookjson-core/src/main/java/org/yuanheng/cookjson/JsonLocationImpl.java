@@ -34,9 +34,9 @@ class JsonLocationImpl implements JsonLocation, Cloneable
 		Unknown.m_streamOffset = -1;
 	}
 
-	private long m_lineNumber;
-	private long m_columnNumber;
-	private long m_streamOffset;
+	long m_lineNumber;
+	long m_columnNumber;
+	long m_streamOffset;
 
 	@Override
 	public long getLineNumber ()
@@ -54,21 +54,6 @@ class JsonLocationImpl implements JsonLocation, Cloneable
 	public long getStreamOffset ()
 	{
 		return m_streamOffset;
-	}
-
-	public void setLineNumber (long lineNumber)
-	{
-		m_lineNumber = lineNumber;
-	}
-
-	public void setColumnNumber (long columnNumber)
-	{
-		m_columnNumber = columnNumber;
-	}
-
-	public void setStreamOffset (long streamOffset)
-	{
-		m_streamOffset = streamOffset;
 	}
 
 	@Override
