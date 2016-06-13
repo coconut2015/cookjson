@@ -54,6 +54,7 @@ public class ConvertJson
 		options.addOption ("t", "to", true, "to file");
 		options.addOption ("p", "pretty", false, "pretty output for text format.");
 		options.addOption ("d", "double", false, "use double for BSON to store BigDecimal / BigInteger.");
+		options.addOption ("a", "array", false, "treat BSON root document as array.");
 		options.addOption ("h", "help", false, "print this message.");
 
 		if (args.length == 0)
@@ -66,6 +67,7 @@ public class ConvertJson
 		String dst = null;
 		boolean pretty = false;
 		boolean useDouble = false;
+		boolean rootAsArray = false;
 
 		CommandLine cmdLine = null;
 		try
@@ -82,6 +84,9 @@ public class ConvertJson
 		{
 			switch (opt.getOpt ().charAt (0))
 			{
+				case 'a':
+					rootAsArray = true;
+					break;
 				case 'h':
 					usage (options);
 					System.exit (0);
@@ -123,14 +128,17 @@ public class ConvertJson
 
 		try
 		{
-			FileInputStream is = new FileInputStream (src);
-			JsonParser p;
 			JsonProvider provider = JsonProvider.provider ();
+
 			HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
 			bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
 			if (useDouble)
 			{
 				bsonConfig.put (CookJsonProvider.USE_DOUBLE, Boolean.TRUE);
+			}
+			if (rootAsArray)
+			{
+				bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
 			}
 
 			HashMap<String, Object> textConfig = new HashMap<String, Object> ();
@@ -139,6 +147,8 @@ public class ConvertJson
 				textConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
 			}
 
+			FileInputStream is = new FileInputStream (src);
+			JsonParser p;
 			if (srcBson)
 			{
 				JsonParserFactory f = provider.createParserFactory (bsonConfig);
