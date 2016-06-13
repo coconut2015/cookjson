@@ -83,8 +83,8 @@ public class TextJsonGenerator implements JsonGenerator
 	/** Buffer position */
 	int m_pos;
 
-	final static int m_valueLen = 13;
-	char[] m_valueBuffer;
+	final static int m_valueLen = 22;
+	char[] m_valueBuffer = new char[m_valueLen];
 
 	public TextJsonGenerator (OutputStream os)
 	{
@@ -162,10 +162,8 @@ public class TextJsonGenerator implements JsonGenerator
 				}
 				start = i + 1;
 				// handle the escape sequences
-				if (esc == null)
+				if (esc[0] == 0)
 				{
-					esc = new char[m_valueLen];
-					m_valueBuffer = esc;
 					esc[0] = '\\';
 					esc[2] = '0';
 					esc[3] = '0';
