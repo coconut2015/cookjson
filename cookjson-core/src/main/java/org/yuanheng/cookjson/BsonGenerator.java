@@ -18,13 +18,12 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Map;
-import java.util.Stack;
 
 import javax.json.*;
 import javax.json.stream.JsonGenerator;
@@ -37,24 +36,34 @@ import org.yuanheng.cookjson.value.CookJsonBinary;
  *
  * @author	Heng Yuan
  */
-public class BsonGenerator implements JsonGenerator
+public class BsonGenerator implements CookJsonGenerator
 {
-	private final BufferedOutputStream m_os;
-	private final byte[] m_bytes = new byte[8];
+	private final static byte[] DIGITS = "0123456789".getBytes ();
+	private final OutputStream m_os;
+	/**
+	 * Internal write buffer.  We manually buffer it rather than
+	 * using BufferedWriter due to slight performance improvement.
+	 */
+	private final static int m_max = 8192;
+	private final byte[] m_buffer = new byte[m_max + 1];	// +1 so that our single byte padding logic is simpler
+	/** Buffer position */
+	private int m_pos;
 
-	private final Stack<Integer> m_states = new Stack<Integer> ();
+	private final static int m_valueLen = 13;
+	private final byte[] m_bytes = new byte[m_valueLen];
+
+	final ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
 	private int m_state = GeneratorState.INITIAL;
 
-	private final Stack<Integer> m_arrayCounts = new Stack<Integer> ();
+	private final ArrayList<Integer> m_arrayCounts = new ArrayList<Integer> ();
 	private String m_name;
-
-	private boolean m_validateName;
+	private int m_index;
 
 	private boolean m_useDouble;
 
 	public BsonGenerator (OutputStream os)
 	{
-		m_os = new BufferedOutputStream (os);
+		m_os = os;
 	}
 
 	public void setUseDouble (boolean b)
@@ -62,21 +71,103 @@ public class BsonGenerator implements JsonGenerator
 		m_useDouble = b;
 	}
 
+	private void w (byte[] bytes) throws IOException
+	{
+		w (bytes, 0, bytes.length);
+	}
+
+	private void w (byte[] bytes, int offset, int length) throws IOException
+	{
+		int pos = m_pos;
+		byte[] buf = m_buffer;
+		if (pos + length < m_max)
+		{
+			for (int i = 0; i < length; ++i)
+				buf[pos++] = bytes[offset++];
+			m_pos = pos;
+			return;
+		}
+		{
+			int len = m_max - pos;
+			for (int i = 0; i < len; ++i)
+				buf[pos++] = bytes[offset++];
+			m_os.write (buf, 0, m_max);
+			length -= len;
+		}
+		while (length > m_max)
+		{
+			m_os.write (bytes, offset, m_max);
+			offset += m_max;
+			length -= m_max;
+		}
+
+		for (int i = 0; i < length; ++i)
+			buf[i] = bytes[i];
+		m_pos = pos;
+	}
+
+	void w (int b) throws IOException
+	{
+		byte[] buf = m_buffer;
+		int pos = m_pos;
+		buf[pos++] = (byte)b;
+		if (pos >= m_max)
+		{
+			m_os.write (buf, 0, pos);
+			m_pos = 0;
+		}
+		else
+		{
+			m_pos = pos;
+		}
+	}
+
+	/**
+	 * Write the array index, including the padding 0 byte.
+	 *
+	 * @param	value
+	 *			the index value.  It should not be negative.
+	 * @throws	IOException
+	 * 			in case of I/O error.
+	 */
+	private void wi (int value) throws IOException
+	{
+		byte[] buf = m_bytes;
+
+		int pos = m_valueLen;
+		buf[--pos] = 0;	// terminating null
+		// use do-while to generate at least 1 digit.
+		do
+		{
+			int v = value / 10;
+			int r = value - v * 10;
+			value = v;
+			buf[--pos] = DIGITS[r];
+		}
+		while (value > 0);
+		w (buf, pos, m_valueLen - pos);
+	}
+
+	private void checkName (String name)
+	{
+		if (name.indexOf (0) >= 0)
+			throw new IllegalArgumentException ("Name string contains \\0.");
+		m_name = name;
+	}
+
 	private void writeCString (String name) throws IOException
 	{
-		if (name.length () == 0)
-			m_os.write (0);
+		if (name == null)
+		{
+			wi (m_index++);
+		}
+		else if (name.length () == 0)
+			w (0);
 		else
 		{
 			byte[] bytes = name.getBytes (BOM.utf8);
-			if (m_validateName)
-			{
-				for (int i = 0; i < bytes.length; ++i)
-					if (bytes[i] == 0)
-						throw new IOException ("Cannot store the name string: " + name);
-			}
-			m_os.write (bytes);
-			m_os.write (0);
+			w (bytes);
+			w (0);
 		}
 	}
 
@@ -84,9 +175,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			m_os.write (type);
+			w (type);
 			writeCString (name);
-			m_os.write (bytes, 0, length);
+			w (bytes, 0, length);
 		}
 		catch (IOException ex)
 		{
@@ -99,7 +190,7 @@ public class BsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			m_os.write (m_bytes, 0, 4);
+			w (m_bytes, 0, 4);
 		}
 		catch (IOException ex)
 		{
@@ -110,7 +201,7 @@ public class BsonGenerator implements JsonGenerator
 
 	private JsonGenerator writeObject (boolean root)
 	{
-		pushState (GeneratorState.IN_OBJECT);
+		pushState (false);
 		Utils.setInt (m_bytes, 0);	// length.  For streaming, we set to 0.
 		if (root)
 			return writeRootObject ();
@@ -120,13 +211,24 @@ public class BsonGenerator implements JsonGenerator
 
 	private JsonGenerator writeArray (boolean root)
 	{
-		pushState (GeneratorState.IN_ARRAY);
+		pushState (true);
 		Utils.setInt (m_bytes, 0);	// length.  For streaming, we set to 0.
-		m_arrayCounts.push (0);		// start index value at 0.
 		if (root)
-			return writeRootObject ();
+		{
+			m_arrayCounts.add (0);
+			m_index = 0;
+			writeRootObject ();
+			m_name = null;
+			return this;
+		}
 		else
-			return writeElement (BsonType.Array, m_name, m_bytes, 4);
+		{
+			writeElement (BsonType.Array, m_name, m_bytes, 4);
+			m_arrayCounts.add (m_index);
+			m_index = 0;
+			m_name = null;
+			return this;
+		}
 	}
 
 	private JsonGenerator writeValue (byte[] value)
@@ -134,9 +236,9 @@ public class BsonGenerator implements JsonGenerator
 		try
 		{
 			Utils.setInt (m_bytes, value.length);
-			m_os.write (m_bytes);
-			m_os.write (0);
-			m_os.write (value);
+			w (m_bytes);
+			w (0);
+			w (value);
 		}
 		catch (IOException ex)
 		{
@@ -152,8 +254,8 @@ public class BsonGenerator implements JsonGenerator
 		writeElement (BsonType.String, m_name, m_bytes, 4);
 		try
 		{
-			m_os.write (bytes);
-			m_os.write (0);
+			w (bytes);
+			w (0);
 		}
 		catch (IOException ex)
 		{
@@ -191,7 +293,7 @@ public class BsonGenerator implements JsonGenerator
 	{
 		try
 		{
-			m_os.write (BsonType.Null);
+			w (BsonType.Null);
 			writeCString (m_name);
 		}
 		catch (IOException ex)
@@ -286,11 +388,9 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator writeStartObject ()
 	{
 //		assert Debug.debug ("WRITE: START_OBJECT");
-		if (m_state == GeneratorState.INITIAL)
-			m_name = "";
-		else
-			m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.INITIAL &&
+			m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeObject (m_state == GeneratorState.INITIAL);
 	}
 
@@ -299,8 +399,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: START_OBJECT");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeObject (false);
 	}
 
@@ -308,11 +409,9 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator writeStartArray ()
 	{
 //		assert Debug.debug ("WRITE: START_ARRAY");
-		if (m_state == GeneratorState.INITIAL)
-			m_name = "";
-		else
-			m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.INITIAL &&
+			m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeArray (m_state == GeneratorState.INITIAL);
 	}
 
@@ -321,8 +420,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: START_ARRAY");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeArray (false);
 	}
 
@@ -331,17 +431,20 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: JsonValue");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
+	@Override
 	public JsonGenerator write (String name, byte[] value)
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_BINARY");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -350,8 +453,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_STRING");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -360,8 +464,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value.toString ());
 	}
 
@@ -370,8 +475,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
@@ -382,8 +488,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -392,8 +499,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -402,8 +510,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -412,8 +521,9 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeValue (value);
 	}
 
@@ -422,20 +532,25 @@ public class BsonGenerator implements JsonGenerator
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NULL");
-		m_name = name;
-		m_validateName = true;
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new IllegalStateException ();
+		checkName (name);
 		return writeNullValue ();
 	}
 
 	@Override
 	public JsonGenerator writeEnd ()
 	{
-		popState ();
-//		int state = popState ();
-//		assert Debug.debug ("WRITE: " + (state == ParserState.IN_ARRAY ? "END_ARRAY" : "END_OBJECT"));
+		boolean isArray = popState ();
+		if (isArray)
+		{
+			m_index = m_arrayCounts.remove (m_arrayCounts.size () - 1);
+		}
+//		assert Debug.debug ("WRITE: " + (isArray ? "END_ARRAY" : "END_OBJECT"));
 		try
 		{
-			m_os.write (0);
+			w (0);
+			m_name = null;
 		}
 		catch (IOException ex)
 		{
@@ -448,16 +563,17 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (JsonValue value)
 	{
 //		assert Debug.debug ("WRITE: JsonValue");
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
+	@Override
 	public JsonGenerator write (byte[] value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_BINARY");
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -465,8 +581,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (String value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_STRING");
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -474,8 +590,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (BigDecimal value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
@@ -485,8 +601,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (BigInteger value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
@@ -496,8 +612,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (int value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -505,8 +621,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (long value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -514,8 +630,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (double value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -523,8 +639,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator write (boolean value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeValue (value);
 	}
 
@@ -532,8 +648,8 @@ public class BsonGenerator implements JsonGenerator
 	public JsonGenerator writeNull ()
 	{
 //		assert Debug.debug ("WRITE: VALUE_NULL");
-		m_name = getIndex ();
-		m_validateName = false;
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new IllegalStateException ();
 		return writeNullValue ();
 	}
 
@@ -542,6 +658,7 @@ public class BsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			flush ();
 			m_os.close ();
 		}
 		catch (IOException ex)
@@ -555,6 +672,11 @@ public class BsonGenerator implements JsonGenerator
 	{
 		try
 		{
+			if (m_pos > 0)
+			{
+				m_os.write (m_buffer, 0, m_pos);
+				m_pos = 0;
+			}
 			m_os.flush ();
 		}
 		catch (IOException ex)
@@ -563,35 +685,24 @@ public class BsonGenerator implements JsonGenerator
 		}
 	}
 
-	String getIndex ()
+	void pushState (boolean isArray)
 	{
-		int index = m_arrayCounts.pop ();
-		m_arrayCounts.push (index + 1);
-		return Integer.toString (index);
+		m_state = isArray ? GeneratorState.IN_ARRAY : GeneratorState.IN_OBJECT;
+		m_states.add (isArray);
 	}
 
-	void pushState (int state)
+	boolean popState ()
 	{
-		if (m_state == GeneratorState.INITIAL)
-			m_state = state;
-		else
-		{
-			m_states.push (m_state);
-			m_state = state;
-		}
-	}
-
-	int popState ()
-	{
-		int oldState = m_state;
-		if (m_state == GeneratorState.IN_ARRAY)
-			m_arrayCounts.pop ();
-
-		if (m_states.isEmpty ())
+		ArrayList<Boolean> states = m_states;
+		int index = states.size () - 1;
+		boolean isArray = states.remove (index);
+		if (index == 0)
 			m_state = GeneratorState.END;
 		else
-			m_state = m_states.pop ();
-		return oldState;
+		{
+			m_state = states.get (index - 1) ? GeneratorState.IN_ARRAY : GeneratorState.IN_OBJECT;
+		}
+		return isArray;
 	}
 
 	void validateAction (int action)

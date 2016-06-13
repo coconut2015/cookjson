@@ -31,6 +31,7 @@ import javax.json.JsonArray;
 import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
+import javax.json.stream.JsonGenerationException;
 import javax.json.stream.JsonGenerator;
 
 /**
@@ -360,10 +361,7 @@ public class TextJsonGenerator implements JsonGenerator
 							m_first = false;
 						else
 							w (',');
-						if (v == null)
-							w ("null");
-						else
-							writeValue (v);
+						writeValue (v);
 					}
 					w (']');
 					m_first = false;
@@ -424,6 +422,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject ()
 	{
+//		assert .debug ("WRITE: START_OBJECT");
+		if (m_state != GeneratorState.INITIAL &&
+			m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.invalidContext);
 		try
 		{
 			writeComma ();
@@ -441,6 +443,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartObject (String name)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: START_OBJECT");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -458,6 +464,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray ()
 	{
+//		assert .debug ("WRITE: START_ARRAY");
+		if (m_state != GeneratorState.INITIAL &&
+			m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.invalidContext);
 		try
 		{
 			writeComma ();
@@ -475,6 +485,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeStartArray (String name)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: START_ARRAY");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -492,6 +506,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, JsonValue value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: JsonValue");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -507,6 +525,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, String value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_STRING");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -522,6 +544,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, BigInteger value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -537,6 +563,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, BigDecimal value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -552,6 +582,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, int value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NUMBER: (int)" + value);
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -567,6 +601,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, long value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NUMBER: (long)" + value);
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -582,6 +620,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, double value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NUMBER: (double)" + value);
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -597,6 +639,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (String name, boolean value)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -612,6 +658,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeNull (String name)
 	{
+//		assert .debug ("WRITE: KEY_NAME: " + name);
+//		assert .debug ("WRITE: VALUE_NULL");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		try
 		{
 			writeName (name);
@@ -627,7 +677,10 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeEnd ()
 	{
+		if (m_state == GeneratorState.END)
+			throw new JsonGenerationException (ErrorMessage.invalidContext);
 		boolean isArray = popState ();
+//		assert .debug ("WRITE: " + (isArray ? "END_ARRAY" : "END_OBJECT"));
 		m_first = false;
 		char ch = isArray ? ']' : '}';
 		try
@@ -644,12 +697,27 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (JsonValue value)
 	{
+//		assert .debug ("WRITE: JsonValue");
+		if (m_state != GeneratorState.IN_ARRAY)
+		{
+			if (m_state == GeneratorState.INITIAL)
+			{
+				if (!(value instanceof JsonArray) &&
+					!(value instanceof JsonObject))
+					throw new JsonGenerationException (ErrorMessage.invalidContext);
+			}
+			else
+				throw new JsonGenerationException (ErrorMessage.notInArrayContext);
+		}
 		return writeValue (value);
 	}
 
 	@Override
 	public JsonGenerator write (String value)
 	{
+//		assert .debug ("WRITE: VALUE_STRING");
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -665,6 +733,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (BigDecimal value)
 	{
+//		assert .debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -680,6 +751,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (BigInteger value)
 	{
+//		assert .debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -695,6 +769,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (int value)
 	{
+//		assert .debug ("WRITE: VALUE_NUMBER: (int)" + value);
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -710,6 +787,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (long value)
 	{
+//		assert .debug ("WRITE: VALUE_NUMBER: (long)" + value);
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -725,6 +805,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (double value)
 	{
+//		assert .debug ("WRITE: VALUE_NUMBER: (double)" + value);
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -740,6 +823,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator write (boolean value)
 	{
+//		assert .debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -755,6 +841,9 @@ public class TextJsonGenerator implements JsonGenerator
 	@Override
 	public JsonGenerator writeNull ()
 	{
+//		assert .debug ("WRITE: VALUE_NULL");
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		try
 		{
 			writeComma ();
@@ -801,14 +890,22 @@ public class TextJsonGenerator implements JsonGenerator
 
 	void pushState (boolean isArray)
 	{
+		m_state = isArray ? GeneratorState.IN_ARRAY : GeneratorState.IN_OBJECT;
 		m_states.add (isArray);
 	}
 
 	boolean popState ()
 	{
-		if (m_states.isEmpty ())
+		ArrayList<Boolean> states = m_states;
+		int index = states.size () - 1;
+		boolean isArray = states.remove (index);
+		if (index == 0)
 			m_state = GeneratorState.END;
-		return m_states.remove (m_states.size () - 1);
+		else
+		{
+			m_state = states.get (index - 1) ? GeneratorState.IN_ARRAY : GeneratorState.IN_OBJECT;
+		}
+		return isArray;
 	}
 
 	void validateAction (int action)

@@ -77,7 +77,7 @@ class BsonHandler implements CookJsonHandler
 	@Override
 	public JsonGenerator createGenerator (Map<String, ?> config, OutputStream os)
 	{
-		BsonGenerator g = new CheckedBsonGenerator (os);
+		BsonGenerator g = new BsonGenerator (os);
 
 		boolean writeDouble = false;
 		Object obj = config.get (CookJsonProvider.USE_DOUBLE);
