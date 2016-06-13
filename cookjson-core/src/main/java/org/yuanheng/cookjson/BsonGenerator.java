@@ -49,7 +49,7 @@ public class BsonGenerator implements CookJsonGenerator
 	/** Buffer position */
 	private int m_pos;
 
-	private final static int m_valueLen = 13;
+	private final static int m_valueLen = 22;
 	private final byte[] m_bytes = new byte[m_valueLen];
 
 	final ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
@@ -89,7 +89,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		{
 			int len = m_max - pos;
-			for (int i = 0; i < len; ++i)
+			while (pos < m_max)
 				buf[pos++] = bytes[offset++];
 			m_os.write (buf, 0, m_max);
 			length -= len;
@@ -102,7 +102,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 
 		for (int i = 0; i < length; ++i)
-			buf[i] = bytes[i];
+			buf[i] = bytes[offset++];
 		m_pos = length;
 	}
 

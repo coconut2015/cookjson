@@ -248,7 +248,7 @@ public class TextJsonGenerator implements JsonGenerator
 		}
 
 		for (int i = 0; i < length; ++i)
-			buf[i] = chars[i];
+			buf[i] = chars[offset++];
 		m_pos = length;
 	}
 
