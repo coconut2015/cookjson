@@ -103,7 +103,7 @@ public class BsonGenerator implements CookJsonGenerator
 
 		for (int i = 0; i < length; ++i)
 			buf[i] = bytes[i];
-		m_pos = pos;
+		m_pos = length;
 	}
 
 	void w (int b) throws IOException

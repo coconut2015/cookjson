@@ -249,7 +249,7 @@ public class TextJsonGenerator implements JsonGenerator
 
 		for (int i = 0; i < length; ++i)
 			buf[i] = chars[i];
-		m_pos = pos;
+		m_pos = length;
 	}
 
 	void w (String str) throws IOException
