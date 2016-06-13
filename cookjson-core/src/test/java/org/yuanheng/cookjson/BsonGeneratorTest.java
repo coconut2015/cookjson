@@ -44,8 +44,7 @@ public class BsonGeneratorTest
 		File file1 = new File (f1.replace ('/', File.separatorChar));
 		File file2 = new File (f2.replace ('/', File.separatorChar));
 
-//		File testFile = testFolder.newFile ();
-		File testFile = new File ("..\\tests\\t1.bson");
+		File testFile = testFolder.newFile ();
 		JsonParser p = new TextJsonParser (new FileInputStream (file1));
 		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
 		Utils.convert (p, g);
