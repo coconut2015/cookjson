@@ -27,8 +27,6 @@ import org.apache.commons.codec.binary.Base64;
  */
 public class BinaryUtils
 {
-	private final static char[] HEXCHARS = "01234567890abcdef".toCharArray ();
-
 	public static String encodeBase64 (byte[] bytes)
 	{
 		return Base64.encodeBase64String (bytes);
@@ -42,13 +40,13 @@ public class BinaryUtils
 	public static String encodeHex (byte[] bytes)
 	{
 		char[] chars = new char[bytes.length * 2];
-
+		char[] hex = Quote.hex;
 		int pos = 0;
 		for (int i = 0; i < bytes.length; ++i)
 		{
 			byte b = bytes[i];
-			chars[pos++] = HEXCHARS[(b & 0xff) >> 4];
-			chars[pos++] = HEXCHARS[(b & 0x0f)];
+			chars[pos++] = hex[(b & 0xff) >> 4];
+			chars[pos++] = hex[(b & 0x0f)];
 		}
 		return new String (chars);
 	}

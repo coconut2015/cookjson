@@ -21,9 +21,15 @@ package org.yuanheng.cookjson;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.util.Map;
 
+import javax.json.JsonArray;
 import javax.json.JsonException;
+import javax.json.JsonObject;
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
+
+import org.yuanheng.cookjson.value.CookJsonBinary;
 
 /**
  * @author	Heng Yuan
@@ -121,5 +127,99 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 			}
 		}
 		return super.writeEnd ();
+	}
+
+	@Override
+	JsonGenerator writeValue (JsonValue value) throws IOException
+	{
+		switch (value.getValueType ())
+		{
+			case ARRAY:
+			{
+				JsonArray array = (JsonArray) value;
+				w ('[');
+				pushState (true);
+				m_first = true;
+				for (JsonValue v : array)
+				{
+					writeComma ();
+					writeValue (v);
+				}
+				if (!m_first)
+				{
+					// indent the value
+					w ('\n');
+					int indents = m_states.size ();
+					String indent = m_indent;
+					for (int i = 1; i < indents; ++i)
+						w (indent);
+				}
+				w (']');
+				popState ();
+				m_first = false;
+				break;
+			}
+			case OBJECT:
+			{
+				JsonObject obj = (JsonObject) value;
+				w ('{');
+				pushState (false);
+				m_first = true;
+				for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
+				{
+					JsonValue v = entry.getValue ();
+					writeName (entry.getKey ());
+					writeValue (v);
+				}
+				if (!m_first)
+				{
+					// indent the value
+					w ('\n');
+					int indents = m_states.size ();
+					String indent = m_indent;
+					for (int i = 1; i < indents; ++i)
+						w (indent);
+				}
+				w ('}');
+				popState ();
+				m_first = false;
+				break;
+			}
+			case NULL:
+			{
+				w ("null");
+				break;
+			}
+			case NUMBER:
+			{
+				w (value.toString ());
+				break;
+			}
+			case STRING:
+			{
+				if (value instanceof CookJsonBinary)
+				{
+					byte[] bytes = ((CookJsonBinary) value).getBytes ();
+					if (m_binaryFormat == 0)
+						base64Encode (bytes);
+					else
+						hexEncode (bytes);
+				}
+				else
+					quote (value.toString ());
+				break;
+			}
+			case TRUE:
+			{
+				w ("true");
+				break;
+			}
+			case FALSE:
+			{
+				w ("false");
+				break;
+			}
+		}
+		return this;
 	}
 }

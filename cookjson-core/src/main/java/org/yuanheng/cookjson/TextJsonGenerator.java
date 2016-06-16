@@ -34,6 +34,8 @@ import javax.json.JsonValue;
 import javax.json.stream.JsonGenerationException;
 import javax.json.stream.JsonGenerator;
 
+import org.yuanheng.cookjson.value.CookJsonBinary;
+
 /**
  * This version of generator does not do any validations to maximize the
  * performance.
@@ -89,7 +91,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 	final static int m_valueLen = 22;
 	char[] m_valueBuffer = new char[m_valueLen];
 
-	private int m_binaryFormat;
+	int m_binaryFormat;
 
 	public TextJsonGenerator (OutputStream os)
 	{
@@ -422,77 +424,73 @@ public class TextJsonGenerator implements CookJsonGenerator
 		w (buf, pos, m_valueLen - pos);
 	}
 
-	private JsonGenerator writeValue (JsonValue value)
+	JsonGenerator writeValue (JsonValue value) throws IOException
 	{
-		try
+		switch (value.getValueType ())
 		{
-			switch (value.getValueType ())
+			case ARRAY:
 			{
-				case ARRAY:
+				JsonArray array = (JsonArray) value;
+				w ('[');
+				m_first = true;
+				for (JsonValue v : array)
 				{
-					JsonArray array = (JsonArray) value;
-					w ('[');
-					m_first = true;
-					for (JsonValue v : array)
-					{
-						if (m_first)
-							m_first = false;
-						else
-							w (',');
-						writeValue (v);
-					}
-					w (']');
-					m_first = false;
-					break;
+					writeComma ();
+					writeValue (v);
 				}
-				case OBJECT:
-				{
-					JsonObject obj = (JsonObject) value;
-					w ('{');
-					m_first = true;
-					for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
-					{
-						JsonValue v = entry.getValue ();
-						writeName (entry.getKey ());
-						if (v == null)
-							w ("null");
-						else
-							writeValue (v);
-					}
-					w ('}');
-					m_first = false;
-					break;
-				}
-				case NULL:
-				{
-					w ("null");
-					break;
-				}
-				case NUMBER:
-				{
-					w (value.toString ());
-					break;
-				}
-				case STRING:
-				{
-					quote (value.toString ());
-					break;
-				}
-				case TRUE:
-				{
-					w ("true");
-					break;
-				}
-				case FALSE:
-				{
-					w ("false");
-					break;
-				}
+				w (']');
+				m_first = false;
+				break;
 			}
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
+			case OBJECT:
+			{
+				JsonObject obj = (JsonObject) value;
+				w ('{');
+				m_first = true;
+				for (Map.Entry<String, JsonValue> entry : obj.entrySet ())
+				{
+					JsonValue v = entry.getValue ();
+					writeName (entry.getKey ());
+					writeValue (v);
+				}
+				w ('}');
+				m_first = false;
+				break;
+			}
+			case NULL:
+			{
+				w ("null");
+				break;
+			}
+			case NUMBER:
+			{
+				w (value.toString ());
+				break;
+			}
+			case STRING:
+			{
+				if (value instanceof CookJsonBinary)
+				{
+					byte[] bytes = ((CookJsonBinary) value).getBytes ();
+					if (m_binaryFormat == 0)
+						base64Encode (bytes);
+					else
+						hexEncode (bytes);
+				}
+				else
+					quote (value.toString ());
+				break;
+			}
+			case TRUE:
+			{
+				w ("true");
+				break;
+			}
+			case FALSE:
+			{
+				w ("false");
+				break;
+			}
 		}
 		return this;
 	}
@@ -809,7 +807,15 @@ public class TextJsonGenerator implements CookJsonGenerator
 			else
 				throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		}
-		return writeValue (value);
+		try
+		{
+			writeComma ();
+			return writeValue (value);
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	public JsonGenerator write (byte[] value)
