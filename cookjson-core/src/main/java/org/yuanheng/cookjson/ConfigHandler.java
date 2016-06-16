@@ -30,7 +30,7 @@ import javax.json.stream.JsonGenerator;
 /**
  * @author	Heng Yuan
  */
-interface CookJsonHandler
+interface ConfigHandler
 {
 	public CookJsonParser createParser (Map<String, ?> config, Reader reader);
 

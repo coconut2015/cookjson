@@ -18,7 +18,10 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Map;
 
@@ -28,77 +31,66 @@ import javax.json.stream.JsonGenerator;
 /**
  * @author	Heng Yuan
  */
-class TextJsonHandler implements CookJsonHandler
+class BsonConfigHandler implements ConfigHandler
 {
-	private final static CookJsonHandler s_instance = new TextJsonHandler ();
+	private final static ConfigHandler s_instance = new BsonConfigHandler ();
 
-	public static CookJsonHandler getInstance ()
+	public static ConfigHandler getInstance ()
 	{
 		return s_instance;
 	}
 
-	private TextJsonHandler ()
+	private BsonConfigHandler ()
 	{
 	}
 
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, Reader reader)
 	{
-		boolean allowComments = false;
-		Object obj = config.get (CookJsonProvider.COMMENT);
-		if (obj != null)
-			allowComments = "true".equals (obj.toString ());
-		TextJsonParser p = new TextJsonParser (reader);
-		p.setAllowComments (allowComments);
-		return p;
+		throw new JsonException ("Cannot create a BSON parser from a Reader.");
 	}
 
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is)
 	{
-		PushbackInputStream pis = new PushbackInputStream (is, 3);
-		Charset charset;
-		try
-		{
-			charset = BOM.guessCharset (pis);
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		return createParser (config, new InputStreamReader (pis, charset));
+		boolean rootAsArray = false;
+		Object obj = config.get (CookJsonProvider.ROOT_AS_ARRAY);
+		if (obj != null)
+			rootAsArray = "true".equals (obj.toString ());
+		BsonParser p = new BsonParser (is);
+		p.setRootAsArray (rootAsArray);
+		return p;
 	}
 
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is, Charset charset)
 	{
-		return createParser (config, new InputStreamReader (is, charset));
+		return createParser (config, is);
 	}
 
 	@Override
 	public JsonGenerator createGenerator (Map<String, ?> config, Writer writer)
 	{
-		boolean pretty = false;
-		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
-		if (obj != null)
-			pretty = "true".equals (obj.toString ());
-		TextJsonGenerator g;
-		if (pretty)
-			g = new PrettyTextJsonGenerator (writer);
-		else
-			g = new TextJsonGenerator (writer);
-		return g;
+		throw new JsonException ("Cannot create a BSON generator from a Writer.");
 	}
 
 	@Override
 	public JsonGenerator createGenerator (Map<String, ?> config, OutputStream os)
 	{
-		return createGenerator (config, new OutputStreamWriter (os, BOM.utf8));
+		BsonGenerator g = new BsonGenerator (os);
+
+		boolean writeDouble = false;
+		Object obj = config.get (CookJsonProvider.USE_DOUBLE);
+		if (obj != null)
+			writeDouble = "true".equals (obj.toString ());
+		g.setUseDouble (writeDouble);
+
+		return g;
 	}
 
 	@Override
 	public JsonGenerator createGenerator (Map<String, ?> config, OutputStream os, Charset charset)
 	{
-		return createGenerator (config, new OutputStreamWriter (os, charset));
+		return createGenerator (config, os);
 	}
 }

@@ -33,9 +33,9 @@ import javax.json.JsonReaderFactory;
 class JsonReaderFactoryImpl implements JsonReaderFactory
 {
 	private final Map<String, ?> m_config;
-	private final CookJsonHandler m_handler;
+	private final ConfigHandler m_handler;
 
-	public JsonReaderFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
+	public JsonReaderFactoryImpl (Map<String, ?> config, ConfigHandler handler)
 	{
 		m_config = config;
 		m_handler = handler;

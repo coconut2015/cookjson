@@ -35,9 +35,9 @@ import javax.json.stream.JsonParserFactory;
 class JsonParserFactoryImpl implements JsonParserFactory
 {
 	private final Map<String, ?> m_config;
-	private final CookJsonHandler m_handler;
+	private final ConfigHandler m_handler;
 
-	public JsonParserFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
+	public JsonParserFactoryImpl (Map<String, ?> config, ConfigHandler handler)
 	{
 		m_config = config;
 		m_handler = handler;

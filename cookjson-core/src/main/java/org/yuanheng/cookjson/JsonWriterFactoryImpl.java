@@ -33,9 +33,9 @@ import javax.json.JsonWriterFactory;
 class JsonWriterFactoryImpl implements JsonWriterFactory
 {
 	private final Map<String, ?> m_config;
-	private final CookJsonHandler m_handler;
+	private final ConfigHandler m_handler;
 
-	public JsonWriterFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
+	public JsonWriterFactoryImpl (Map<String, ?> config, ConfigHandler handler)
 	{
 		m_config = config;
 		m_handler = handler;

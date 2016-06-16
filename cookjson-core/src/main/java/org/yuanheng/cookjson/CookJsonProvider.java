@@ -143,12 +143,12 @@ public class CookJsonProvider extends JsonProvider
 		return new JsonBuilderFactoryImpl (config);
 	}
 
-	private CookJsonHandler getHandler (Map<String, ?> config)
+	private ConfigHandler getHandler (Map<String, ?> config)
 	{
 		boolean bson = FORMAT_BSON.equals (config.get (FORMAT));
 		if (bson)
-			return BsonHandler.getInstance ();
+			return BsonConfigHandler.getInstance ();
 		else
-			return TextJsonHandler.getInstance ();
+			return TextJsonConfigHandler.getInstance ();
 	}
 }

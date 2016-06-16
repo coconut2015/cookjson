@@ -33,9 +33,9 @@ import javax.json.stream.JsonGeneratorFactory;
 class JsonGeneratorFactoryImpl implements JsonGeneratorFactory
 {
 	private final Map<String, ?> m_config;
-	private final CookJsonHandler m_handler;
+	private final ConfigHandler m_handler;
 
-	public JsonGeneratorFactoryImpl (Map<String, ?> config, CookJsonHandler handler)
+	public JsonGeneratorFactoryImpl (Map<String, ?> config, ConfigHandler handler)
 	{
 		m_config = config;
 		m_handler = handler;
