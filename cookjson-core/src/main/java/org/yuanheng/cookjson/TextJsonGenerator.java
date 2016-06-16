@@ -47,8 +47,11 @@ import javax.json.stream.JsonGenerator;
  *
  * @author	Heng Yuan
  */
-public class TextJsonGenerator implements JsonGenerator
+public class TextJsonGenerator implements CookJsonGenerator
 {
+	public final static int BINARY_FORMAT_BASE64 = 0;
+	public final static int BINARY_FORMAT_HEX = 1;
+
 	/**
 	 * If the name is already being escaped.
 	 */
@@ -85,6 +88,8 @@ public class TextJsonGenerator implements JsonGenerator
 
 	final static int m_valueLen = 22;
 	char[] m_valueBuffer = new char[m_valueLen];
+
+	private int m_binaryFormat;
 
 	public TextJsonGenerator (OutputStream os)
 	{
@@ -216,6 +221,81 @@ public class TextJsonGenerator implements JsonGenerator
 		{
 			w (str, start, len);
 		}
+		w ('"');
+	}
+
+	void base64Encode (byte[] value) throws IOException
+	{
+		// mime base 64 chars
+		char[] chars = Base64.CHARS;
+		w ('"');
+
+		char[] buf = m_buffer;
+		int pos = m_pos;
+		final int max = m_max - 4;
+
+		// code / algorithm from Wikipedia
+		int b;
+		final int len = value.length;
+		for (int i = 0; i < len; i += 3)
+		{
+			if (pos >= max)
+			{
+				m_out.write (buf, 0, pos);
+				pos = 0;
+			}
+			b = (value[i] & 0xfc) >> 2;
+			buf[pos++] = chars[b];
+			b = (value[i] & 0x03) << 4;
+			if (i + 1 < len)
+			{
+				b |= (value[i + 1] & 0xf0) >> 4;
+				buf[pos++] = chars[b];
+				b = (value[i + 1] & 0x0f) << 2;
+				if (i + 2 < len)
+				{
+					b |= (value[i + 2] & 0xc0) >> 6;
+					buf[pos++] = chars[b];
+					b = value[i + 2] & 0x3f;
+					buf[pos++] = chars[b];
+				}
+				else
+				{
+					buf[pos++] = chars[b];
+					buf[pos++] = '=';
+				}
+			}
+			else
+			{
+				buf[pos++] = chars[b];
+				buf[pos++] = '=';
+				buf[pos++] = '=';
+			}
+		}
+		m_pos = pos;
+        w ('"');
+	}
+
+	void hexEncode (byte[] value) throws IOException
+	{
+		char[] hex = Quote.hex;
+		w ('"');
+
+		char[] buf = m_buffer;
+		int pos = m_pos;
+		final int max = m_max - 2;
+		for (byte b : value)
+		{
+			if (pos >= max)
+			{
+				m_out.write (buf, 0, pos);
+				pos = 0;
+			}
+			buf[pos++] = hex[(b >> 4) & 0x0f];
+			buf[pos++] = hex[b & 0x0f];
+		}
+		m_pos = pos;
+
 		w ('"');
 	}
 
@@ -521,6 +601,28 @@ public class TextJsonGenerator implements JsonGenerator
 	}
 
 	@Override
+	public JsonGenerator write (String name, byte[] value)
+	{
+//		assert Debug.debug ("WRITE: KEY_NAME: " + name);
+//		assert Debug.debug ("WRITE: VALUE_STRING");
+		if (m_state != GeneratorState.IN_OBJECT)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
+		try
+		{
+			writeName (name);
+			if (m_binaryFormat == 0)
+				base64Encode (value);
+			else
+				hexEncode (value);
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
+	}
+
+	@Override
 	public JsonGenerator write (String name, String value)
 	{
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
@@ -708,6 +810,26 @@ public class TextJsonGenerator implements JsonGenerator
 				throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		}
 		return writeValue (value);
+	}
+
+	public JsonGenerator write (byte[] value)
+	{
+//		assert Debug.debug ("WRITE: VALUE_STRING");
+		if (m_state != GeneratorState.IN_ARRAY)
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
+		try
+		{
+			writeComma ();
+			if (m_binaryFormat == 0)
+				base64Encode (value);
+			else
+				hexEncode (value);
+			return this;
+		}
+		catch (IOException ex)
+		{
+			throw new JsonException (ex.getMessage (), ex);
+		}
 	}
 
 	@Override
@@ -934,5 +1056,32 @@ public class TextJsonGenerator implements JsonGenerator
 	public void setKeyNameEscaped (boolean b)
 	{
 		m_keyNameEscaped = b;
+	}
+
+	/**
+	 * Gets the binary format for storing byte[].
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
+	 *
+	 * @return	the binaryFormat
+	 */
+	public int getBinaryFormat ()
+	{
+		return m_binaryFormat;
+	}
+
+	/**
+	 * Sets the binary format for storing byte[].  The default is Base64.
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
+	 *
+	 * @param	binaryFormat
+	 *			the binary format
+	 */
+	public void setBinaryFormat (int binaryFormat)
+	{
+		m_binaryFormat = binaryFormat;
 	}
 }

@@ -87,6 +87,14 @@ class TextJsonConfigHandler implements ConfigHandler
 			g = new PrettyTextJsonGenerator (writer);
 		else
 			g = new TextJsonGenerator (writer);
+		obj = config.get (CookJsonProvider.BINARY_FORMAT);
+		if (obj != null)
+		{
+			if (CookJsonProvider.BINARY_FORMAT_HEX.equals (obj.toString ()))
+			{
+				g.setBinaryFormat (TextJsonGenerator.BINARY_FORMAT_HEX);
+			}
+		}
 		return g;
 	}
 
