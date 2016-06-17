@@ -53,6 +53,7 @@ public class JsonPathProvider extends AbstractJsonProvider
 		{
 			Reader r = new StringReader (jsonString);
 			TextJsonParser p = new TextJsonParser (r);
+			p.next ();	// read the very first token to get initiated.
 			JsonValue v = Utils.getValue (p);
 			p.close ();
 			return v;
@@ -70,6 +71,7 @@ public class JsonPathProvider extends AbstractJsonProvider
 		{
 			InputStreamReader reader = new InputStreamReader (is, charset);
 			TextJsonParser p = new TextJsonParser (reader);
+			p.next ();	// read the very first token to get initiated.
 			JsonValue v = Utils.getValue (p);
 			p.close ();
 			return v;

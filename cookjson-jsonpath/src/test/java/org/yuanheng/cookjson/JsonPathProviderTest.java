@@ -21,14 +21,17 @@ package org.yuanheng.cookjson;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashMap;
 
-import javax.json.*;
+import javax.json.JsonReader;
+import javax.json.JsonReaderFactory;
+import javax.json.JsonStructure;
+import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
 
 import org.apache.log4j.BasicConfigurator;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
@@ -50,7 +53,7 @@ public class JsonPathProviderTest
 		Configuration pathConfig = Configuration.defaultConfiguration ().jsonProvider (provider);
 		JsonPath path = JsonPath.compile ("$..A");
 
-		JsonProvider p = JsonProvider.provider ();
+		JsonProvider p = new CookJsonProvider ();
 		HashMap<String, Object> readConfig = new HashMap<String, Object> ();
 		JsonReaderFactory rf = p.createReaderFactory (readConfig);
 		JsonReader reader = rf.createReader (new FileInputStream (file));
@@ -59,14 +62,42 @@ public class JsonPathProviderTest
 
 		JsonValue value = path.read (obj, pathConfig);
 
-		HashMap<String, Object> writeConfig = new HashMap<String, Object> ();
-		JsonWriterFactory wf = p.createWriterFactory (writeConfig);
-		StringWriter sw = new StringWriter ();
-		JsonWriter writer = wf.createWriter (sw);
-		writer.write ((JsonStructure) value);
-		writer.close ();
+		Assert.assertEquals ("[1,3,5,7]", provider.toJson (value));
+	}
 
-		Assert.assertEquals ("[1,3,5,7]", sw.toString ());
+	@Test
+	public void testParseString () throws IOException
+	{
+		BasicConfigurator.configure ();
+		String f = "../tests/data/complex1.json";
+		File file = new File (f.replace ('/', File.separatorChar));
+		String str = Utils.getString (file);
+
+		JsonPathProvider provider = new JsonPathProvider ();
+
+		Configuration pathConfig = Configuration.defaultConfiguration ().jsonProvider (provider);
+		JsonPath path = JsonPath.compile ("$.strange");
+		JsonValue value = path.read (str, pathConfig);
+
+		// we cannot directly compare the output since the attribute ordering
+		// can vary.
+		Assert.assertEquals ("{\"id\":5555,\"price\":[1,2,3],\"customer\":\"john...\"}".length (), provider.toJson (value).length ());
+	}
+
+	@Test
+	public void testParseFile () throws IOException
+	{
+		BasicConfigurator.configure ();
+		String f = "../tests/data/data3.json";
+		File file = new File (f.replace ('/', File.separatorChar));
+
+		JsonPathProvider provider = new JsonPathProvider ();
+
+		Configuration pathConfig = Configuration.defaultConfiguration ().jsonProvider (provider);
+		JsonPath path = JsonPath.compile ("$..A");
+		JsonValue value = path.read (file, pathConfig);
+
+		Assert.assertEquals ("[1,3,5,7]", provider.toJson (value));
 	}
 
 	@Test
@@ -81,7 +112,7 @@ public class JsonPathProviderTest
 		Configuration pathConfig = Configuration.defaultConfiguration ().jsonProvider (provider);
 		JsonPath path = JsonPath.compile ("$..A");
 
-		JsonProvider p = JsonProvider.provider ();
+		JsonProvider p = new CookJsonProvider ();
 		HashMap<String, Object> readConfig = new HashMap<String, Object> ();
 		readConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
 		readConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
@@ -92,13 +123,6 @@ public class JsonPathProviderTest
 
 		JsonValue value = path.read (obj, pathConfig);
 
-		HashMap<String, Object> writeConfig = new HashMap<String, Object> ();
-		JsonWriterFactory wf = p.createWriterFactory (writeConfig);
-		StringWriter sw = new StringWriter ();
-		JsonWriter writer = wf.createWriter (sw);
-		writer.write ((JsonStructure) value);
-		writer.close ();
-
-		Assert.assertEquals ("[1,3,5,7]", sw.toString ());
+		Assert.assertEquals ("[1,3,5,7]", provider.toJson (value));
 	}
 }
