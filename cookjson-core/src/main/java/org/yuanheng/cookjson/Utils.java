@@ -338,34 +338,6 @@ public class Utils
 		}
 	}
 
-	private static void assertState (boolean b)
-	{
-		if (!b)
-			throw new IllegalStateException ();
-	}
-
-	public static void validateGeneratorAction (int currentState, int action)
-	{
-		switch (action)
-		{
-			case GeneratorAction.END_ARRAY_OBJECT:
-				assertState (currentState == GeneratorState.IN_ARRAY ||
-							 currentState == GeneratorState.IN_OBJECT);
-				break;
-			case GeneratorAction.WRITE_ARRAY_VALUE:
-				assertState (currentState == GeneratorState.INITIAL ||
-							 currentState == GeneratorState.IN_ARRAY);
-				break;
-			case GeneratorAction.WRITE_OBJECT_VALUE:
-				assertState (currentState == GeneratorState.IN_OBJECT);
-				break;
-			case GeneratorAction.CLOSE:
-				assertState (currentState == GeneratorState.INITIAL ||
-							 currentState == GeneratorState.END);
-				break;
-		}
-	}
-
 	public static String getString (File file)
 	{
 		try

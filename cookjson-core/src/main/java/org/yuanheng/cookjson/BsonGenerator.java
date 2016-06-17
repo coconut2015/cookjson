@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Map;
 
 import javax.json.*;
+import javax.json.stream.JsonGenerationException;
 import javax.json.stream.JsonGenerator;
 
 import org.yuanheng.cookjson.value.CookJsonBinary;
@@ -314,10 +315,7 @@ public class BsonGenerator implements CookJsonGenerator
 				for (JsonValue v : array)
 				{
 					m_name = null;
-					if (v == null)
-						writeNullValue ();
-					else
-						writeValue (v);
+					writeValue (v);
 				}
 				writeEnd ();
 				break;
@@ -330,10 +328,7 @@ public class BsonGenerator implements CookJsonGenerator
 				{
 					m_name = entry.getKey ();
 					JsonValue v = entry.getValue ();
-					if (v == null)
-						writeNullValue ();
-					else
-						writeValue (v);
+					writeValue (v);
 				}
 				writeEnd ();
 				break;
@@ -390,7 +385,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: START_OBJECT");
 		if (m_state != GeneratorState.INITIAL &&
 			m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.invalidContext);
 		return writeObject (m_state == GeneratorState.INITIAL);
 	}
 
@@ -400,7 +395,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: START_OBJECT");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeObject (false);
 	}
@@ -411,7 +406,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: START_ARRAY");
 		if (m_state != GeneratorState.INITIAL &&
 			m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.invalidContext);
 		return writeArray (m_state == GeneratorState.INITIAL);
 	}
 
@@ -421,7 +416,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: START_ARRAY");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeArray (false);
 	}
@@ -432,7 +427,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: JsonValue");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -443,7 +438,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_BINARY");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -454,7 +449,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_STRING");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -465,7 +460,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value.toString ());
 	}
@@ -476,7 +471,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
@@ -489,7 +484,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -500,7 +495,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -511,7 +506,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -522,7 +517,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeValue (value);
 	}
@@ -533,7 +528,7 @@ public class BsonGenerator implements CookJsonGenerator
 //		assert Debug.debug ("WRITE: KEY_NAME: " + name);
 //		assert Debug.debug ("WRITE: VALUE_NULL");
 		if (m_state != GeneratorState.IN_OBJECT)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
 		return writeNullValue ();
 	}
@@ -564,7 +559,16 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: JsonValue");
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+		{
+			if (m_state == GeneratorState.INITIAL)
+			{
+				if (!(value instanceof JsonArray) &&
+					!(value instanceof JsonObject))
+					throw new JsonGenerationException (ErrorMessage.invalidContext);
+			}
+			else
+				throw new JsonGenerationException (ErrorMessage.notInArrayContext);
+		}
 		return writeValue (value);
 	}
 
@@ -573,7 +577,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_BINARY");
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -582,7 +586,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_STRING");
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -591,7 +595,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigDecimal)" + value);
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
@@ -602,7 +606,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (BigInteger)" + value);
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		if (m_useDouble)
 			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
@@ -613,7 +617,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (int)" + value);
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -622,7 +626,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (long)" + value);
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -631,7 +635,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NUMBER: (double)" + value);
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -640,7 +644,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_" + (value ? "TRUE" : "FALSE"));
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeValue (value);
 	}
 
@@ -649,7 +653,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 //		assert Debug.debug ("WRITE: VALUE_NULL");
 		if (m_state != GeneratorState.IN_ARRAY)
-			throw new IllegalStateException ();
+			throw new JsonGenerationException (ErrorMessage.notInArrayContext);
 		return writeNullValue ();
 	}
 
@@ -703,10 +707,5 @@ public class BsonGenerator implements CookJsonGenerator
 			m_state = states.get (index - 1) ? GeneratorState.IN_ARRAY : GeneratorState.IN_OBJECT;
 		}
 		return isArray;
-	}
-
-	void validateAction (int action)
-	{
-		Utils.validateGeneratorAction (m_state, action);
 	}
 }

@@ -25,7 +25,7 @@ import javax.json.*;
 /**
  * @author Heng Yuan
  */
-public class CookJsonObject extends HashMap<String, JsonValue>implements JsonObject
+public class CookJsonObject extends HashMap<String, JsonValue> implements JsonObject
 {
 	private static final long serialVersionUID = -4911944799507752602L;
 

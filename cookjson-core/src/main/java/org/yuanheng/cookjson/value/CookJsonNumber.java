@@ -45,7 +45,10 @@ public class CookJsonNumber implements JsonNumber
 	public boolean isIntegral ()
 	{
 		if (m_value instanceof Integer ||
-			m_value instanceof Long)
+			m_value instanceof Long ||
+			m_value instanceof BigInteger ||
+			(m_value instanceof BigDecimal &&
+			 ((BigDecimal)m_value).scale () == 0))
 			return true;
 		return false;
 	}
@@ -108,6 +111,10 @@ public class CookJsonNumber implements JsonNumber
 	@Override
 	public BigDecimal bigDecimalValue ()
 	{
+		if (m_value instanceof BigDecimal)
+		{
+			return (BigDecimal) m_value;
+		}
 		if (m_value instanceof Integer)
 		{
 			return new BigDecimal (m_value.intValue ());
@@ -115,6 +122,10 @@ public class CookJsonNumber implements JsonNumber
 		if (m_value instanceof Long)
 		{
 			return new BigDecimal (m_value.longValue ());
+		}
+		if (m_value instanceof BigInteger)
+		{
+			return new BigDecimal ((BigInteger) m_value);
 		}
 		if (m_value instanceof Float)
 		{

@@ -1034,11 +1034,6 @@ public class TextJsonGenerator implements CookJsonGenerator
 		return isArray;
 	}
 
-	void validateAction (int action)
-	{
-		Utils.validateGeneratorAction (m_state, action);
-	}
-
 	/**
 	 * Check if key name is escaped.
 	 * @return	true if key name is escaped.  false otherwise.

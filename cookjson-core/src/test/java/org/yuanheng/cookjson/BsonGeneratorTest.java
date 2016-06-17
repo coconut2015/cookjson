@@ -18,13 +18,13 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 
+import javax.json.JsonValue;
+import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -39,10 +39,12 @@ public class BsonGeneratorTest
 	@Rule
 	public TemporaryFolder testFolder = new TemporaryFolder ();
 
-	void testFile (String f1, String f2) throws IOException
+	@Test
+	public void testFile () throws IOException
 	{
-		File file1 = new File (f1.replace ('/', File.separatorChar));
-		File file2 = new File (f2.replace ('/', File.separatorChar));
+		// data1.bson has 0 in Document / Array length
+		File file1 = new File ("../tests/data/data3.json".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/data2.bson".replace ('/', File.separatorChar));
 
 		File testFile = testFolder.newFile ();
 		JsonParser p = new TextJsonParser (new FileInputStream (file1));
@@ -55,9 +57,62 @@ public class BsonGeneratorTest
 	}
 
 	@Test
-	public void test () throws IOException
+	public void testComplex () throws IOException
 	{
-		// data1.bson has 0 in Document / Array length
-		testFile ("../tests/data/data3.json", "../tests/data/data2.bson");
+		File file1 = new File ("../tests/data/complex1.json".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/complex1.bson".replace ('/', File.separatorChar));
+
+		// first convert from Json to Bson
+		File bsonFile = testFolder.newFile ();
+		CookJsonParser p = new TextJsonParser (new FileInputStream (file1));
+		JsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		// convert from expected BSON file to JSON
+		StringWriter sw1 = new StringWriter ();
+		p = new BsonParser (new FileInputStream (file2));
+		g = new TextJsonGenerator (sw1);
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		// then convert from generated BSON file to JSON
+		StringWriter sw2 = new StringWriter ();
+		p = new BsonParser (new FileInputStream (bsonFile));
+		g = new TextJsonGenerator (sw2);
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		Assert.assertEquals (sw1.toString (), sw2.toString ());
+	}
+
+	@Test
+	public void testJsonValue () throws IOException
+	{
+		File file1 = new File ("../tests/data/complex1.json".replace ('/', File.separatorChar));
+
+		// first convert from Json to Bson using stream API
+		File bsonFile = testFolder.newFile ();
+		CookJsonParser p = new TextJsonParser (new FileInputStream (file1));
+		JsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		// convert from Json to Bson using tree api
+		File bsonFile2 = testFolder.newFile ();
+		p = new TextJsonParser (new FileInputStream (file1));
+		p.next ();
+		JsonValue value = p.getValue ();
+		p.close ();
+		g = new BsonGenerator (new FileOutputStream (bsonFile2));
+		g.write (value);
+		g.close ();
+
+		// due to object ordering, we can only compare the length.
+		Assert.assertEquals (bsonFile.length (), bsonFile2.length ());
 	}
 }
