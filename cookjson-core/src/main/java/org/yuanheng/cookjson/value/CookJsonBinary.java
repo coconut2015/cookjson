@@ -20,7 +20,8 @@ package org.yuanheng.cookjson.value;
 
 import javax.json.JsonString;
 
-import org.yuanheng.cookjson.BinaryUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 /**
  * @author	Heng Yuan
@@ -50,8 +51,8 @@ public class CookJsonBinary implements JsonString
 	public String getString ()
 	{
 		if (m_textFormat == HEX)
-			return BinaryUtils.encodeHex (m_bytes);
-		return BinaryUtils.encodeBase64 (m_bytes);
+			return Hex.encodeHexString (m_bytes);
+		return Base64.encodeBase64String (m_bytes);
 	}
 
 	@Override
