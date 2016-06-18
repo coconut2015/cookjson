@@ -36,6 +36,12 @@ public class ConvertJsonTest
 	public TemporaryFolder testFolder = new TemporaryFolder ();
 
 	@Test
+	public void testHelp () throws Exception
+	{
+		ConvertJson.main (new String[]{ "-h" });
+	}
+
+	@Test
 	public void testJson () throws IOException
 	{
 		// test Json input / output with pretty option

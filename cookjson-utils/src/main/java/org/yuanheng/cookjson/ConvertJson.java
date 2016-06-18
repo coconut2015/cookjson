@@ -42,7 +42,7 @@ public class ConvertJson
 	{
 		PrintWriter pw = new PrintWriter (System.out);
 		HelpFormatter formatter = new HelpFormatter ();
-		formatter.printHelp (pw, 78, "cookjson-utils.jar [options]", null, options, 2, HelpFormatter.DEFAULT_DESC_PAD, null);
+		formatter.printHelp (pw, 78, "convertjson [options]", null, options, 2, HelpFormatter.DEFAULT_DESC_PAD, null);
 		pw.flush ();
 	}
 
@@ -89,8 +89,7 @@ public class ConvertJson
 					break;
 				case 'h':
 					usage (options);
-					System.exit (0);
-					break;
+					return;
 				case 'd':
 					useDouble = true;
 					break;

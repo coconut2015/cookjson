@@ -166,8 +166,7 @@ public class FixBson
 			{
 				case 'h':
 					usage (options);
-					System.exit (0);
-					break;
+					return;
 			}
 		}
 
