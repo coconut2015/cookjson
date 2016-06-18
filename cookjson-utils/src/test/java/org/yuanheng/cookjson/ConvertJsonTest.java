@@ -46,28 +46,43 @@ public class ConvertJsonTest
 	{
 		// test Json input / output with pretty option
 
-		File dstFile;
 		File srcFile;
+		File dstFile;
 
 		srcFile = new File ("../tests/data/complex1_pretty.json".replace ('/', File.separatorChar));
-		dstFile = testFolder.newFile ("test1.json");
+		dstFile = testFolder.newFile ("complex1_pretty.json");
 		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile.getPath (), "-p" });
 		FileAssert.assertBinaryEquals (srcFile, dstFile);
 	}
 
 	@Test
-	public void testBson () throws Exception
+	public void testBsonComplex () throws Exception
 	{
 		// test Bson input / output
 
-		File dstFile;
 		File srcFile;
+		File dstFile;
 
 		srcFile = new File ("../tests/data/complex1.bson".replace ('/', File.separatorChar));
-		dstFile = testFolder.newFile ("test2.bson");
+		dstFile = testFolder.newFile ("complex1.bson");
 		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile.getPath () });
-		FixBson.main (new String[]{ dstFile.getPath () });
 		FileAssert.assertBinaryEquals (srcFile, dstFile);
+	}
+
+	@Test
+	public void testBsonNumber () throws Exception
+	{
+		// test Bson input / output
+
+		File srcFile;
+		File expectFile;
+		File dstFile;
+
+		srcFile = new File ("../tests/data/number3.json".replace ('/', File.separatorChar));
+		expectFile = new File ("../tests/data/number3.bson".replace ('/', File.separatorChar));
+		dstFile = testFolder.newFile ("number3.bson");
+		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile.getPath (), "-d" });
+		FileAssert.assertBinaryEquals (expectFile, dstFile);
 	}
 
 	@Test
@@ -75,16 +90,16 @@ public class ConvertJsonTest
 	{
 		// test Bson input with rootAsArray option
 
-		File dstFile;
 		File srcFile;
+		File dstFile;
 		File dstFile2;
 
 		srcFile = new File ("../tests/data/data1.bson".replace ('/', File.separatorChar));
-		dstFile = testFolder.newFile ("test3_1.json");
+		dstFile = testFolder.newFile ("testroot_1.json");
 		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile.getPath (), "-a" });
 
 		srcFile = new File ("../tests/data/data3.json".replace ('/', File.separatorChar));
-		dstFile2 = testFolder.newFile ("test3_2.json");
+		dstFile2 = testFolder.newFile ("testroot_2.json");
 		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile2.getPath () });
 		FileAssert.assertBinaryEquals (dstFile, dstFile2);
 	}

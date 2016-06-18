@@ -18,6 +18,7 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
@@ -50,12 +51,18 @@ public class ConvertJson
 	{
 		Options options = new Options ();
 
+		options.addOption ("h", "help", false, "print this message.");
+
 		options.addOption ("f", "from", true, "from file");
 		options.addOption ("t", "to", true, "to file");
-		options.addOption ("p", "pretty", false, "pretty output for text format.");
-		options.addOption ("d", "double", false, "use double for BSON to store BigDecimal / BigInteger.");
+		// source options
 		options.addOption ("a", "array", false, "treat BSON root document as array.");
-		options.addOption ("h", "help", false, "print this message.");
+		// target options
+		// -- JSON specific
+		options.addOption ("p", "pretty", false, "pretty output for JSON format.");
+		// -- BSON specific
+		options.addOption ("d", "double", false, "use double for BSON to store BigDecimal / BigInteger.");
+		options.addOption ("n", "nofix", false, "disable fixing of BSON lengths.");
 
 		if (args.length == 0)
 		{
@@ -68,6 +75,7 @@ public class ConvertJson
 		boolean pretty = false;
 		boolean useDouble = false;
 		boolean rootAsArray = false;
+		boolean fixBson = true;
 
 		CommandLine cmdLine = null;
 		try
@@ -84,23 +92,23 @@ public class ConvertJson
 		{
 			switch (opt.getOpt ().charAt (0))
 			{
-				case 'a':
-					rootAsArray = true;
-					break;
 				case 'h':
 					usage (options);
 					return;
-				case 'd':
-					useDouble = true;
-					break;
-				case 'p':
-					pretty = true;
-					break;
 				case 'f':
 					src = opt.getValue ();
 					break;
 				case 't':
 					dst = opt.getValue ();
+					break;
+				case 'a':
+					rootAsArray = true;
+					break;
+				case 'd':
+					useDouble = true;
+					break;
+				case 'p':
+					pretty = true;
 					break;
 			}
 		}
@@ -174,6 +182,9 @@ public class ConvertJson
 			Utils.convert (p, g);
 			g.close ();
 			p.close ();
+
+			if (dstBson && fixBson)
+				FixBson.fix (new File (dst));
 		}
 		catch (IllegalStateException ex)
 		{
