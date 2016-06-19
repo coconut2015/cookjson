@@ -47,9 +47,4 @@ class BsonType
 
 	public final static int MinKey = 0xff;
 	public final static int MaxKey = 0x7f;
-
-	public static boolean isValueType (int type)
-	{
-		return type != Document && type != Array;
-	}
 }

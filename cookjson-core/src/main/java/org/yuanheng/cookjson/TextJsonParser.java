@@ -74,6 +74,8 @@ public class TextJsonParser implements CookJsonParser
 	public TextJsonParser (Reader r)
 	{
 		m_reader = r;
+		m_line = 1;
+		m_column = 1;
 	}
 
 	public TextJsonParser (InputStream is)
@@ -93,6 +95,8 @@ public class TextJsonParser implements CookJsonParser
 			throw new JsonException (ex.getMessage (), ex);
 		}
 		m_reader = new InputStreamReader (pis, charset);
+		m_line = 1;
+		m_column = 1;
 	}
 
 	private void saveLocation ()
@@ -164,7 +168,7 @@ public class TextJsonParser implements CookJsonParser
 				if (ch == '\n')
 				{
 					m_offset += len;
-					m_column = 0;
+					m_column = 1;
 					++m_line;
 					m_readPos = readPos;
 					return;
@@ -194,7 +198,7 @@ public class TextJsonParser implements CookJsonParser
 					case '\n':
 					{
 						m_offset += len;
-						m_column = 0;
+						m_column = 1;
 						++m_line;
 						len = 0;
 						break;
@@ -491,7 +495,7 @@ public class TextJsonParser implements CookJsonParser
 				switch (ch)
 				{
 					case '\n':
-						m_column = 0;
+						m_column = 1;
 						++m_line;
 						append (ch);
 						break;
@@ -576,7 +580,7 @@ public class TextJsonParser implements CookJsonParser
 				continue;
 			if (ch == '\n')
 			{
-				m_column = 0;
+				m_column = 1;
 				++m_line;
 				continue;
 			}
@@ -602,7 +606,7 @@ public class TextJsonParser implements CookJsonParser
 				continue;
 			if (ch == '\n')
 			{
-				m_column = 0;
+				m_column = 1;
 				++m_line;
 				continue;
 			}
@@ -628,7 +632,7 @@ public class TextJsonParser implements CookJsonParser
 				continue;
 			if (ch == '\n')
 			{
-				m_column = 0;
+				m_column = 1;
 				++m_line;
 				continue;
 			}
@@ -647,7 +651,7 @@ public class TextJsonParser implements CookJsonParser
 				continue;
 			if (ch == '\n')
 			{
-				m_column = 0;
+				m_column = 1;
 				++m_line;
 				continue;
 			}
@@ -680,7 +684,7 @@ public class TextJsonParser implements CookJsonParser
 				continue;
 			if (ch == '\n')
 			{
-				m_column = 0;
+				m_column = 1;
 				++m_line;
 				continue;
 			}
@@ -699,7 +703,7 @@ public class TextJsonParser implements CookJsonParser
 				case '\r':
 					break;
 				case '\n':
-					m_column = 0;
+					m_column = 1;
 					++m_line;
 					break;
 				case ' ':
