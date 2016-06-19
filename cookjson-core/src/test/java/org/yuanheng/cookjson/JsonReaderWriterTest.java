@@ -36,13 +36,24 @@ import org.junit.Test;
  */
 public class JsonReaderWriterTest
 {
-	private String getString (File file, JsonProvider provider) throws IOException
+	private String getString (File file, JsonProvider provider, int readCase) throws IOException
 	{
 		// create reader
 		HashMap<String, Object> readConfig = new HashMap<String, Object> ();
 		JsonReaderFactory rf = provider.createReaderFactory (readConfig);
 		JsonReader reader = rf.createReader (new FileInputStream (file));
-		JsonStructure obj = reader.read ();
+		JsonStructure obj;
+		switch (readCase)
+		{
+			case 1:
+				obj = reader.readArray ();
+				break;
+			case 2:
+				obj = reader.readObject ();
+				break;
+			default:	// 0
+				obj = reader.read ();
+		}
 		reader.close ();
 
 		// write it out
@@ -56,20 +67,41 @@ public class JsonReaderWriterTest
 		return sw.toString ();
 	}
 
-	@Test
-	public void test () throws IOException
+	private void testFile (String fileName, int readCase) throws IOException
 	{
-		String f = "../tests/data/complex1.json";
-		File file = new File (f.replace ('/', File.separatorChar));
+		File file = new File (fileName.replace ('/', File.separatorChar));
 
-		String str1 = getString (file, new CookJsonProvider ());
-		String str2 = getString (file, new JsonProviderImpl ());
+		String str1 = "";
+		try
+		{
+			str1 = getString (file, new CookJsonProvider (), readCase);
+		}
+		catch (Exception ex)
+		{
+		}
+		String str2 = "";
+		try
+		{
+			str2 = getString (file, new JsonProviderImpl (), readCase);
+		}
+		catch (Exception ex)
+		{
+		}
 
 		// Because JsonObject's name ordering is somewhat random,
 		// we cannot do string comparison.  But we can compare the
 		// string length which should be equal.
-		System.out.println (str1);
-		System.out.println (str2);
+//		System.out.println (str1);
+//		System.out.println (str2);
 		Assert.assertEquals (str1.length (), str2.length ());
+	}
+
+	@Test
+	public void test () throws IOException
+	{
+		for (int i = 0; i < 3; ++i)
+			testFile ("../tests/data/complex1.json", i);
+		for (int i = 0; i < 3; ++i)
+			testFile ("../tests/data/string2.json", i);
 	}
 }
