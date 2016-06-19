@@ -103,5 +103,7 @@ public class JsonReaderWriterTest
 			testFile ("../tests/data/complex1.json", i);
 		for (int i = 0; i < 3; ++i)
 			testFile ("../tests/data/string2.json", i);
+		for (int i = 0; i < 3; ++i)
+			testFile ("../tests/data/types.json", i);
 	}
 }

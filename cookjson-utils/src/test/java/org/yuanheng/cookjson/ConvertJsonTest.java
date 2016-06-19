@@ -103,4 +103,21 @@ public class ConvertJsonTest
 		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile2.getPath () });
 		FileAssert.assertBinaryEquals (dstFile, dstFile2);
 	}
+
+	@Test
+	public void testHexadecimal () throws Exception
+	{
+		// test Bson input with rootAsArray option
+
+		File srcFile;
+		File expectFile;
+		File dstFile;
+
+		srcFile = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		dstFile = testFolder.newFile ("testbinary.json");
+		ConvertJson.main (new String[]{ "-f", srcFile.getPath (), "-t", dstFile.getPath (), "-a", "-x" });
+
+		expectFile = new File ("../tests/data/binary2.json".replace ('/', File.separatorChar));
+		FileAssert.assertBinaryEquals (expectFile, dstFile);
+	}
 }
