@@ -41,7 +41,9 @@ public class BsonParser implements CookJsonParser
 {
 	private final BsonInputStream m_is;
 
-	private BsonField m_field = new BsonField ();
+	private int m_fieldType;
+	private String m_fieldName;
+
 	private Event m_event;
 	private Object m_value;
 	private ArrayList<Boolean> m_states = new ArrayList<Boolean> ();
@@ -104,15 +106,14 @@ public class BsonParser implements CookJsonParser
 	private void getField () throws IOException
 	{
 		m_location.m_streamOffset= m_is.getLocation ();
-		BsonField field = m_field;
-		field.type = m_is.read () & 0xff;
-		if (field.type == 0)
-			field.name = null;
+		m_fieldType = m_is.read () & 0xff;
+		if (m_fieldType == 0)
+			m_fieldName = null;
 		else
-			field.name = m_is.readCString ();
+			m_fieldName = m_is.readCString ();
 
 		// we treat Code w/ scope as Objects.  Not tested.
-		switch (field.type)
+		switch (m_fieldType)
 		{
 			case BsonType.JavaScriptScope:
 			{
@@ -131,7 +132,7 @@ public class BsonParser implements CookJsonParser
 			}
 			default:
 			{
-				if (field.type >= 128 && field.type <= 255)
+				if (m_fieldType >= 128 && m_fieldType <= 255)
 				{
 					throw new IOException ("Cannot handle user defined type.");
 				}
@@ -236,15 +237,15 @@ public class BsonParser implements CookJsonParser
 					// we need to setup as a nameless document
 					// by default, BSON's root is a Document.
 					m_state = m_rootAsArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
-					m_field.type = m_rootAsArray ? BsonType.Array : BsonType.Document;
-					m_field.name = null;
-					m_event = getEventFromType (m_field.type);
+					m_fieldType = m_rootAsArray ? BsonType.Array : BsonType.Document;
+					m_fieldName = null;
+					m_event = getEventFromType (m_fieldType);
 					break;
 				}
 				case ParserState.IN_FIELD:
 				{
 					// get the value
-					m_event = getEventFromType (m_field.type);
+					m_event = getEventFromType (m_fieldType);
 					break;
 				}
 				case ParserState.IN_ARRAY:
@@ -252,7 +253,7 @@ public class BsonParser implements CookJsonParser
 					// get the field
 					getField ();
 					// skip the name for array.
-					m_event = getEventFromType (m_field.type);
+					m_event = getEventFromType (m_fieldType);
 					break;
 				}
 				case ParserState.IN_OBJECT:
@@ -260,7 +261,7 @@ public class BsonParser implements CookJsonParser
 					getField ();
 //					Debug.debug ("FIELD: " + m_field);
 					m_event = Event.KEY_NAME;
-					m_value = m_field.name;
+					m_value = m_fieldName;
 					m_state = ParserState.IN_FIELD;
 					break;
 				}
