@@ -172,13 +172,13 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 	}
 
-	private JsonGenerator writeElement (int type, String name, byte[] bytes, int length)
+	private JsonGenerator writeElement (int type, String name, int length)
 	{
 		try
 		{
 			w (type);
 			writeCString (name);
-			w (bytes, 0, length);
+			w (m_bytes, 0, length);
 		}
 		catch (IOException ex)
 		{
@@ -207,7 +207,7 @@ public class BsonGenerator implements CookJsonGenerator
 		if (root)
 			return writeRootObject ();
 		else
-			return writeElement (BsonType.Document, m_name, m_bytes, 4);
+			return writeElement (BsonType.Document, m_name, 4);
 	}
 
 	private JsonGenerator writeArray (boolean root)
@@ -224,7 +224,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		else
 		{
-			writeElement (BsonType.Array, m_name, m_bytes, 4);
+			writeElement (BsonType.Array, m_name, 4);
 			m_arrayCounts.add (m_index);
 			m_index = 0;
 			m_name = null;
@@ -237,7 +237,7 @@ public class BsonGenerator implements CookJsonGenerator
 		try
 		{
 			Utils.setInt (m_bytes, value.length);
-			w (m_bytes);
+			writeElement (BsonType.Binary, m_name, 4);
 			w (0);
 			w (value);
 		}
@@ -252,7 +252,7 @@ public class BsonGenerator implements CookJsonGenerator
 	{
 		byte[] bytes = value.getBytes (BOM.utf8);
 		Utils.setInt (m_bytes, bytes.length + 1);
-		writeElement (BsonType.String, m_name, m_bytes, 4);
+		writeElement (BsonType.String, m_name, 4);
 		try
 		{
 			w (bytes);
@@ -268,26 +268,26 @@ public class BsonGenerator implements CookJsonGenerator
 	private JsonGenerator writeValue (int value)
 	{
 		Utils.setInt (m_bytes, value);
-		return writeElement (BsonType.Integer, m_name, m_bytes, 4);
+		return writeElement (BsonType.Integer, m_name, 4);
 	}
 
 	private JsonGenerator writeValue (long value)
 	{
 		Utils.setLong (m_bytes, value);
-		return writeElement (BsonType.Long, m_name, m_bytes, 8);
+		return writeElement (BsonType.Long, m_name, 8);
 	}
 	
 	private JsonGenerator writeValue (double value)
 	{
 		long v = Double.doubleToLongBits (value);
 		Utils.setLong (m_bytes, v);
-		return writeElement (BsonType.Double, m_name, m_bytes, 8);
+		return writeElement (BsonType.Double, m_name, 8);
 	}
 
 	private JsonGenerator writeValue (boolean value)
 	{
 		m_bytes[0] = (byte) (value ? 1 : 0);
-		return writeElement (BsonType.Boolean, m_name, m_bytes, 1);
+		return writeElement (BsonType.Boolean, m_name, 1);
 	}
 
 	private JsonGenerator writeNullValue ()

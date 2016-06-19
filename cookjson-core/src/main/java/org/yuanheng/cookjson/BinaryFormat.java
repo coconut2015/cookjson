@@ -18,21 +18,11 @@
  */
 package org.yuanheng.cookjson;
 
-class Pair implements Comparable<Pair>
+/**
+ * @author	Heng Yuan
+ */
+public class BinaryFormat
 {
-	long offset;
-	int size;
-
-	@Override
-	public int compareTo (Pair o)
-	{
-		long diff = offset - o.offset;
-		return diff > 0 ? 1 : (diff < 0 ? -1 : 0);
-	}
-
-	@Override
-	public String toString ()
-	{
-		return offset + ": " + size;
-	}
+	public final static int BINARY_FORMAT_BASE64 = 0;
+	public final static int BINARY_FORMAT_HEX = 1;
 }

@@ -34,18 +34,12 @@ import junitx.framework.FileAssert;
 /**
  * @author	Heng Yuan
  */
-public class FixBsonTest
+public class BsonFixLengthTest
 {
 	@Rule
 	public TemporaryFolder testFolder = new TemporaryFolder ();
 
-	@Test
-	public void testHelp () throws Exception
-	{
-		FixBson.main (new String[]{ "-h" });
-	}
-
-	private void runConvert (String src, File dstFile) throws Exception
+	private void runFixBson (String src, File dstFile) throws Exception
 	{
 		File srcFile = new File (src.replace ('/', File.separatorChar));
 
@@ -55,15 +49,16 @@ public class FixBsonTest
 		Utils.convert (p, g);
 		p.close ();
 		g.close ();
+
+		// then fix it
+		BsonFixLength.fix (dstFile);
 	}
 
 	@Test
-	public void testFixBson () throws Exception
+	public void testFix () throws Exception
 	{
 		File dstFile = testFolder.newFile ("output.bson");
-		runConvert ("../tests/data/complex1.json", dstFile);
-
-		FixBson.main (new String[]{ dstFile.getPath () });
+		runFixBson ("../tests/data/complex1.json", dstFile);
 
 		File actualFile = new File ("../tests/data/complex1.bson".replace ('/', File.separatorChar));
 		FileAssert.assertBinaryEquals (dstFile, actualFile);

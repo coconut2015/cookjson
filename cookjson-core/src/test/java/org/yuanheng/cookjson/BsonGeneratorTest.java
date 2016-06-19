@@ -22,7 +22,6 @@ import java.io.*;
 
 import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonParser;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -47,7 +46,7 @@ public class BsonGeneratorTest
 		File file2 = new File ("../tests/data/data2.bson".replace ('/', File.separatorChar));
 
 		File testFile = testFolder.newFile ();
-		JsonParser p = new TextJsonParser (new FileInputStream (file1));
+		TextJsonParser p = new TextJsonParser (new FileInputStream (file1));
 		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
 		Utils.convert (p, g);
 		p.close ();

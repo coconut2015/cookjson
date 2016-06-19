@@ -46,7 +46,10 @@ public class CookJsonProvider extends JsonProvider
 	// ---- JSON options
 	/** If the value is true, allows line/block comments in the file. */
 	public final static String COMMENT = "comment";
-	/** The binary format for JSON */
+	/**
+	 * The binary format for JSON output, as well as for string representation
+	 * format of binary data read from BSON.
+	 */
 	public final static String BINARY_FORMAT = "binaryFormat";
 	/**
 	 * Specifies MIME Base64 format in a single line.

@@ -22,19 +22,15 @@ import javax.json.JsonString;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.yuanheng.cookjson.BinaryFormat;
 
 /**
  * @author	Heng Yuan
  */
 public class CookJsonBinary implements JsonString
 {
-	/** Use base64 to represent binary values. */
-	public final static int BASE64 = 0;
-	/** Use hexadecimal to represent binary values. */
-	public final static int HEX = 1;
-
 	private final byte[] m_bytes;
-	private int m_textFormat;
+	private int m_binaryFormat;
 
 	public CookJsonBinary (byte[] bytes)
 	{
@@ -50,7 +46,7 @@ public class CookJsonBinary implements JsonString
 	@Override
 	public String getString ()
 	{
-		if (m_textFormat == HEX)
+		if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_HEX)
 			return Hex.encodeHexString (m_bytes);
 		return Base64.encodeBase64String (m_bytes);
 	}
@@ -67,21 +63,29 @@ public class CookJsonBinary implements JsonString
 	}
 
 	/**
-	 * @return	the textFormat
+	 * Gets the binary format for storing byte[].
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
+	 *
+	 * @return	the binaryFormat
 	 */
-	public int getTextFormat ()
+	public int getBinaryFormat ()
 	{
-		return m_textFormat;
+		return m_binaryFormat;
 	}
 
 	/**
-	 * Use BASE64 or HEX format for string.
+	 * Sets the binary format for storing byte[].  The default is Base64.
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
 	 *
-	 * @param	textFormat
-	 *			the text format to set
+	 * @param	binaryFormat
+	 *			the binary format
 	 */
-	public void setTextFormat (int textFormat)
+	public void setBinaryFormat (int binaryFormat)
 	{
-		m_textFormat = textFormat;
+		m_binaryFormat = binaryFormat;
 	}
 }

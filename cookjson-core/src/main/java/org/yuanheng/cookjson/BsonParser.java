@@ -28,6 +28,8 @@ import javax.json.JsonException;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.yuanheng.cookjson.value.*;
 
 /**
@@ -48,6 +50,7 @@ public class BsonParser implements CookJsonParser
 	private boolean m_inArray;
 
 	private boolean m_rootAsArray;
+	private int m_binaryFormat;
 
 	public BsonParser (InputStream is)
 	{
@@ -282,7 +285,15 @@ public class BsonParser implements CookJsonParser
 		{
 			case KEY_NAME:
 			case VALUE_STRING:
+			{
+				if (m_value instanceof byte[])
+				{
+					if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_HEX)
+						return Hex.encodeHexString ((byte[]) m_value);
+					return Base64.encodeBase64String ((byte[]) m_value);
+				}
 				return (String) m_value;
+			}
 			case VALUE_NUMBER:
 				return m_value.toString ();
 			default:
@@ -368,5 +379,32 @@ public class BsonParser implements CookJsonParser
 	public void setRootAsArray (boolean b)
 	{
 		m_rootAsArray = b;
+	}
+
+	/**
+	 * Gets the binary format for storing byte[].
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
+	 *
+	 * @return	the binaryFormat
+	 */
+	public int getBinaryFormat ()
+	{
+		return m_binaryFormat;
+	}
+
+	/**
+	 * Sets the binary format for storing byte[].  The default is Base64.
+	 * <p>
+	 * It is one of {@link #BINARY_FORMAT_BASE64} and
+	 * {@link #BINARY_FORMAT_HEX}.
+	 *
+	 * @param	binaryFormat
+	 *			the binary format
+	 */
+	public void setBinaryFormat (int binaryFormat)
+	{
+		m_binaryFormat = binaryFormat;
 	}
 }

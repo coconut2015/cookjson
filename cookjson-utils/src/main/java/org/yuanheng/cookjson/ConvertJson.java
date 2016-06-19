@@ -184,7 +184,7 @@ public class ConvertJson
 			p.close ();
 
 			if (dstBson && fixBson)
-				FixBson.fix (new File (dst));
+				BsonFixLength.fix (new File (dst));
 		}
 		catch (IllegalStateException ex)
 		{

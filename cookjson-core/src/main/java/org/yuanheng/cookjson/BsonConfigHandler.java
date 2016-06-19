@@ -53,12 +53,24 @@ class BsonConfigHandler implements ConfigHandler
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is)
 	{
+		BsonParser p = new BsonParser (is);
+
 		boolean rootAsArray = false;
 		Object obj = config.get (CookJsonProvider.ROOT_AS_ARRAY);
 		if (obj != null)
 			rootAsArray = "true".equals (obj.toString ());
-		BsonParser p = new BsonParser (is);
 		p.setRootAsArray (rootAsArray);
+
+		int binaryFormat = BinaryFormat.BINARY_FORMAT_BASE64;
+		obj = config.get (CookJsonProvider.BINARY_FORMAT);
+		if (obj != null)
+		{
+			if (CookJsonProvider.BINARY_FORMAT_HEX.equals (obj.toString ()))
+			{
+				binaryFormat = BinaryFormat.BINARY_FORMAT_HEX;
+			}
+		}
+		p.setBinaryFormat (binaryFormat);
 		return p;
 	}
 

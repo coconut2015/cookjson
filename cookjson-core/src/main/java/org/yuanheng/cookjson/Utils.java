@@ -35,7 +35,7 @@ import javax.json.stream.JsonParser.Event;
 import org.yuanheng.cookjson.value.*;
 
 /**
- * @author Heng Yuan
+ * @author	Heng Yuan
  */
 public class Utils
 {
@@ -318,7 +318,10 @@ public class Utils
 							if (name == null)
 								((BsonGenerator)g).write (bytes);
 							else
+							{
 								((BsonGenerator)g).write (name, bytes);
+								name = null;
+							}
 							break;
 						}
 					}
@@ -331,6 +334,7 @@ public class Utils
 						g.write (name, p.getString ());
 						name = null;
 					}
+					break;
 				}
 				default:
 					break;

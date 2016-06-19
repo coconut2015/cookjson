@@ -51,9 +51,6 @@ import org.yuanheng.cookjson.value.CookJsonBinary;
  */
 public class TextJsonGenerator implements CookJsonGenerator
 {
-	public final static int BINARY_FORMAT_BASE64 = 0;
-	public final static int BINARY_FORMAT_HEX = 1;
-
 	/**
 	 * If the name is already being escaped.
 	 */
@@ -472,7 +469,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 				if (value instanceof CookJsonBinary)
 				{
 					byte[] bytes = ((CookJsonBinary) value).getBytes ();
-					if (m_binaryFormat == 0)
+					if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_BASE64)
 						base64Encode (bytes);
 					else
 						hexEncode (bytes);
@@ -608,7 +605,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		try
 		{
 			writeName (name);
-			if (m_binaryFormat == 0)
+			if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_BASE64)
 				base64Encode (value);
 			else
 				hexEncode (value);
@@ -826,7 +823,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		try
 		{
 			writeComma ();
-			if (m_binaryFormat == 0)
+			if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_BASE64)
 				base64Encode (value);
 			else
 				hexEncode (value);

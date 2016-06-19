@@ -78,23 +78,28 @@ class TextJsonConfigHandler implements ConfigHandler
 	@Override
 	public JsonGenerator createGenerator (Map<String, ?> config, Writer writer)
 	{
+		TextJsonGenerator g;
+
 		boolean pretty = false;
 		Object obj = config.get (JsonGenerator.PRETTY_PRINTING);
 		if (obj != null)
 			pretty = "true".equals (obj.toString ());
-		TextJsonGenerator g;
 		if (pretty)
 			g = new PrettyTextJsonGenerator (writer);
 		else
 			g = new TextJsonGenerator (writer);
+
+		int binaryFormat = BinaryFormat.BINARY_FORMAT_BASE64;
 		obj = config.get (CookJsonProvider.BINARY_FORMAT);
 		if (obj != null)
 		{
 			if (CookJsonProvider.BINARY_FORMAT_HEX.equals (obj.toString ()))
 			{
-				g.setBinaryFormat (TextJsonGenerator.BINARY_FORMAT_HEX);
+				binaryFormat = BinaryFormat.BINARY_FORMAT_HEX;
 			}
 		}
+		g.setBinaryFormat (binaryFormat);
+
 		return g;
 	}
 
