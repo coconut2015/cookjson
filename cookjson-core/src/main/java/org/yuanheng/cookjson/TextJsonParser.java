@@ -916,7 +916,7 @@ public class TextJsonParser implements CookJsonParser
 				diff = 1;
 				break;
 			case VALUE_NUMBER:
-				diff = m_appendPos;
+				diff = m_appendPos + 1;
 				break;
 			case KEY_NAME:
 			case VALUE_STRING:
