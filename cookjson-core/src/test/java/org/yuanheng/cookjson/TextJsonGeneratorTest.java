@@ -70,6 +70,7 @@ public class TextJsonGeneratorTest
 		testFile ("../tests/data/nested2.json");
 		testFile ("../tests/data/string.json");
 		testFile ("../tests/data/string2.json");
+		testFile ("../tests/data/number4.json");
 	}
 
 	private void testJsonValueJson (String f) throws IOException

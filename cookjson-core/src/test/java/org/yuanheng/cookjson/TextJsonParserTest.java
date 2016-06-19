@@ -64,6 +64,7 @@ public class TextJsonParserTest
 		testFile ("../tests/data/double.json");
 		testFile ("../tests/data/empty.json");
 		testFile ("../tests/data/long.json");
+		testFile ("../tests/data/number.json");
 		testFile ("../tests/data/string.json");
 		testFile ("../tests/data/string2.json");
 	}
