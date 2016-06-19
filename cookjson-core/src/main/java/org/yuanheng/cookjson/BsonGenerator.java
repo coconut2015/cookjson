@@ -462,6 +462,8 @@ public class BsonGenerator implements CookJsonGenerator
 		if (m_state != GeneratorState.IN_OBJECT)
 			throw new JsonGenerationException (ErrorMessage.notInObjectContext);
 		checkName (name);
+		if (m_useDouble)
+			return writeValue (value.doubleValue ());
 		return writeValue (value.toString ());
 	}
 

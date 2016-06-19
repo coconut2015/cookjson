@@ -38,21 +38,53 @@ public class BsonGeneratorTest
 	@Rule
 	public TemporaryFolder testFolder = new TemporaryFolder ();
 
-	@Test
-	public void testFile () throws IOException
+	private void testFile (String fileName1, String fileName2, boolean useDouble) throws IOException
 	{
 		// data1.bson has 0 in Document / Array length
-		File file1 = new File ("../tests/data/data3.json".replace ('/', File.separatorChar));
-		File file2 = new File ("../tests/data/data2.bson".replace ('/', File.separatorChar));
+		File file1 = new File (fileName1.replace ('/', File.separatorChar));
+		File file2 = new File (fileName2.replace ('/', File.separatorChar));
 
 		File testFile = testFolder.newFile ();
 		TextJsonParser p = new TextJsonParser (new FileInputStream (file1));
 		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
+		g.setUseDouble (useDouble);
 		Utils.convert (p, g);
 		p.close ();
 		g.close ();
+		BsonFixLength.fix (testFile);
 
 		FileAssert.assertBinaryEquals (file2, testFile);
+	}
+
+	@Test
+	public void testConvert () throws IOException
+	{
+		testFile ("../tests/data/data3.json", "../tests/data/data1.bson", false);
+		testFile ("../tests/data/types.json", "../tests/data/types.bson", true);
+		testFile ("../tests/data/types.json", "../tests/data/types2.bson", false);
+	}
+
+	private void testBsonFile (String fileName, boolean useDouble) throws IOException
+	{
+		// data1.bson has 0 in Document / Array length
+		File file = new File (fileName.replace ('/', File.separatorChar));
+
+		File testFile = testFolder.newFile ();
+		BsonParser p = new BsonParser (new FileInputStream (file));
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
+		g.setUseDouble (useDouble);
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+		BsonFixLength.fix (testFile);
+
+		FileAssert.assertBinaryEquals (file, testFile);
+	}
+
+	@Test
+	public void testSelf () throws IOException
+	{
+		testBsonFile ("../tests/data/binary.bson", false);
 	}
 
 	@Test

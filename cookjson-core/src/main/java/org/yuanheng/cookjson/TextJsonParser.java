@@ -808,13 +808,6 @@ public class TextJsonParser implements CookJsonParser
 					m_lastToken = START;
 					return;
 				}
-				case '}':
-				{
-					popState (false);
-					m_event = Event.END_OBJECT;
-					m_lastToken = VALUE;
-					return;
-				}
 				default:
 				{
 					scanUnexpected (ch);
