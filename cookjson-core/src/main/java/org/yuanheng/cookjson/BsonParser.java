@@ -116,13 +116,7 @@ public class BsonParser implements CookJsonParser
 		switch (m_fieldType)
 		{
 			case BsonType.JavaScriptScope:
-			{
-				// skip the following two fields
-				m_is.readInt ();		// size
-				m_is.getStringValue ();	// scope?
-				getField ();
-				break;
-			}
+				throw new IOException ("Cannot handle user defined type.");
 			case BsonType.MinKey:
 			case BsonType.MaxKey:
 			{
@@ -259,6 +253,21 @@ public class BsonParser implements CookJsonParser
 				case ParserState.IN_OBJECT:
 				{
 					getField ();
+					if (m_fieldType == 0)
+					{
+						Boolean b = m_states.remove (m_states.size () - 1);
+						if (b)
+							throw new IllegalStateException ();
+						m_value = null;
+						if (m_states.isEmpty ())
+							m_state = ParserState.END;
+						else
+						{
+							m_inArray = m_states.get (m_states.size () - 1);
+							m_state = m_inArray ? ParserState.IN_ARRAY : ParserState.IN_OBJECT;
+						}
+						return Event.END_OBJECT;
+					}
 //					Debug.debug ("FIELD: " + m_field);
 					m_event = Event.KEY_NAME;
 					m_value = m_fieldName;

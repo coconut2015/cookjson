@@ -22,10 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.NoSuchElementException;
 
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParser.Event;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -66,5 +68,49 @@ public class BsonParserTest
 		testFile ("../tests/data/data1.bson", "../tests/data/data3.json");
 		// data2.bson has the correct length
 		testFile ("../tests/data/data2.bson", "../tests/data/data3.json");
+	}
+
+	private void eventCheck (String fileName, int expectedCount, boolean rootAsArray) throws IOException
+	{
+		File file = new File (fileName.replace ('/', File.separatorChar));
+		BsonParser p = new BsonParser (new FileInputStream (file));
+		p.setRootAsArray (rootAsArray);
+
+		int count = 0;
+		try
+		{
+			for (;;)
+			{
+				Event e = p.next ();
+//				Debug.debug ("READ: " + e);
+				switch (e)
+				{
+					case KEY_NAME:
+					{
+//						String str = p.getString ();
+//						if (str == null)
+//							str = "?";
+						++count;
+						break;
+					}
+					default:
+						++count;
+				}
+			}
+		}
+		catch (NoSuchElementException ex)
+		{
+			// expected end.
+		}
+		p.close ();
+		Assert.assertEquals (expectedCount, count);
+	}
+
+	@Test
+	public void testEvent () throws IOException
+	{
+		// data1.bson has 0 in Document / Array length
+		eventCheck ("../tests/data/complex1.bson", 47, false);
+		eventCheck ("../tests/data/binary.bson", 32, true);
 	}
 }

@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 
+import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
@@ -67,5 +68,73 @@ public class TextJsonGeneratorTest
 		testFile ("../tests/data/long.json");
 		testFile ("../tests/data/nested1.json");
 		testFile ("../tests/data/nested2.json");
+		testFile ("../tests/data/string.json");
+		testFile ("../tests/data/string2.json");
+	}
+
+	private void testJsonValueJson (String f) throws IOException
+	{
+		File file = new File (f.replace ('/', File.separatorChar));
+
+		JsonValue value;
+
+		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		p.next ();
+		value = p.getValue ();
+		p.close ();
+
+		StringWriter out1 = new StringWriter ();
+		JsonGenerator g1 = new TextJsonGenerator (out1);
+		g1.writeStartArray ();
+		g1.write (value);
+		g1.writeEnd ();
+		g1.close ();
+
+		JsonProvider provider = new org.glassfish.json.JsonProviderImpl ();
+		StringWriter out2 = new StringWriter ();
+		JsonGenerator g2 = provider.createGenerator (out2);
+		g2.writeStartArray ();
+		g2.write (value);
+		g2.writeEnd ();
+		g2.close ();
+
+		Assert.assertEquals (out1.toString (), out2.toString ());
+	}
+
+	private void testJsonValueBson (String f) throws IOException
+	{
+		File file = new File (f.replace ('/', File.separatorChar));
+
+		JsonValue value;
+
+		BsonParser p = new BsonParser (new FileInputStream (file));
+		p.setRootAsArray (true);
+		p.next ();
+		value = p.getValue ();
+		p.close ();
+
+		StringWriter out1 = new StringWriter ();
+		JsonGenerator g1 = new TextJsonGenerator (out1);
+		g1.writeStartArray ();
+		g1.write (value);
+		g1.writeEnd ();
+		g1.close ();
+
+		JsonProvider provider = new org.glassfish.json.JsonProviderImpl ();
+		StringWriter out2 = new StringWriter ();
+		JsonGenerator g2 = provider.createGenerator (out2);
+		g2.writeStartArray ();
+		g2.write (value);
+		g2.writeEnd ();
+		g2.close ();
+
+		Assert.assertEquals (out1.toString (), out2.toString ());
+	}
+
+	@Test
+	public void testJsonValue () throws IOException
+	{
+		testJsonValueJson ("../tests/data/complex1.json");
+		testJsonValueBson ("../tests/data/binary.bson");
 	}
 }

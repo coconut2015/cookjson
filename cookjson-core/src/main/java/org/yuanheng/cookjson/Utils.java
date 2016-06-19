@@ -22,12 +22,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
-import java.util.Stack;
+import java.util.ArrayList;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
@@ -63,49 +60,79 @@ public class Utils
 
 	private static void addStructure (CookJsonParser p, JsonStructure struct)
 	{
-		Stack<JsonStructure> structStack = new Stack<JsonStructure> ();
-		Stack<String> nameStack = new Stack<String> ();
+		ArrayList<JsonStructure> structStack = new ArrayList<JsonStructure> ();
 
-		structStack.push (struct);
-//		Debug.debug ("push " + struct.getClass ());
-		while (p.hasNext ())
+		structStack.add (struct);
+//		assert Debug.debug ("push " + struct.getClass ());
+		String name = null;
+		for (;;)
 		{
 			Event e = p.next ();
 			JsonValue value = null;
-//			Debug.debug ("READ: " + e);
+//			assert Debug.debug ("READ: " + e);
 			switch (e)
 			{
 				case START_ARRAY:
-					structStack.push (new CookJsonArray ());
-//					Debug.debug ("push array");
+				{
+					JsonStructure newStruct = new CookJsonArray ();
+					if (struct instanceof JsonArray)
+					{
+						((JsonArray)struct).add (newStruct);
+					}
+					else
+					{
+						((JsonObject)struct).put (name, newStruct);
+					}
+					struct = newStruct;
+					structStack.add (newStruct);
+//					assert Debug.debug ("push array");
 					continue;
+				}
 				case START_OBJECT:
-					structStack.push (new CookJsonObject ());
-//					Debug.debug ("push object");
+				{
+					JsonStructure newStruct = new CookJsonObject ();
+					if (struct instanceof JsonArray)
+					{
+						((JsonArray)struct).add (newStruct);
+					}
+					else
+					{
+						((JsonObject)struct).put (name, newStruct);
+					}
+					struct = newStruct;
+					structStack.add (newStruct);
+//					assert Debug.debug ("push object");
 					continue;
+				}
 				case KEY_NAME:
-					nameStack.push (p.getString ());
+				{
+					name = p.getString ();
 					continue;
+				}
 				case END_ARRAY:
 				{
-					value = structStack.pop ();
+//					assert Debug.debug ("end array");
+					value = structStack.remove (structStack.size () - 1);
 					if (!(value instanceof JsonArray))
 						throw new IllegalStateException ();
 					if (structStack.isEmpty ())
 						return;	// done
-					break;
+					struct = structStack.get (structStack.size () - 1);
+					continue;
 				}
 				case END_OBJECT:
 				{
-					value = structStack.pop ();
+//					assert Debug.debug ("end object");
+					value = structStack.remove (structStack.size () - 1);
 					if (!(value instanceof JsonObject))
 					{
-//						Debug.debug ("invalid value: " + value.getClass ());
+//						assert Debug.debug ("invalid value: " + value.getClass ());
 						throw new IllegalStateException ();
 					}
 					if (structStack.isEmpty ())
 						return;	// done
-					break;
+					struct = structStack.get (structStack.size () - 1);
+					continue;
 				}
 				case VALUE_TRUE:
 				case VALUE_FALSE:
@@ -117,15 +144,14 @@ public class Utils
 					break;
 				}
 			}
-			struct = structStack.peek ();
 			if (struct instanceof JsonArray)
 			{
 				((JsonArray)struct).add (value);
 			}
 			else
 			{
-				String name = nameStack.pop ();
 				((JsonObject)struct).put (name, value);
+				name = null;
 			}
 		}
 	}
