@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.management.ThreadMXBean;
 import java.util.NoSuchElementException;
 
 import javax.json.spi.JsonProvider;
@@ -50,7 +51,8 @@ public class TextJsonGeneratorPerformanceTest
 	{
 		JsonProvider glassFishProvider = new JsonProviderImpl ();
 		JsonProvider provider = new CookJsonProvider ();
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			JsonParser p = glassFishProvider.createParser (new FileInputStream (inFile));
@@ -59,14 +61,15 @@ public class TextJsonGeneratorPerformanceTest
 			p.close ();
 			g.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
 	private long glassFishTest (File inFile, File outFile) throws IOException
 	{
 		JsonProvider glassFishProvider = new JsonProviderImpl ();
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			JsonParser p = glassFishProvider.createParser (new FileInputStream (inFile));
@@ -75,7 +78,7 @@ public class TextJsonGeneratorPerformanceTest
 			p.close ();
 			g.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
@@ -128,8 +131,8 @@ public class TextJsonGeneratorPerformanceTest
 		long cookJsonTime = cookJsonTest (inFile, outFile);
 
 		System.out.println ("== JsonGenerator Performance Test ==");
-		System.out.println ("cookjson: " + cookJsonTime);
-		System.out.println ("glassfish: " + glassFishTime);
+		System.out.printf ("cookjson: %1.3fs\n", ((double)cookJsonTime / 1000000000));
+		System.out.printf ("glassfish: %1.3fs\n", ((double)glassFishTime / 1000000000));
 		System.out.printf ("Percentage: %2.2f\n", ((double)cookJsonTime / glassFishTime));
 		System.out.flush ();
 	}

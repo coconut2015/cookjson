@@ -19,6 +19,7 @@
 package org.yuanheng.cookjson;
 
 import java.io.*;
+import java.lang.management.ThreadMXBean;
 import java.util.NoSuchElementException;
 
 import javax.json.spi.JsonProvider;
@@ -45,42 +46,45 @@ public class TextJsonParserPerformanceTest
 
 	private long cookJsonTest (File file) throws IOException
 	{
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			JsonParser p = new TextJsonParser (getReader (file));
 			perfTest (p);
 			p.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
 	private long glassFishTest (File file) throws IOException
 	{
 		JsonProvider provider = JsonProvider.provider ();
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			JsonParser p = provider.createParser (getReader (file));
 			perfTest (p);
 			p.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
 	private long jacksonTest (File file) throws IOException
 	{
 		JsonFactory jsonFactory = new JsonFactory();
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getReader (file));
 			perfTest2 (p);
 			p.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
@@ -134,9 +138,9 @@ public class TextJsonParserPerformanceTest
 		long jacksonTime = jacksonTest (file);
 
 		System.out.println ("== JsonParser Performance Test ==");
-		System.out.println ("cookjson: " + cookJsonTime);
-		System.out.println ("glassfish: " + glassFishTime);
-		System.out.println ("jackson: " + jacksonTime);
+		System.out.printf ("cookjson: %1.3fs\n", ((double)cookJsonTime / 1000000000));
+		System.out.printf ("glassfish: %1.3fs\n", ((double)glassFishTime / 1000000000));
+		System.out.printf ("jackson: %1.3fs\n", ((double)jacksonTime / 1000000000));
 		System.out.printf ("Percentage: %2.2f\n", ((double)cookJsonTime / glassFishTime));
 		System.out.flush ();
 	}

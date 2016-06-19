@@ -21,6 +21,7 @@ package org.yuanheng.cookjson;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.management.ThreadMXBean;
 import java.util.NoSuchElementException;
 
 import javax.json.stream.JsonParser;
@@ -41,28 +42,30 @@ public class BsonParserPerformanceTest
 
 	private long cookJsonTest (File file) throws IOException
 	{
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			BsonParser p = new BsonParser (new FileInputStream (file));
 			perfTest (p);
 			p.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
 	private long jacksonTest (File file) throws IOException
 	{
 		BsonFactory bsonFactory = new BsonFactory();
-		long start = System.currentTimeMillis ();
+		ThreadMXBean mxBean = java.lang.management.ManagementFactory.getThreadMXBean();
+		long start = mxBean.getCurrentThreadCpuTime ();
 		for (int i = 0; i < ITERATIONS; ++i)
 		{
 			de.undercouch.bson4jackson.BsonParser p = bsonFactory.createParser (new FileInputStream (file));
 			perfTest2 (p);
 			p.close ();
 		}
-		long end = System.currentTimeMillis ();
+		long end = mxBean.getCurrentThreadCpuTime ();
 		return end - start;
 	}
 
@@ -111,8 +114,8 @@ public class BsonParserPerformanceTest
 		long jacksonTime = jacksonTest (file);
 
 		System.out.println ("== BsonParser Performance Test ==");
-		System.out.println ("cookjson: " + cookJsonTime);
-		System.out.println ("jackson: " + jacksonTime);
+		System.out.printf ("cookjson: %1.3fs\n", ((double)cookJsonTime / 1000000000));
+		System.out.printf ("jackson: %1.3fs\n", ((double)jacksonTime / 1000000000));
 		System.out.printf ("Percentage: %2.2f\n", ((double)cookJsonTime / jacksonTime));
 		System.out.flush ();
 	}

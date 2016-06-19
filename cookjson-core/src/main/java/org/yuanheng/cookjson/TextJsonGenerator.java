@@ -848,7 +848,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -866,7 +866,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -884,7 +884,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -902,7 +902,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -920,7 +920,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -938,7 +938,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -956,7 +956,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -974,7 +974,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			ex.printStackTrace();
+			throw new JsonException (ex.getMessage (), ex);
 		}
 		return this;
 	}

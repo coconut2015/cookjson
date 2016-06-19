@@ -492,25 +492,43 @@ public class TextJsonParser implements CookJsonParser
 				char ch = buf[readPos++];
 				++m_offset;
 				++m_column;
-				switch (ch)
+				// JSON does not allow 0x00 - 0x1f in string.
+				// And '"' and '\\' must be escaped.
+				if (ch > '\\')
 				{
-					case '\n':
-						m_column = 1;
-						++m_line;
+					append (ch);
+				}
+				else if (ch > '"')
+				{
+					if (ch < '\\')
+					{
 						append (ch);
-						break;
-					case '"':
-						m_readPos = readPos;
-						return;
-					case '\\':
+					}
+					else
+					{
+						// handle '\\' case
 						m_readPos = readPos;
 						readEscape ();
 						readPos = m_readPos;
 						readMax = m_readMax;
-						break;
-					default:
+					}
+				}
+				else if (ch >= ' ')
+				{
+					if (ch < '"')
+					{
 						append (ch);
-						break;
+					}
+					else
+					{
+						// handle '"' case
+						m_readPos = readPos;
+						return;
+					}
+				}
+				else
+				{
+					unexpected (ch);
 				}
 			}
 			fill ();

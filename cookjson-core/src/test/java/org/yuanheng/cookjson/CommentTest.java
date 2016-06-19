@@ -66,5 +66,6 @@ public class CommentTest
 	public void test () throws IOException
 	{
 		testFile ("../tests/data/comment.json", "../tests/data/complex1.json");
+		testFile ("../tests/data/comment2.json", "../tests/data/complex1.json");
 	}
 }
