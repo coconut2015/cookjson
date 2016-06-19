@@ -23,8 +23,12 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 
-import javax.json.*;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonStructure;
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
@@ -194,177 +198,183 @@ public class Utils
 	public static void convert (JsonParser p, JsonGenerator g)
 	{
 		String name = null;
-		while (p.hasNext ())
+		try
 		{
-			Event e = p.next ();
-			switch (e)
+			for (;;)
 			{
-				case START_ARRAY:
-//					assert Debug.debug ("READ: " + e);
-					if (name == null)
-						g.writeStartArray ();
-					else
-					{
-						g.writeStartArray (name);
-						name = null;
-					}
-					break;
-				case START_OBJECT:
-//					assert Debug.debug ("READ: " + e);
-					if (name == null)
-						g.writeStartObject ();
-					else
-					{
-						g.writeStartObject (name);
-						name = null;
-					}
-					break;
-				case KEY_NAME:
-//					assert Debug.debug ("READ: " + e + " = " + p.getString ());
-					name = p.getString ();
-					break;
-				case END_ARRAY:
-				case END_OBJECT:
-//					assert Debug.debug ("READ: " + e);
-					g.writeEnd ();
-					name = null;
-					break;
-				case VALUE_TRUE:
+				Event e = p.next ();
+				switch (e)
 				{
-//					assert Debug.debug ("READ: " + e);
-					if (name == null)
-					{
-						g.write (true);
-					}
-					else
-					{
-						g.write (name, true);
-						name = null;
-					}
-					break;
-				}
-				case VALUE_FALSE:
-				{
-//					assert Debug.debug ("READ: " + e);
-					if (name == null)
-					{
-						g.write (false);
-					}
-					else
-					{
-						g.write (name, false);
-						name = null;
-					}
-					break;
-				}
-				case VALUE_NULL:
-				{
-//					assert Debug.debug ("READ: " + e);
-					if (name == null)
-					{
-						g.writeNull ();
-					}
-					else
-					{
-						g.writeNull (name);
-						name = null;
-					}
-					break;
-				}
-				case VALUE_NUMBER:
-				{
-					BigDecimal value = p.getBigDecimal ();
-//					assert Debug.debug ("READ: " + e + " = " + value);
-					if (p.isIntegralNumber ())
-					{
-						try
+					case START_ARRAY:
+//						assert Debug.debug ("READ: " + e);
+						if (name == null)
+							g.writeStartArray ();
+						else
 						{
-							if (name == null)
-							{
-								g.write (value.intValueExact ());
-							}
-							else
-							{
-								g.write (name, value.intValueExact ());
-								name = null;
-							}
+							g.writeStartArray (name);
+							name = null;
 						}
-						catch (ArithmeticException ex)
+						break;
+					case START_OBJECT:
+//						assert Debug.debug ("READ: " + e);
+						if (name == null)
+							g.writeStartObject ();
+						else
+						{
+							g.writeStartObject (name);
+							name = null;
+						}
+						break;
+					case KEY_NAME:
+//						assert Debug.debug ("READ: " + e + " = " + p.getString ());
+						name = p.getString ();
+						break;
+					case END_ARRAY:
+					case END_OBJECT:
+//						assert Debug.debug ("READ: " + e);
+						g.writeEnd ();
+						name = null;
+						break;
+					case VALUE_TRUE:
+					{
+//						assert Debug.debug ("READ: " + e);
+						if (name == null)
+						{
+							g.write (true);
+						}
+						else
+						{
+							g.write (name, true);
+							name = null;
+						}
+						break;
+					}
+					case VALUE_FALSE:
+					{
+//						assert Debug.debug ("READ: " + e);
+						if (name == null)
+						{
+							g.write (false);
+						}
+						else
+						{
+							g.write (name, false);
+							name = null;
+						}
+						break;
+					}
+					case VALUE_NULL:
+					{
+//						assert Debug.debug ("READ: " + e);
+						if (name == null)
+						{
+							g.writeNull ();
+						}
+						else
+						{
+							g.writeNull (name);
+							name = null;
+						}
+						break;
+					}
+					case VALUE_NUMBER:
+					{
+						BigDecimal value = p.getBigDecimal ();
+//						assert Debug.debug ("READ: " + e + " = " + value);
+						if (p.isIntegralNumber ())
 						{
 							try
 							{
 								if (name == null)
 								{
-									g.write (value.longValueExact ());
+									g.write (value.intValueExact ());
 								}
 								else
 								{
-									g.write (name, value.longValueExact ());
+									g.write (name, value.intValueExact ());
 									name = null;
 								}
 							}
-							catch (ArithmeticException ex2)
+							catch (ArithmeticException ex)
 							{
-								if (name == null)
+								try
 								{
-									g.write (value.toBigInteger ());
+									if (name == null)
+									{
+										g.write (value.longValueExact ());
+									}
+									else
+									{
+										g.write (name, value.longValueExact ());
+										name = null;
+									}
 								}
-								else
+								catch (ArithmeticException ex2)
 								{
-									g.write (name, value.toBigInteger ());
-									name = null;
+									if (name == null)
+									{
+										g.write (value.toBigInteger ());
+									}
+									else
+									{
+										g.write (name, value.toBigInteger ());
+										name = null;
+									}
 								}
 							}
-						}
-					}
-					else
-					{
-						if (name == null)
-						{
-							g.write (value);
 						}
 						else
 						{
-							g.write (name, value);
-							name = null;
-						}
-					}
-					break;
-				}
-				case VALUE_STRING:
-				{
-//					assert Debug.debug ("READ: " + e + " = " + p.getString ());
-					if (p instanceof BsonParser &&
-						g instanceof BsonGenerator)
-					{
-						JsonValue v = ((BsonParser) p).getValue ();
-						if (v instanceof CookJsonBinary)
-						{
-							byte[] bytes = ((CookJsonBinary) v).getBytes ();
 							if (name == null)
-								((BsonGenerator)g).write (bytes);
+							{
+								g.write (value);
+							}
 							else
 							{
-								((BsonGenerator)g).write (name, bytes);
+								g.write (name, value);
 								name = null;
 							}
-							break;
 						}
+						break;
 					}
-					if (name == null)
+					case VALUE_STRING:
 					{
-						g.write (p.getString ());
+//						assert Debug.debug ("READ: " + e + " = " + p.getString ());
+						if (p instanceof BsonParser &&
+							g instanceof BsonGenerator)
+						{
+							JsonValue v = ((BsonParser) p).getValue ();
+							if (v instanceof CookJsonBinary)
+							{
+								byte[] bytes = ((CookJsonBinary) v).getBytes ();
+								if (name == null)
+									((BsonGenerator)g).write (bytes);
+								else
+								{
+									((BsonGenerator)g).write (name, bytes);
+									name = null;
+								}
+								break;
+							}
+						}
+						if (name == null)
+						{
+							g.write (p.getString ());
+						}
+						else
+						{
+							g.write (name, p.getString ());
+							name = null;
+						}
+						break;
 					}
-					else
-					{
-						g.write (name, p.getString ());
-						name = null;
-					}
-					break;
+					default:
+						break;
 				}
-				default:
-					break;
 			}
+		}
+		catch (NoSuchElementException ex)
+		{
 		}
 	}
 
