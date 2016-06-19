@@ -26,6 +26,8 @@ import java.util.NoSuchElementException;
 import javax.json.*;
 import javax.json.stream.JsonLocation;
 
+import org.yuanheng.cookjson.value.CookJsonBinary;
+
 /**
  * @author	Heng Yuan
  */
@@ -207,6 +209,24 @@ public class JsonStructureParser implements CookJsonParser
 				stateError ();
 				return null;	// to make compiler happy.
 		}
+	}
+
+	@Override
+	public boolean isBinary ()
+	{
+		if (m_event != Event.VALUE_STRING)
+			throw new IllegalStateException ();
+		return m_value instanceof CookJsonBinary;
+	}
+
+	@Override
+	public byte[] getBytes ()
+	{
+		if (m_event != Event.VALUE_STRING)
+			throw new IllegalStateException ();
+		if (m_value instanceof CookJsonBinary)
+			return ((CookJsonBinary) m_value).getBytes ();
+		throw new IllegalStateException ();
 	}
 
 	@Override

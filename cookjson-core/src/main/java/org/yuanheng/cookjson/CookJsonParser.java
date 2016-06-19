@@ -19,6 +19,7 @@
 package org.yuanheng.cookjson;
 
 import javax.json.JsonValue;
+import javax.json.stream.JsonParser.Event;
 
 /**
  * @author	Heng Yuan
@@ -42,4 +43,25 @@ public interface CookJsonParser extends javax.json.stream.JsonParser
 	 * @return	the JsonValue associated with the current event.
 	 */
 	public JsonValue getValue ();
+
+	/**
+     * Returns true if the current JSON value at the current parser state is
+     * actually a binary data.
+     *
+     * @return	true if the String value is actually a binary.
+     * @throws	IllegalStateException
+     *			if the current parser state is not {@code VALUE_STRING}
+	 */
+	public boolean isBinary ();
+
+	/**
+     * Returns the {@code byte[]} value if the parser state is
+     * {@link Event#VALUE_STRING} and the data is actually a binary data.
+     *
+     * @return	the binary value.
+     * @throws	IllegalStateException
+     *			if the current parser state is not {@code VALUE_STRING}
+     *			or the current value is not binary.
+	 */
+	public byte[] getBytes ();
 }

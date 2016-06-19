@@ -312,6 +312,24 @@ public class BsonParser implements CookJsonParser
 	}
 
 	@Override
+	public boolean isBinary ()
+	{
+		if (m_event != Event.VALUE_STRING)
+			throw new IllegalStateException ();
+		return m_value instanceof byte[];
+	}
+
+	@Override
+	public byte[] getBytes ()
+	{
+		if (m_event != Event.VALUE_STRING)
+			throw new IllegalStateException ();
+		if (m_value instanceof byte[])
+			return (byte[]) m_value;
+		throw new IllegalStateException ();
+	}
+
+	@Override
 	public boolean isIntegralNumber ()
 	{
 		if (m_event != Event.VALUE_NUMBER)

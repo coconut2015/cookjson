@@ -197,6 +197,12 @@ public class Utils
 
 	public static void convert (JsonParser p, JsonGenerator g)
 	{
+		CookJsonParser p2 = null;
+		CookJsonGenerator g2 = null;
+		if (p instanceof CookJsonParser)
+			p2 = (CookJsonParser) p;
+		if (g instanceof CookJsonGenerator)
+			g2 = (CookJsonGenerator) g;
 		String name = null;
 		try
 		{
@@ -340,18 +346,15 @@ public class Utils
 					case VALUE_STRING:
 					{
 //						assert Debug.debug ("READ: " + e + " = " + p.getString ());
-						if (p instanceof BsonParser &&
-							g instanceof BsonGenerator)
+						if (p2 != null && g2 != null)
 						{
-							JsonValue v = ((BsonParser) p).getValue ();
-							if (v instanceof CookJsonBinary)
+							if (p2.isBinary ())
 							{
-								byte[] bytes = ((CookJsonBinary) v).getBytes ();
 								if (name == null)
-									((BsonGenerator)g).write (bytes);
+									g2.write (p2.getBytes ());
 								else
 								{
-									((BsonGenerator)g).write (name, bytes);
+									g2.write (name, p2.getBytes ());
 									name = null;
 								}
 								break;

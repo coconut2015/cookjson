@@ -22,10 +22,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigDecimal;
 
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParser.Event;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,6 +37,60 @@ import org.junit.Test;
  */
 public class TextJsonParserTest
 {
+	@Test
+	public void testGetInt () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		int[] ints = new int[7];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				ints[count++] = p.getInt ();
+			}
+		}
+		p.close ();
+		Assert.assertArrayEquals (new int[]{ 123, 1942892530, -115429390, 12345, 1234, 1234, 1 }, ints);
+	}
+
+	@Test
+	public void testGetLong () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		long[] longs = new long[7];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				longs[count++] = p.getLong ();
+			}
+		}
+		p.close ();
+		Assert.assertArrayEquals (new long[]{ 123, 12345678901234L, 7888426545362939890L, 12345, 1234, 1234, 1 }, longs);
+	}
+
+	@Test
+	public void testGetDecimal () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		BigDecimal[] decimals = new BigDecimal[7];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				decimals[count++] = p.getBigDecimal ();
+			}
+		}
+		p.close ();
+		Assert.assertArrayEquals (new BigDecimal[]{ new BigDecimal (123), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1234), new BigDecimal (1234.5), new BigDecimal (1) }, decimals);
+	}
+
 	void testFile (String f) throws IOException
 	{
 		File file = new File (f.replace ('/', File.separatorChar));

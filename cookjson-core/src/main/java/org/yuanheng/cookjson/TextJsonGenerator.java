@@ -815,6 +815,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 	}
 
+	@Override
 	public JsonGenerator write (byte[] value)
 	{
 //		assert Debug.debug ("WRITE: VALUE_STRING");

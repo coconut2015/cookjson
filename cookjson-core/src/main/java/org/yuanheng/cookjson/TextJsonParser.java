@@ -894,7 +894,14 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ();
-		return Integer.valueOf (getBufferString ());
+		String str = getBufferString ();
+		if (m_int &&
+			(m_appendPos < 10 ||
+			 (m_appendPos < 11 && m_appendBuf[0] == '-')))
+		{
+			return Integer.valueOf (str);
+		}
+		return new BigDecimal (str).intValue ();
 	}
 
 	@Override
@@ -902,7 +909,14 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ();
-		return Long.valueOf (getBufferString ());
+		String str = getBufferString ();
+		if (m_int &&
+			(m_appendPos < 19 ||
+			 (m_appendPos < 20 && m_appendBuf[0] == '-')))
+		{
+			return Long.valueOf (str);
+		}
+		return new BigDecimal (str).longValue ();
 	}
 
 	@Override
@@ -959,6 +973,20 @@ public class TextJsonParser implements CookJsonParser
 			m_event != Event.KEY_NAME)
 			stateError ();
 		return getBufferString ();
+	}
+
+	@Override
+	public boolean isBinary ()
+	{
+		if (m_event != Event.VALUE_STRING)
+			throw new IllegalStateException ();
+		return false;
+	}
+
+	@Override
+	public byte[] getBytes ()
+	{
+		throw new IllegalStateException ();
 	}
 
 	@Override

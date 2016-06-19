@@ -53,13 +53,19 @@ public class ConvertJson
 
 		options.addOption ("h", "help", false, "print this message.");
 
-		options.addOption ("f", "from", true, "from file");
-		options.addOption ("t", "to", true, "to file");
+		Option option;
+		option = new Option ("f", "from", true, "from file");
+		option.setArgName ("file");
+		options.addOption (option);
+		option = new Option ("t", "to", true, "to file");
+		option.setArgName ("file");
+		options.addOption (option);
 		// source options
 		options.addOption ("a", "array", false, "treat BSON root document as array.");
 		// target options
 		// -- JSON specific
 		options.addOption ("p", "pretty", false, "pretty output for JSON format.");
+		options.addOption ("x", "hex", false, "use hexadecimal instead of base64 to represent binary data.");
 		// -- BSON specific
 		options.addOption ("d", "double", false, "use double for BSON to store BigDecimal / BigInteger.");
 		options.addOption ("n", "nofix", false, "disable fixing of BSON lengths.");
@@ -76,6 +82,7 @@ public class ConvertJson
 		boolean useDouble = false;
 		boolean rootAsArray = false;
 		boolean fixBson = true;
+		boolean hexadecimal = false;
 
 		CommandLine cmdLine = null;
 		try
@@ -109,6 +116,9 @@ public class ConvertJson
 					break;
 				case 'p':
 					pretty = true;
+					break;
+				case 'x':
+					hexadecimal = true;
 					break;
 			}
 		}
@@ -147,11 +157,19 @@ public class ConvertJson
 			{
 				bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
 			}
+			if (hexadecimal)
+			{
+				bsonConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+			}
 
 			HashMap<String, Object> textConfig = new HashMap<String, Object> ();
 			if (pretty)
 			{
 				textConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+			}
+			if (hexadecimal)
+			{
+				textConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
 			}
 
 			FileInputStream is = new FileInputStream (src);
