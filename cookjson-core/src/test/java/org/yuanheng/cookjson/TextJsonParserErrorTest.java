@@ -69,6 +69,44 @@ public class TextJsonParserErrorTest
 
 	@Test
 	@SuppressWarnings ("resource")
+	public void test3 ()
+	{
+		String json = "{{}}";
+
+	    thrown.expect (JsonException.class);
+	    thrown.expectMessage ("Line 1, column 2, offset 1: unexpected character '{'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testStateError ()
+	{
+		String json = "{\"abc\":1234}";
+
+	    thrown.expect (IllegalStateException.class);
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			switch (p.next ())
+			{
+				case START_OBJECT:
+					p.getString ();
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
 	public void testTrue1 ()
 	{
 		String json = "[ t ]";

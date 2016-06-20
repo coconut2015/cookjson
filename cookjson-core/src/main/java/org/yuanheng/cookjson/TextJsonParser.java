@@ -115,10 +115,9 @@ public class TextJsonParser implements CookJsonParser
 		m_appendBuf[m_appendPos++] = ch;
 	}
 
-	private void stateError ()
+	private void stateError (String function)
 	{
-		JsonLocation location = getLocation ();
-		throw new IllegalStateException ("Line " + location.getLineNumber () + ", column " + location.getColumnNumber () + ", offset " + location.getStreamOffset () + ": invalid token.");
+		throw new IllegalStateException (function + " cannot be called at the current state: " + m_event + ".");
 	}
 
 	private void ioError (String msg)
@@ -561,7 +560,7 @@ public class TextJsonParser implements CookJsonParser
 			case END_ARRAY:
 			case END_OBJECT:
 			case KEY_NAME:
-				stateError ();
+				stateError ("getValue()");
 			case VALUE_TRUE:
 				return CookJsonBoolean.TRUE;
 			case VALUE_FALSE:
@@ -573,7 +572,7 @@ public class TextJsonParser implements CookJsonParser
 			case VALUE_STRING:
 				return new CookJsonString (getString ());
 		}
-		stateError ();
+		stateError ("getValue()");
 		return null;	// should not get here.
 	}
 
@@ -890,6 +889,8 @@ public class TextJsonParser implements CookJsonParser
 	@Override
 	public boolean isIntegralNumber ()
 	{
+		if (m_event != Event.VALUE_NUMBER)
+			stateError ("isIntegralNumber()");
 		return m_int || getBigDecimal ().scale () == 0;
 	}
 
@@ -897,7 +898,7 @@ public class TextJsonParser implements CookJsonParser
 	public int getInt ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			stateError ("getInt()");
 		String str = getBufferString ();
 		if (m_int &&
 			(m_appendPos < 10 ||
@@ -912,7 +913,7 @@ public class TextJsonParser implements CookJsonParser
 	public long getLong ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			stateError ("getLong()");
 		String str = getBufferString ();
 		if (m_int &&
 			(m_appendPos < 19 ||
@@ -927,7 +928,7 @@ public class TextJsonParser implements CookJsonParser
 	public BigDecimal getBigDecimal ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			stateError ("getBigDecimal()");
 		return new BigDecimal (getBufferString ());
 	}
 
@@ -975,7 +976,7 @@ public class TextJsonParser implements CookJsonParser
 		if (m_event != Event.VALUE_STRING &&
 			m_event != Event.VALUE_NUMBER &&
 			m_event != Event.KEY_NAME)
-			stateError ();
+			stateError ("getString()");
 		return getBufferString ();
 	}
 
@@ -983,14 +984,18 @@ public class TextJsonParser implements CookJsonParser
 	public boolean isBinary ()
 	{
 		if (m_event != Event.VALUE_STRING)
-			throw new IllegalStateException ();
+			stateError ("isBinary()");
+		// For Json, it is up to the caller to interpret the string
+		// value as the binary encoded string.
 		return false;
 	}
 
 	@Override
 	public byte[] getBytes ()
 	{
-		throw new IllegalStateException ();
+		if (m_event != Event.VALUE_STRING)
+			stateError ("getBytes()");
+		throw new IllegalStateException ("The current string value is not binary.");
 	}
 
 	@Override
