@@ -80,11 +80,7 @@ public class TextJsonParser implements CookJsonParser
 
 	public TextJsonParser (InputStream is)
 	{
-		PushbackInputStream pis;
-		if (is instanceof PushbackInputStream)
-			pis = (PushbackInputStream) is;
-		else
-			pis = new PushbackInputStream (is, 3);
+		PushbackInputStream pis = new PushbackInputStream (is, 3);
 		Charset charset;
 		try
 		{
@@ -127,7 +123,8 @@ public class TextJsonParser implements CookJsonParser
 
 	private void ioError (String msg)
 	{
-		throw new JsonException ("Line " + m_line + ", column " + m_column + ", offset " + m_offset + ": " + msg);
+		// -1 to back track the last read character.
+		throw new JsonException ("Line " + m_line + ", column " + (m_column - 1) + ", offset " + (m_offset - 1) + ": " + msg);
 	}
 
 	private void unexpected (char ch)
@@ -142,6 +139,13 @@ public class TextJsonParser implements CookJsonParser
 		++m_offset;
 		++m_column;
 		return m_readBuf[m_readPos++];
+	}
+
+	private void unread ()
+	{
+		--m_readPos;
+		--m_offset;
+		--m_column;
 	}
 
 	private void fill () throws IOException
@@ -343,7 +347,7 @@ public class TextJsonParser implements CookJsonParser
 				append (ch);
 				continue;
 			}
-			--m_readPos;	// unread the last char
+			unread ();		// unread the last char
 			return;
 		}
 	}
@@ -363,7 +367,7 @@ public class TextJsonParser implements CookJsonParser
 			readExp ();
 		}
 		else
-			--m_readPos;	// unread the last char
+			unread ();		// unread the last char
 	}
 
 	private void readNumber (char firstChar) throws IOException
@@ -383,7 +387,7 @@ public class TextJsonParser implements CookJsonParser
 			}
 			else
 			{
-				--m_readPos;	// unread the last char
+				unread ();		// unread the last char
 				return;
 			}
 		}
@@ -407,7 +411,7 @@ public class TextJsonParser implements CookJsonParser
 			readExp ();
 		}
 		else
-			--m_readPos;	// unread the last char
+			unread ();		// unread the last char
 	}
 
 	private void readEscape () throws IOException
