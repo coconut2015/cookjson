@@ -19,7 +19,6 @@
 package org.yuanheng.cookjson;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 
@@ -33,50 +32,6 @@ public class BOM
 	public final static Charset utf16be = Charset.forName ("utf-16be");
 	public final static Charset utf32le = Charset.forName ("utf-32le");
 	public final static Charset utf32be = Charset.forName ("utf-32be");
-
-	/**
-	 * Write the BOM for a given character set.
-	 *
-	 * @param	os
-	 *			an output stream
-	 * @param	charset
-	 * 			the character set for the output stream
-	 * @return	the number of bytes for BOM written.
-	 * @throws	IOException
-	 * 			in case of error.
-	 */
-	public int write (OutputStream os, Charset charset) throws IOException
-	{
-		byte[] bytes = null;
-
-		if (utf8.equals (charset))
-		{
-			bytes = new byte[]{ (byte) 0xef, (byte) 0xbb, (byte) 0xbf };
-		}
-		else if (utf16le.equals (charset))
-		{
-			bytes = new byte[]{ (byte) 0xff, (byte) 0xfe };
-		}
-		else if (utf16be.equals (charset))
-		{
-			bytes = new byte[]{ (byte) 0xfe, (byte) 0xff };
-		}
-		else if (utf32le.equals (charset))
-		{
-			bytes = new byte[]{ (byte) 0xff, (byte) 0xfe, 0, 0 };
-		}
-		else if (utf32be.equals (charset))
-		{
-			bytes = new byte[]{ 0, 0, (byte) 0xfe, (byte) 0xff };
-		}
-
-		if (bytes != null)
-		{
-			os.write (bytes);
-			return bytes.length;
-		}
-		return 0;
-	}
 
 	/**
 	 * It should be noted that (rfc4627) does not requires BOM.  Instead,
