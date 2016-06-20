@@ -84,9 +84,6 @@ public class BsonParserTest
 				{
 					case KEY_NAME:
 					{
-//						String str = p.getString ();
-//						if (str == null)
-//							str = "?";
 						++count;
 						break;
 					}
@@ -109,5 +106,20 @@ public class BsonParserTest
 		// data1.bson has 0 in Document / Array length
 		eventCheck ("../tests/data/complex1.bson", 47, false);
 		eventCheck ("../tests/data/binary.bson", 32, true);
+	}
+
+	@Test
+	public void testLargeCstring () throws IOException
+	{
+		int length = 0;
+		BsonParser p = new BsonParser (new FileInputStream ("../tests/data/largecstring.bson".replace ('/', File.separatorChar)));
+		while (p.hasNext ())
+		{
+			Event e = p.next ();
+			if (e == Event.KEY_NAME)
+				length = p.getString ().length ();
+		}
+		p.close ();
+		Assert.assertEquals (8554, length);
 	}
 }

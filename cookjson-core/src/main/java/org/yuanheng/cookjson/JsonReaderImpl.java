@@ -43,7 +43,7 @@ class JsonReaderImpl implements JsonReader
 		if (e != Event.START_ARRAY &&
 			e != Event.START_OBJECT)
 			throw new IllegalStateException ();
-		return (JsonStructure)Utils.getValue (m_p);
+		return (JsonStructure)Utils.getStructure (m_p);
 	}
 
 	@Override
@@ -57,7 +57,7 @@ class JsonReaderImpl implements JsonReader
 		Event e = m_p.next ();
 		if (e != Event.START_OBJECT)
 			throw new IllegalStateException ();
-		return (JsonObject)Utils.getValue (m_p);
+		return (JsonObject)Utils.getStructure (m_p);
 	}
 
 	@Override
@@ -72,7 +72,7 @@ class JsonReaderImpl implements JsonReader
 		if (e != Event.START_ARRAY &&
 			e != Event.START_OBJECT)
 			throw new IllegalStateException ();
-		return (JsonArray)Utils.getValue (m_p);
+		return (JsonArray)Utils.getStructure (m_p);
 	}
 
 	@Override

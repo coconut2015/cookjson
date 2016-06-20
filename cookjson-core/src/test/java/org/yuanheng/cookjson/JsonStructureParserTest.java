@@ -85,4 +85,34 @@ public class JsonStructureParserTest
 		testFile ("../tests/data/empty.json");
 		testFile ("../tests/data/long.json");
 	}
+
+	private void eventCount (String f, int expect)  throws IOException
+	{
+		File file = new File (f.replace ('/', File.separatorChar));
+
+		JsonValue value;
+		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		p.next ();
+		value = p.getValue ();
+		p.close ();
+
+		JsonProvider provider = new CookJsonProvider ();
+		JsonParser p2 = createParser (provider, value);
+
+		int count;
+		for (count = 0; p2.hasNext (); ++count)
+			p2.next ();
+		p2.close ();
+
+		Assert.assertEquals (expect, count);;
+	}
+
+	@Test
+	public void testCount () throws IOException
+	{
+		eventCount ("../tests/data/complex1.json", 47);
+		eventCount ("../tests/data/double.json", 16);
+		eventCount ("../tests/data/empty.json", 2);
+		eventCount ("../tests/data/long.json", 10);
+	}
 }

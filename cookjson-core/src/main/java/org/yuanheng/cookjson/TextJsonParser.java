@@ -558,7 +558,7 @@ public class TextJsonParser implements CookJsonParser
 		{
 			case START_ARRAY:
 			case START_OBJECT:
-				return Utils.getValue (this);
+				return Utils.getStructure (this);
 			case END_ARRAY:
 			case END_OBJECT:
 			case KEY_NAME:

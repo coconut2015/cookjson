@@ -17,6 +17,7 @@ package org.yuanheng.cookjson;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.util.HashMap;
 
 import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
@@ -43,10 +44,13 @@ public class BsonGeneratorTest
 		File file1 = new File (fileName1.replace ('/', File.separatorChar));
 		File file2 = new File (fileName2.replace ('/', File.separatorChar));
 
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> config = new HashMap<String, Object> ();
+		config.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		config.put (CookJsonProvider.USE_DOUBLE, useDouble);
 		File testFile = testFolder.newFile ();
 		TextJsonParser p = new TextJsonParser (new FileInputStream (file1));
-		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
-		g.setUseDouble (useDouble);
+		JsonGenerator g = provider.createGeneratorFactory (config).createGenerator (new FileOutputStream (testFile));
 		Utils.convert (p, g);
 		p.close ();
 		g.close ();

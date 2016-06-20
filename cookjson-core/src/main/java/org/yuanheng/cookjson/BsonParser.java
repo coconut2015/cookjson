@@ -80,7 +80,7 @@ public class BsonParser implements CookJsonParser
 		{
 			case START_ARRAY:
 			case START_OBJECT:
-				return Utils.getValue (this);
+				return Utils.getStructure (this);
 			case VALUE_STRING:
 			{
 				if (m_value instanceof byte[])

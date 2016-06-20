@@ -157,7 +157,7 @@ public class Utils
 		}
 	}
 
-	public static JsonValue getValue (CookJsonParser p)
+	public static JsonValue getStructure (CookJsonParser p)
 	{
 		Event e = p.getEvent ();
 		switch (e)
@@ -174,19 +174,6 @@ public class Utils
 				addStructure (p, v);
 				return v;
 			}
-			case KEY_NAME:
-			case END_ARRAY:
-			case END_OBJECT:
-				throw new IllegalStateException ();
-			case VALUE_TRUE:
-				return CookJsonBoolean.TRUE;
-			case VALUE_FALSE:
-				return CookJsonBoolean.FALSE;
-			case VALUE_NULL:
-				return CookJsonNull.NULL;
-			case VALUE_NUMBER:
-			case VALUE_STRING:
-				return p.getValue ();
 			default:
 				throw new IllegalStateException ();
 		}
