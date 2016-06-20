@@ -200,7 +200,7 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 				if (value instanceof CookJsonBinary)
 				{
 					byte[] bytes = ((CookJsonBinary) value).getBytes ();
-					if (m_binaryFormat == 0)
+					if (m_binaryFormat == BinaryFormat.BINARY_FORMAT_BASE64)
 						base64Encode (bytes);
 					else
 						hexEncode (bytes);

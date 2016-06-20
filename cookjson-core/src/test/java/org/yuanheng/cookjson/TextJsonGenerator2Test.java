@@ -32,7 +32,7 @@ import org.junit.Test;
 /**
  * @author	Heng Yuan
  */
-public class TextJsonGeneratorTest2
+public class TextJsonGenerator2Test
 {
 	void testFile (String f) throws IOException
 	{
