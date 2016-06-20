@@ -28,6 +28,12 @@ class Debug
 	private final static PrintStream s_out = new PrintStream (System.err)
 	{
 		@Override
+		public void println (Object obj)
+		{
+			super.println ("DEBUG: " + String.valueOf (obj));
+		}
+
+		@Override
 		public void println (String msg)
 		{
 			super.println ("DEBUG: " + msg);

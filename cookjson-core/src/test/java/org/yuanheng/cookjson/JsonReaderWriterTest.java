@@ -61,7 +61,17 @@ public class JsonReaderWriterTest
 		JsonWriterFactory wf = provider.createWriterFactory (writeConfig);
 		StringWriter sw = new StringWriter ();
 		JsonWriter writer = wf.createWriter (sw);
-		writer.write (obj);
+		switch (readCase)
+		{
+			case 1:
+				writer.writeArray ((JsonArray) obj);
+				break;
+			case 2:
+				writer.writeObject ((JsonObject) obj);
+				break;
+			default:	// 0
+				writer.write (obj);
+		}
 		writer.close ();
 
 		return sw.toString ();
@@ -128,7 +138,17 @@ public class JsonReaderWriterTest
 		// write it out
 		StringWriter sw = new StringWriter ();
 		JsonWriter writer = provider.createWriter (sw);
-		writer.write (obj);
+		switch (readCase)
+		{
+			case 1:
+				writer.writeArray ((JsonArray) obj);
+				break;
+			case 2:
+				writer.writeObject ((JsonObject) obj);
+				break;
+			default:	// 0
+				writer.write (obj);
+		}
 		writer.close ();
 
 		return sw.toString ();

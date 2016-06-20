@@ -24,6 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 
@@ -52,15 +53,103 @@ public class BinaryTest
 		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
 		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
 
-		// first convert from Json to Bson using stream API
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+
 		File jsonFile = testFolder.newFile ();
 		JsonParser p = provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
-		JsonGenerator g = new TextJsonGenerator (new FileOutputStream (jsonFile));
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile));
 		Utils.convert (p, g);
 		p.close ();
 		g.close ();
 
 		FileAssert.assertBinaryEquals (file2, jsonFile);
+	}
+
+	@Test
+	public void testJsonHex () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary2.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+
+		File jsonFile = testFolder.newFile ();
+		JsonParser p = provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile));
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		FileAssert.assertBinaryEquals (file2, jsonFile);
+	}
+
+	@Test
+	public void testPrettyJson () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+
+		File jsonFile1 = testFolder.newFile ();
+		JsonParser p = provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile1));
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		File jsonFile2 = testFolder.newFile ();
+		JsonParser p2 = provider.createParserFactory (jsonConfig).createParser (new FileInputStream (file2));
+		JsonGenerator g2 = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile2));
+		Utils.convert (p2, g2);
+		p2.close ();
+		g2.close ();
+
+		FileAssert.assertBinaryEquals (jsonFile2, jsonFile1);
+	}
+
+	@Test
+	public void testPrettyJsonHex () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary2.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+		jsonConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+
+		File jsonFile1 = testFolder.newFile ();
+		JsonParser p = provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile1));
+		Utils.convert (p, g);
+		p.close ();
+		g.close ();
+
+		File jsonFile2 = testFolder.newFile ();
+		JsonParser p2 = provider.createParserFactory (jsonConfig).createParser (new FileInputStream (file2));
+		JsonGenerator g2 = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile2));
+		Utils.convert (p2, g2);
+		p2.close ();
+		g2.close ();
+
+		FileAssert.assertBinaryEquals (jsonFile2, jsonFile1);
 	}
 
 	@Test
@@ -83,5 +172,123 @@ public class BinaryTest
 
 		BsonFixLength.fix (bsonFile);
 		FileAssert.assertBinaryEquals (file1, bsonFile);
+	}
+
+	@Test
+	public void testJsonValueJson () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+
+		File jsonFile = testFolder.newFile ();
+		CookJsonParser p = (CookJsonParser) provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		p.next ();
+		JsonValue value = p.getValue ();
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile));
+		g.write (value);
+		p.close ();
+		g.close ();
+
+		FileAssert.assertBinaryEquals (file2, jsonFile);
+	}
+
+	@Test
+	public void testJsonValueJsonHex () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary2.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+
+		File jsonFile = testFolder.newFile ();
+		CookJsonParser p = (CookJsonParser) provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		p.next ();
+		JsonValue value = p.getValue ();
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile));
+		g.write (value);
+		p.close ();
+		g.close ();
+
+		FileAssert.assertBinaryEquals (file2, jsonFile);
+	}
+
+	@Test
+	public void testJsonValuePrettyJson () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+
+		File jsonFile1 = testFolder.newFile ();
+		CookJsonParser p = (CookJsonParser) provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		p.next ();
+		JsonValue value = p.getValue ();
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile1));
+		g.write (value);
+		p.close ();
+		g.close ();
+
+		File jsonFile2 = testFolder.newFile ();
+		JsonParser p2 = provider.createParserFactory (jsonConfig).createParser (new FileInputStream (file2));
+		JsonGenerator g2 = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile2));
+		Utils.convert (p2, g2);
+		p2.close ();
+		g2.close ();
+
+		FileAssert.assertBinaryEquals (jsonFile2, jsonFile1);
+	}
+
+	@Test
+	public void testJsonValuePrettyJsonHex () throws IOException
+	{
+		File file1 = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		File file2 = new File ("../tests/data/binary2.json".replace ('/', File.separatorChar));
+
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> bsonConfig = new HashMap<String, Object> ();
+		bsonConfig.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		bsonConfig.put (CookJsonProvider.ROOT_AS_ARRAY, Boolean.TRUE);
+
+		HashMap<String, Object> jsonConfig = new HashMap<String, Object> ();
+		jsonConfig.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+		jsonConfig.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+
+		File jsonFile1 = testFolder.newFile ();
+		CookJsonParser p = (CookJsonParser) provider.createParserFactory (bsonConfig).createParser (new FileInputStream (file1));
+		p.next ();
+		JsonValue value = p.getValue ();
+		JsonGenerator g = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile1));
+		g.write (value);
+		p.close ();
+		g.close ();
+
+		File jsonFile2 = testFolder.newFile ();
+		JsonParser p2 = provider.createParserFactory (jsonConfig).createParser (new FileInputStream (file2));
+		JsonGenerator g2 = provider.createGeneratorFactory (jsonConfig).createGenerator (new FileOutputStream (jsonFile2));
+		Utils.convert (p2, g2);
+		p2.close ();
+		g2.close ();
+
+		FileAssert.assertBinaryEquals (jsonFile2, jsonFile1);
 	}
 }

@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 import javax.json.JsonException;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
+import javax.json.stream.JsonParsingException;
 
 import org.yuanheng.cookjson.value.CookJsonBoolean;
 import org.yuanheng.cookjson.value.CookJsonNull;
@@ -122,8 +123,12 @@ public class TextJsonParser implements CookJsonParser
 
 	private void ioError (String msg)
 	{
+		JsonLocationImpl location = new JsonLocationImpl ();
+		location.m_lineNumber = m_line;
 		// -1 to back track the last read character.
-		throw new JsonException ("Line " + m_line + ", column " + (m_column - 1) + ", offset " + (m_offset - 1) + ": " + msg);
+		location.m_columnNumber = m_column -1;
+		location.m_streamOffset = m_offset - 1;
+		throw new JsonParsingException ("Parsing error at " + location.toString () + ": " + msg, location);
 	}
 
 	private void unexpected (char ch)
@@ -946,7 +951,7 @@ public class TextJsonParser implements CookJsonParser
 				diff = 1;
 				break;
 			case VALUE_NUMBER:
-				diff = m_appendPos + 1;
+				diff = m_appendPos;
 				break;
 			case KEY_NAME:
 			case VALUE_STRING:

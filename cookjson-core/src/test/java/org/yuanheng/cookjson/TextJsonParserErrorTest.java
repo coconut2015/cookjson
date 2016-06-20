@@ -20,7 +20,7 @@ package org.yuanheng.cookjson;
 
 import java.io.StringReader;
 
-import javax.json.JsonException;
+import javax.json.stream.JsonParsingException;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,8 +40,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "{[]}";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 2, offset 1: unexpected character '['");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 2, offset 1: unexpected character '['");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -56,8 +56,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "{/}";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 2, offset 1: unexpected character '/'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 2, offset 1: unexpected character '/'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 	    p.setAllowComments (true);
@@ -73,8 +73,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "{{}}";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 2, offset 1: unexpected character '{'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 2, offset 1: unexpected character '{'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -111,7 +111,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ t ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -126,7 +126,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ tr ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -141,7 +141,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ tru ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -156,7 +156,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ trua ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -171,7 +171,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ f ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -186,7 +186,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ fa ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -201,7 +201,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ fal ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -216,7 +216,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ fals ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -231,7 +231,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ falsa ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -246,7 +246,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ n ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -261,7 +261,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ nu ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -276,7 +276,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ nul ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -291,7 +291,7 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ nula ]";
 
-	    thrown.expect (JsonException.class);
+	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -306,8 +306,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ 01 ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 4, offset 3: unexpected character '1'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '1'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -322,8 +322,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ -1e ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 6, offset 5: unexpected character ' '");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character ' '");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -338,8 +338,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ -e ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 4, offset 3: unexpected character 'e'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character 'e'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -354,8 +354,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ \"\\s\" ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 5, offset 4: unknown escape sequence '\\s'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unknown escape sequence '\\s'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -370,8 +370,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ \"\\u05c\" ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 9, offset 8: unexpected character '\"'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 9, offset 8: unexpected character '\"'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -386,8 +386,8 @@ public class TextJsonParserErrorTest
 	{
 		String json = "[ \"\t\" ]";
 
-	    thrown.expect (JsonException.class);
-	    thrown.expectMessage ("Line 1, column 4, offset 3: unexpected character '\t'");
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\t'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)

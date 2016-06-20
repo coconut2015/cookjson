@@ -18,47 +18,18 @@
  */
 package org.yuanheng.cookjson;
 
-import javax.json.stream.JsonLocation;
+import org.junit.Test;
 
 /**
  * @author	Heng Yuan
  */
-class JsonLocationImpl implements JsonLocation
+public class DebugTest
 {
-	public final static JsonLocationImpl Unknown = new JsonLocationImpl ();
-
-	static
+	@Test
+	public void test ()
 	{
-		Unknown.m_columnNumber = -1;
-		Unknown.m_lineNumber = -1;
-		Unknown.m_streamOffset = -1;
-	}
+		Debug.debug ("test message");
 
-	long m_lineNumber;
-	long m_columnNumber;
-	long m_streamOffset;
-
-	@Override
-	public long getLineNumber ()
-	{
-		return m_lineNumber;
-	}
-
-	@Override
-	public long getColumnNumber ()
-	{
-		return m_columnNumber;
-	}
-
-	@Override
-	public long getStreamOffset ()
-	{
-		return m_streamOffset;
-	}
-
-	@Override
-	public String toString ()
-	{
-		return "line " + m_lineNumber + ", column " + m_columnNumber + ", offset " + m_streamOffset;
+		Debug.debug (new Exception ("Test Exception"));
 	}
 }

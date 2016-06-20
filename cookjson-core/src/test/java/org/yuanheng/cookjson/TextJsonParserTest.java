@@ -18,14 +18,12 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.math.BigDecimal;
 
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonLocation;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
 
@@ -125,5 +123,174 @@ public class TextJsonParserTest
 		testFile ("../tests/data/string2.json");
 		testFile ("../tests/data/string3.json");
 		testFile ("../tests/data/types.json");
+	}
+
+	@Test
+	public void testLocation1 ()
+	{
+		String json = "{\"abc\" : -1234}";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (10, location.getColumnNumber ());
+		Assert.assertEquals (9, location.getStreamOffset ());
+		Assert.assertEquals ("line 1, column 10, offset 9", location.toString ());
+	}
+
+	@Test
+	public void testLocation2 ()
+	{
+		String json = "{\"abc\" : -1234}";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case KEY_NAME:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (2, location.getColumnNumber ());
+		Assert.assertEquals (1, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation3 ()
+	{
+		String json = "{\"abc\\t\" : \"def\"}";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_STRING:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (12, location.getColumnNumber ());
+		Assert.assertEquals (11, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation4 ()
+	{
+		String json = "{\"abc\\t\" : []}";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case START_ARRAY:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (12, location.getColumnNumber ());
+		Assert.assertEquals (11, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation5 ()
+	{
+		String json = "[ true, false, null ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_TRUE:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (3, location.getColumnNumber ());
+		Assert.assertEquals (2, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation6 ()
+	{
+		String json = "[ true, false, null ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_FALSE:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (9, location.getColumnNumber ());
+		Assert.assertEquals (8, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation7 ()
+	{
+		String json = "[ true, false, null ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NULL:
+					location = p.getLocation ();
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+		Assert.assertEquals (1, location.getLineNumber ());
+		Assert.assertEquals (16, location.getColumnNumber ());
+		Assert.assertEquals (15, location.getStreamOffset ());
 	}
 }

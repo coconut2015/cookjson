@@ -22,8 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.HashMap;
 
 import javax.json.spi.JsonProvider;
+import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
 
 import org.junit.Assert;
@@ -42,7 +44,10 @@ public class PrettyTextJsonGeneratorTest
 
 		StringWriter out1 = new StringWriter ();
 		JsonParser p1 = provider.createParser (new FileInputStream (file));
-		PrettyTextJsonGenerator g1 = new PrettyTextJsonGenerator (out1);
+
+		HashMap<String, Object> config = new HashMap<String, Object> ();
+		config.put (JsonGenerator.PRETTY_PRINTING, Boolean.TRUE);
+		JsonGenerator g1 = new CookJsonProvider ().createGeneratorFactory (config).createGenerator (out1);
 		Utils.convert (p1, g1);
 		p1.close ();
 		g1.close ();
