@@ -19,6 +19,7 @@
 package org.yuanheng.cookjson;
 
 import java.io.*;
+import java.math.BigInteger;
 
 import javax.json.JsonValue;
 import javax.json.stream.JsonGenerator;
@@ -27,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.yuanheng.cookjson.value.CookJsonNumber;
 
 import junitx.framework.FileAssert;
 
@@ -145,5 +147,77 @@ public class BsonGeneratorTest
 
 		// due to object ordering, we can only compare the length.
 		Assert.assertEquals (bsonFile.length (), bsonFile2.length ());
+	}
+
+	@Test
+	public void testTypes () throws IOException
+	{
+		File testFile = testFolder.newFile ();
+
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
+		g.setUseDouble (true);
+		g.writeStartArray ();
+		g.writeStartObject ();
+		g.write ("int", 123);
+		g.write ("long", 12345678901234L);
+		g.write ("bigint", new BigInteger ("1234567890123412345678901234"));
+		g.write ("decimal", 12345.5);
+		g.write ("string", "asdf");
+		g.writeNull ("null");
+		g.write ("true", true);
+		g.write ("false", false);
+		g.writeEnd ();
+		g.write (true);
+		g.write (false);
+		g.writeNull ();
+		g.writeStartArray ();
+		g.write (1234);
+		g.write (1234.5);
+		g.write (true);
+		g.writeStartObject ();
+		g.writeEnd ();
+		g.writeEnd ();
+		g.write (1);
+		g.writeEnd ();
+		g.close ();
+		BsonFixLength.fix (testFile);
+
+		FileAssert.assertBinaryEquals (new File ("../tests/data/types.bson".replace ('/', File.separatorChar)), testFile);
+	}
+
+	@Test
+	public void testTypes2 () throws IOException
+	{
+		File testFile = testFolder.newFile ();
+
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (testFile));
+		g.setUseDouble (true);
+		g.writeStartArray ();
+		g.writeStartObject ();
+		g.write ("int", new CookJsonNumber (123));
+		g.write ("long", new CookJsonNumber (12345678901234L));
+		g.write ("bigint", new CookJsonNumber (new BigInteger ("1234567890123412345678901234")));
+		g.write ("decimal", new CookJsonNumber (12345.5));
+		g.write ("string", "asdf");
+		g.writeNull ("null");
+		g.write ("true", true);
+		g.write ("false", false);
+		g.writeEnd ();
+		g.write (true);
+		g.write (false);
+		g.writeNull ();
+		g.writeStartArray ();
+		g.write (new CookJsonNumber (1234));
+		g.write (new CookJsonNumber (1234.5));
+		g.write (true);
+		g.writeStartObject ();
+		g.writeEnd ();
+		g.writeEnd ();
+		g.write (1);
+		g.writeEnd ();
+		g.close ();
+		BsonFixLength.fix (testFile);
+
+		FileAssert.assertBinaryEquals (new File ("../tests/data/types.bson".replace ('/', File.separatorChar)), testFile);
 	}
 }

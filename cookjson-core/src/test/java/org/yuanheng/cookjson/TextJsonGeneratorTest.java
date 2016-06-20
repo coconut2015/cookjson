@@ -153,4 +153,37 @@ public class TextJsonGeneratorTest
 		testJsonValueJson ("../tests/data/complex1.json");
 		testJsonValueBson ("../tests/data/binary.bson");
 	}
+
+	@Test
+	public void testHex ()
+	{
+		StringWriter sw = new StringWriter ();
+		TextJsonGenerator g = new TextJsonGenerator (sw);
+		g.setBinaryFormat (BinaryFormat.BINARY_FORMAT_HEX);
+		g.writeStartArray ();
+		g.write (new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef });
+		g.write (new byte[]{ (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef });
+		g.writeEnd ();
+		g.close ();
+
+		Assert.assertEquals ("[\"deadbeef\",\"deadbeef\"]", sw.toString ());
+	}
+
+	@Test
+	public void testDouble ()
+	{
+		StringWriter sw = new StringWriter ();
+		TextJsonGenerator g = new TextJsonGenerator (sw);
+		g.writeStartArray ();
+		g.write (1234.5);
+		g.write (1234.5);
+		g.writeStartObject ();
+		g.write ("d1", 123.5);
+		g.write ("d2", 123.5);
+		g.writeEnd ();
+		g.writeEnd ();
+		g.close ();
+
+		Assert.assertEquals ("[1234.5,1234.5,{\"d1\":123.5,\"d2\":123.5}]", sw.toString ());
+	}
 }

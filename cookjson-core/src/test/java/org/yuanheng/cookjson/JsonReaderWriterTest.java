@@ -106,4 +106,71 @@ public class JsonReaderWriterTest
 		for (int i = 0; i < 3; ++i)
 			testFile ("../tests/data/types.json", i);
 	}
+
+	private String getString2 (File file, JsonProvider provider, int readCase) throws IOException
+	{
+		// create reader
+		JsonReader reader = provider.createReader (new FileInputStream (file));
+		JsonStructure obj;
+		switch (readCase)
+		{
+			case 1:
+				obj = reader.readArray ();
+				break;
+			case 2:
+				obj = reader.readObject ();
+				break;
+			default:	// 0
+				obj = reader.read ();
+		}
+		reader.close ();
+
+		// write it out
+		StringWriter sw = new StringWriter ();
+		JsonWriter writer = provider.createWriter (sw);
+		writer.write (obj);
+		writer.close ();
+
+		return sw.toString ();
+	}
+
+	private void testFile2 (String fileName, int readCase) throws IOException
+	{
+		File file = new File (fileName.replace ('/', File.separatorChar));
+
+		String str1 = "";
+		try
+		{
+			str1 = getString2 (file, new CookJsonProvider (), readCase);
+		}
+		catch (Exception ex)
+		{
+		}
+		String str2 = "";
+		try
+		{
+			str2 = getString2 (file, new JsonProviderImpl (), readCase);
+		}
+		catch (Exception ex)
+		{
+		}
+
+		// Because JsonObject's name ordering is somewhat random,
+		// we cannot do string comparison.  But we can compare the
+		// string length which should be equal.
+//		System.out.println (str1);
+//		System.out.println (str2);
+		Assert.assertEquals (str1.length (), str2.length ());
+	}
+
+	@Test
+	public void test2 () throws IOException
+	{
+		for (int i = 0; i < 3; ++i)
+			testFile2 ("../tests/data/complex1.json", i);
+		for (int i = 0; i < 3; ++i)
+			testFile2 ("../tests/data/string2.json", i);
+		for (int i = 0; i < 3; ++i)
+			testFile2 ("../tests/data/types.json", i);
+	}
 }
