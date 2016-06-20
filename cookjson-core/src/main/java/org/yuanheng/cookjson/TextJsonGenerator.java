@@ -81,12 +81,12 @@ public class TextJsonGenerator implements CookJsonGenerator
 	 * using BufferedWriter due to slight performance improvement.
 	 */
 	final static int m_max = 8192;
-	char[] m_buffer = new char[m_max + 1];	// +1 so that our single char padding logic is simpler
+	final char[] m_buffer = new char[m_max + 1];	// +1 so that our single char padding logic is simpler
 	/** Buffer position */
 	int m_pos;
 
 	final static int m_valueLen = 22;
-	char[] m_valueBuffer = new char[m_valueLen];
+	final char[] m_valueBuffer = new char[m_valueLen];
 
 	int m_binaryFormat;
 
@@ -384,11 +384,6 @@ public class TextJsonGenerator implements CookJsonGenerator
 	void wi (int value) throws IOException
 	{
 		char[] buf = m_valueBuffer;
-		if (buf == null)
-		{
-			buf = new char[m_valueLen];
-			m_valueBuffer = buf;
-		}
 
 		int pos = m_valueLen;
 		boolean negative;

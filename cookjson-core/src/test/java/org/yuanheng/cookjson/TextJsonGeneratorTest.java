@@ -36,6 +36,19 @@ import org.junit.Test;
  */
 public class TextJsonGeneratorTest
 {
+	@Test
+	public void testWriteInt ()
+	{
+		StringWriter out = new StringWriter ();
+		TextJsonGenerator g = new TextJsonGenerator (out);
+		g.writeStartArray ();
+		g.write (-1234);
+		g.writeEnd ();
+		g.close ();
+
+		Assert.assertEquals ("[-1234]", out.toString ());
+	}
+
 	void testFile (String f) throws IOException
 	{
 		File file = new File (f.replace ('/', File.separatorChar));
