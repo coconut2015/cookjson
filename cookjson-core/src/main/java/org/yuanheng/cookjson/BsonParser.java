@@ -21,9 +21,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import javax.json.JsonException;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
+import javax.json.stream.JsonParsingException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
@@ -76,6 +76,8 @@ public class BsonParser implements CookJsonParser
 	@Override
 	public JsonValue getValue ()
 	{
+		if (m_event == null)
+			throw new IllegalStateException ();
 		switch (m_event)
 		{
 			case START_ARRAY:
@@ -84,7 +86,11 @@ public class BsonParser implements CookJsonParser
 			case VALUE_STRING:
 			{
 				if (m_value instanceof byte[])
-					return new CookJsonBinary ((byte[]) m_value);
+				{
+					CookJsonBinary v = new CookJsonBinary ((byte[]) m_value);
+					v.setBinaryFormat (m_binaryFormat);
+					return v;
+				}
 				return new CookJsonString ((String) m_value);
 			}
 			case VALUE_NUMBER:
@@ -114,27 +120,6 @@ public class BsonParser implements CookJsonParser
 			m_fieldName = null;
 		else
 			m_fieldName = m_is.readCString ();
-
-		// we treat Code w/ scope as Objects.  Not tested.
-		switch (m_fieldType)
-		{
-			case BsonType.JavaScriptScope:
-				throw new IOException ("Cannot handle user defined type.");
-			case BsonType.MinKey:
-			case BsonType.MaxKey:
-			{
-				// for min/max key, we simply skip it.
-				getField ();
-				return;
-			}
-			default:
-			{
-				if (m_fieldType >= 128 && m_fieldType <= 255)
-				{
-					throw new IOException ("Cannot handle user defined type.");
-				}
-			}
-		}
 	}
 
 	private Event getEventFromType (int type) throws IOException
@@ -154,6 +139,7 @@ public class BsonParser implements CookJsonParser
 				}
 				if (b)
 					return Event.END_ARRAY;
+				// should not get here since this case is handled in next()
 				return Event.END_OBJECT;
 			}
 			case BsonType.Array:
@@ -215,7 +201,7 @@ public class BsonParser implements CookJsonParser
 				m_value = m_is.getBinary ();
 				return Event.VALUE_STRING;
 			default:
-				throw new IllegalStateException ();	// should not get here.
+				throw new JsonParsingException ("Unknown field: " + type, getLocation ());	// 
 		}
 	}
 
@@ -287,7 +273,7 @@ public class BsonParser implements CookJsonParser
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonParsingException (ex.getMessage (), ex, m_location);
 		}
 	}
 
@@ -297,6 +283,7 @@ public class BsonParser implements CookJsonParser
 		switch (m_event)
 		{
 			case KEY_NAME:
+				return (String) m_value;
 			case VALUE_STRING:
 			{
 				if (m_value instanceof byte[])
@@ -384,7 +371,7 @@ public class BsonParser implements CookJsonParser
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonParsingException (ex.getMessage (), ex, m_location);
 		}
 	}
 

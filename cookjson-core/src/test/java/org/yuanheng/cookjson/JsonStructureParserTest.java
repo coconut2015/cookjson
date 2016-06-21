@@ -19,14 +19,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 
-import javax.json.JsonArray;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.spi.JsonProvider;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParser.Event;
 import javax.json.stream.JsonParserFactory;
 
 import org.junit.Assert;
@@ -115,4 +116,126 @@ public class JsonStructureParserTest
 		eventCount ("../tests/data/empty.json", 2);
 		eventCount ("../tests/data/long.json", 10);
 	}
+
+	private int sum (int[] array)
+	{
+		int total = 0;
+		for (int i : array)
+			total += i;
+		return total;
+	}
+
+	private long sum (long[] array)
+	{
+		long total = 0;
+		for (long i : array)
+			total += i;
+		return total;
+	}
+
+	private BigInteger sum (BigInteger[] array)
+	{
+		BigInteger total = BigInteger.ZERO;
+		for (BigInteger i : array)
+			total.add (i);
+		return total;
+	}
+
+	private BigDecimal sum (BigDecimal[] array)
+	{
+		BigDecimal total = BigDecimal.ZERO;
+		for (BigDecimal i : array)
+			total.add (i);
+		return total;
+	}
+
+	@Test
+	public void testGetInt () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		CookJsonProvider provider = new CookJsonProvider ();
+		JsonReader r = provider.createReader (new FileInputStream (file));
+		JsonStructure v = r.read ();
+		r.close ();
+
+		CookJsonParser p = new JsonStructureParser (v);
+		int[] ints = new int[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				Assert.assertEquals (Event.VALUE_NUMBER, p.getEvent ());
+				ints[count++] = p.getInt ();
+			}
+		}
+		p.close ();
+
+		Assert.assertEquals (sum (new int[]{ 1234, 1942892530, -115429390, 12345, 1234, 1942892530, -115429390, 12345, 1 }), sum (ints));
+	}
+
+	@Test
+	public void testGetLong () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		CookJsonProvider provider = new CookJsonProvider ();
+		JsonReader r = provider.createReader (new FileInputStream (file));
+		JsonStructure v = r.read ();
+		r.close ();
+
+		JsonParser p = new JsonStructureParser (v);
+		long[] longs = new long[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				longs[count++] = p.getLong ();
+			}
+		}
+		p.close ();
+		Assert.assertEquals (sum (new long[]{ 1234, 12345678901234L, 7888426545362939890L, 12345, 1234, 12345678901234L, 7888426545362939890L, 12345, 1 }), sum (longs));
+	}
+
+	@Test
+	public void testGetBigInteger () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		BigInteger[] bigints = new BigInteger[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				bigints[count++] = p.getBigDecimal ().toBigInteger ();
+			}
+		}
+		p.close ();
+		Assert.assertEquals (sum (new BigInteger[]{ new BigInteger ("1234"), new BigInteger ("12345678901234"), new BigInteger ("1234567890123412345678901234"), new BigInteger ("12345"), new BigInteger ("1234"), new BigInteger ("12345678901234"), new BigInteger ("1234567890123412345678901234"), new BigInteger ("12345"), new BigInteger ("1") }), sum (bigints));
+	}
+
+	@Test
+	public void testGetDecimal () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		CookJsonProvider provider = new CookJsonProvider ();
+		JsonReader r = provider.createReader (new FileInputStream (file));
+		JsonStructure v = r.read ();
+		r.close ();
+
+		JsonParser p = new JsonStructureParser (v);
+		BigDecimal[] decimals = new BigDecimal[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				decimals[count++] = p.getBigDecimal ();
+			}
+		}
+		p.close ();
+		Assert.assertEquals (sum (new BigDecimal[]{ new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1) }), sum (decimals));
+	}
+
 }

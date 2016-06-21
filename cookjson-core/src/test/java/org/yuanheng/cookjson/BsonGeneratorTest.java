@@ -16,6 +16,7 @@
 package org.yuanheng.cookjson;
 
 import java.io.*;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 
@@ -68,6 +69,7 @@ public class BsonGeneratorTest
 		testFile ("../tests/data/data3.json", "../tests/data/data1.bson", false);
 		testFile ("../tests/data/types.json", "../tests/data/types.bson", true);
 		testFile ("../tests/data/types.json", "../tests/data/types2.bson", false);
+		testFile ("../tests/data/emptystring.json", "../tests/data/emptystring.bson", false);
 	}
 
 	private void testBsonFile (String fileName, boolean useDouble) throws IOException
@@ -91,6 +93,7 @@ public class BsonGeneratorTest
 	public void testSelf () throws IOException
 	{
 		testBsonFile ("../tests/data/binary.bson", false);
+		testBsonFile ("../tests/data/emptystring.bson", false);
 	}
 
 	@Test
@@ -162,7 +165,7 @@ public class BsonGeneratorTest
 		g.setUseDouble (true);
 		g.writeStartArray ();
 		g.writeStartObject ();
-		g.write ("int", 123);
+		g.write ("int", 1234);
 		g.write ("long", 12345678901234L);
 		g.write ("bigint", new BigInteger ("1234567890123412345678901234"));
 		g.write ("decimal", 12345.5);
@@ -176,8 +179,13 @@ public class BsonGeneratorTest
 		g.writeNull ();
 		g.writeStartArray ();
 		g.write (1234);
-		g.write (1234.5);
+		g.write (12345678901234L);
+		g.write (new BigInteger ("1234567890123412345678901234"));
+		g.write (12345.5);
+		g.write ("asdf");
 		g.write (true);
+		g.write (false);
+		g.writeNull ();
 		g.writeStartObject ();
 		g.writeEnd ();
 		g.writeEnd ();
@@ -198,7 +206,7 @@ public class BsonGeneratorTest
 		g.setUseDouble (true);
 		g.writeStartArray ();
 		g.writeStartObject ();
-		g.write ("int", new CookJsonInt (123));
+		g.write ("int", new CookJsonInt (1234));
 		g.write ("long", new CookJsonLong (12345678901234L));
 		g.write ("bigint", new CookJsonBigDecimal (new BigInteger ("1234567890123412345678901234")));
 		g.write ("decimal", new CookJsonDouble (12345.5));
@@ -211,9 +219,14 @@ public class BsonGeneratorTest
 		g.write (false);
 		g.writeNull ();
 		g.writeStartArray ();
-		g.write (new CookJsonInt (1234));
-		g.write (new CookJsonDouble (1234.5));
+		g.write (1234);
+		g.write (12345678901234L);
+		g.write (new BigInteger ("1234567890123412345678901234"));
+		g.write (12345.5);
+		g.write ("asdf");
 		g.write (true);
+		g.write (false);
+		g.writeNull ();
 		g.writeStartObject ();
 		g.writeEnd ();
 		g.writeEnd ();
@@ -223,5 +236,78 @@ public class BsonGeneratorTest
 		BsonFixLength.fix (testFile);
 
 		FileAssert.assertBinaryEquals (new File ("../tests/data/types.bson".replace ('/', File.separatorChar)), testFile);
+	}
+
+	@Test
+	public void testBinary () throws IOException
+	{
+		File bsonFile = testFolder.newFile ();
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
+		g.writeStartArray ();
+		g.write (new byte[] { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef });
+		g.writeEnd ();
+		g.close ();
+
+		// convert to Json
+		BsonParser p = new BsonParser (new FileInputStream (bsonFile));
+		p.setRootAsArray (true);
+		StringWriter sw = new StringWriter ();
+		TextJsonGenerator g2 = new TextJsonGenerator (sw);
+		g2.setBinaryFormat (BinaryFormat.BINARY_FORMAT_HEX);
+		Utils.convert (p, g2);
+		g2.close ();
+		p.close ();
+
+		// now verify that our original data written was correct.
+		Assert.assertEquals ("[\"deadbeef\"]", sw.toString ());
+	}
+
+	@Test
+	public void testJsonBinary () throws IOException
+	{
+		File bsonFile = testFolder.newFile ();
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
+		g.writeStartArray ();
+		g.write (new byte[] { (byte) 0xde, (byte) 0xad, (byte) 0xbe, (byte) 0xef });
+		g.writeEnd ();
+		g.close ();
+
+		// read into a structure which contains CookJsonBinary
+		BsonParser p = new BsonParser (new FileInputStream (bsonFile));
+		p.setRootAsArray (true);
+		p.next ();
+		JsonValue value = p.getValue ();
+		p.close ();
+
+		// now write to another BSON file;
+		File bsonFile2 = testFolder.newFile ();
+		BsonGenerator g2 = new BsonGenerator (new FileOutputStream (bsonFile2));
+		g2.write (value);
+		g2.close ();
+
+		// now verify that our original data written was correct.
+		FileAssert.assertBinaryEquals (bsonFile, bsonFile2);
+	}
+
+	@Test
+	public void testBigInteger () throws IOException
+	{
+		File bsonFile = testFolder.newFile ();
+		BsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
+		g.writeStartArray ();
+		g.write (new BigInteger ("123456789012345678901234567890"));
+		g.writeEnd ();
+		g.close ();
+
+		// now write to another BSON file;
+		File bsonFile2 = testFolder.newFile ();
+		BsonGenerator g2 = new BsonGenerator (new FileOutputStream (bsonFile2));
+		g2.writeStartArray ();
+		g2.write (new CookJsonBigDecimal (new BigDecimal ("123456789012345678901234567890")) );
+		g2.writeEnd ();
+		g2.close ();
+
+		// now verify that our original data written was correct.
+		FileAssert.assertBinaryEquals (bsonFile, bsonFile2);
 	}
 }

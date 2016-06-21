@@ -37,7 +37,7 @@ public class TextJsonParserTest
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
 		JsonParser p = new TextJsonParser (new FileInputStream (file));
-		int[] ints = new int[7];
+		int[] ints = new int[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
@@ -47,7 +47,7 @@ public class TextJsonParserTest
 			}
 		}
 		p.close ();
-		Assert.assertArrayEquals (new int[]{ 123, 1942892530, -115429390, 12345, 1234, 1234, 1 }, ints);
+		Assert.assertArrayEquals (new int[]{ 1234, 1942892530, -115429390, 12345, 1234, 1942892530, -115429390, 12345, 1 }, ints);
 	}
 
 	@Test
@@ -55,7 +55,7 @@ public class TextJsonParserTest
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
 		JsonParser p = new TextJsonParser (new FileInputStream (file));
-		long[] longs = new long[7];
+		long[] longs = new long[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
@@ -65,7 +65,7 @@ public class TextJsonParserTest
 			}
 		}
 		p.close ();
-		Assert.assertArrayEquals (new long[]{ 123, 12345678901234L, 7888426545362939890L, 12345, 1234, 1234, 1 }, longs);
+		Assert.assertArrayEquals (new long[]{ 1234, 12345678901234L, 7888426545362939890L, 12345, 1234, 12345678901234L, 7888426545362939890L, 12345, 1 }, longs);
 	}
 
 	@Test
@@ -73,7 +73,7 @@ public class TextJsonParserTest
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
 		JsonParser p = new TextJsonParser (new FileInputStream (file));
-		BigDecimal[] decimals = new BigDecimal[7];
+		BigDecimal[] decimals = new BigDecimal[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
@@ -83,7 +83,7 @@ public class TextJsonParserTest
 			}
 		}
 		p.close ();
-		Assert.assertArrayEquals (new BigDecimal[]{ new BigDecimal (123), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1234), new BigDecimal (1234.5), new BigDecimal (1) }, decimals);
+		Assert.assertArrayEquals (new BigDecimal[]{ new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1) }, decimals);
 	}
 
 	void testFile (String f) throws IOException

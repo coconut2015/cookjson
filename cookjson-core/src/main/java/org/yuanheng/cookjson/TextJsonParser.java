@@ -21,7 +21,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import javax.json.JsonException;
 import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 import javax.json.stream.JsonParsingException;
@@ -84,7 +83,7 @@ public class TextJsonParser implements CookJsonParser
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonParsingException (ex.getMessage (), ex, getCurrentLocation ());
 		}
 		m_reader = new InputStreamReader (pis, charset);
 		m_line = 1;
@@ -126,6 +125,12 @@ public class TextJsonParser implements CookJsonParser
 		throw new JsonParsingException ("Parsing error at " + location.toString () + ": " + msg, location);
 	}
 
+	private void eofError ()
+	{
+		JsonLocation location = getCurrentLocation ();
+		throw new JsonParsingException ("Parsing error at " + location.toString () + ": unexpected eof.", location);
+	}
+
 	private void unexpected (char ch)
 	{
 		ioError ("unexpected character '" + ch + "'");
@@ -152,7 +157,7 @@ public class TextJsonParser implements CookJsonParser
 		m_readPos = 0;
 		m_readMax = m_reader.read (m_readBuf);
 		if (m_readMax <= 0)
-			ioError ("unexpected eof.");
+			eofError ();
 	}
 
 	private void readLineComment () throws IOException
@@ -876,7 +881,7 @@ public class TextJsonParser implements CookJsonParser
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonParsingException (ex.getMessage (), ex, getCurrentLocation ());
 		}
 	}
 
@@ -930,6 +935,15 @@ public class TextJsonParser implements CookJsonParser
 		if (m_event != Event.VALUE_NUMBER)
 			stateError ("getBigDecimal()");
 		return new BigDecimal (getBufferString ());
+	}
+
+	private JsonLocation getCurrentLocation ()
+	{
+		JsonLocationImpl location = new JsonLocationImpl ();
+		location.m_columnNumber = m_column;
+		location.m_streamOffset = m_offset;
+		location.m_lineNumber = m_line;
+		return location;
 	}
 
 	@Override
@@ -1007,7 +1021,7 @@ public class TextJsonParser implements CookJsonParser
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonParsingException (ex.getMessage (), ex, getCurrentLocation ());
 		}
 	}
 

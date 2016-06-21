@@ -392,4 +392,20 @@ public class TextJsonParserErrorTest
 			p.next ();
 		}
 	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testIOError ()
+	{
+		String json = "[{";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 3, offset 2: unexpected eof");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
 }

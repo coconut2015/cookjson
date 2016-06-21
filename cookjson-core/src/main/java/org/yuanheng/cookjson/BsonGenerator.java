@@ -179,7 +179,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -192,7 +192,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -240,7 +240,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -257,7 +257,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -296,7 +296,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -548,7 +548,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -666,7 +666,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -684,7 +684,7 @@ public class BsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 

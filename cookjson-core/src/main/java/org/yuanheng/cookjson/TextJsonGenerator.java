@@ -24,7 +24,10 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.json.*;
+import javax.json.JsonArray;
+import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
 import javax.json.stream.JsonGenerationException;
 import javax.json.stream.JsonGenerator;
 
@@ -400,7 +403,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		do
 		{
 			int v = value / 10;
-			int r = value - v * 10;
+			int r = value % 10;
 			value = v;
 			buf[--pos] = digits[r];
 		}
@@ -500,7 +503,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -521,7 +524,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -542,7 +545,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -563,7 +566,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -582,7 +585,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -604,7 +607,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -623,7 +626,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -642,7 +645,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -661,7 +664,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -680,7 +683,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -699,7 +702,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -718,7 +721,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -737,7 +740,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -756,7 +759,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -775,7 +778,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -802,7 +805,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -823,7 +826,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -840,7 +843,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -858,7 +861,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -876,7 +879,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -894,7 +897,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -912,7 +915,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -930,7 +933,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -948,7 +951,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -966,7 +969,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 		return this;
 	}
@@ -981,7 +984,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 
@@ -999,7 +1002,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		}
 		catch (IOException ex)
 		{
-			throw new JsonException (ex.getMessage (), ex);
+			throw new JsonGenerationException (ex.getMessage (), ex);
 		}
 	}
 

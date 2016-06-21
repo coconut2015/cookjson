@@ -1,1 +1,1 @@
-[{"int":123,"long":12345678901234,"bigint":1234567890123412345678901234,"decimal":12345.5,"string":"asdf","null":null,"true":true,"false":false},true,false,null,[1234,1234.5,true,{}],1]
+[{"int":1234,"long":12345678901234,"bigint":1234567890123412345678901234,"decimal":12345.5,"string":"asdf","null":null,"true":true,"false":false},true,false,null,[1234,12345678901234,1234567890123412345678901234,12345.5,"asdf",true,false,null,{}],1]
