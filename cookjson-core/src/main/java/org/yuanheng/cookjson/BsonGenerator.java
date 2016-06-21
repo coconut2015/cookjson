@@ -367,7 +367,7 @@ public class BsonGenerator implements CookJsonGenerator
 			case STRING:
 				if (value instanceof CookJsonBinary)
 					return writeValue (((CookJsonBinary) value).getBytes ());
-				return writeValue (value.toString ());
+				return writeValue (((JsonString)value).getString ());
 			case TRUE:
 				return writeValue (true);
 			case FALSE:

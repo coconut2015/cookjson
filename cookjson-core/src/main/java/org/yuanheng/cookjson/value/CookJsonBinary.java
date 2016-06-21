@@ -15,6 +15,8 @@
  */
 package org.yuanheng.cookjson.value;
 
+import java.util.Arrays;
+
 import javax.json.JsonString;
 
 import org.apache.commons.codec.binary.Base64;
@@ -62,8 +64,8 @@ public class CookJsonBinary implements JsonString
 	/**
 	 * Gets the binary format for storing byte[].
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @return	the binaryFormat
 	 */
@@ -75,8 +77,8 @@ public class CookJsonBinary implements JsonString
 	/**
 	 * Sets the binary format for storing byte[].  The default is Base64.
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @param	binaryFormat
 	 *			the binary format
@@ -84,5 +86,29 @@ public class CookJsonBinary implements JsonString
 	public void setBinaryFormat (int binaryFormat)
 	{
 		m_binaryFormat = binaryFormat;
+	}
+
+	/**
+	 * Gets the hash code of the byte array computed using {@link Arrays#hashCode(byte[])}
+	 *
+	 * @return	the hash code of the byte array computed using {@link Arrays#hashCode(byte[])}
+	 */
+	@Override
+	public int hashCode ()
+	{
+		return Arrays.hashCode (m_bytes);
+	}
+
+	/**
+	 * Gets the quoted string representation of the byte array.
+	 *
+	 * @return	quoted string representation of the byte array.
+	 */
+	@Override
+	public String toString ()
+	{
+		// Neither Hexadecimal nor Base64 encoding have \ and "
+		// characters in them.  So we can safely quote the value.
+		return '"' + getString () + '"';
 	}
 }

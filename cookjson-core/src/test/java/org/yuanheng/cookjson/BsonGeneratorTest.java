@@ -26,7 +26,10 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.yuanheng.cookjson.value.CookJsonNumber;
+import org.yuanheng.cookjson.value.CookJsonBigDecimal;
+import org.yuanheng.cookjson.value.CookJsonDouble;
+import org.yuanheng.cookjson.value.CookJsonInt;
+import org.yuanheng.cookjson.value.CookJsonLong;
 
 import junitx.framework.FileAssert;
 
@@ -195,10 +198,10 @@ public class BsonGeneratorTest
 		g.setUseDouble (true);
 		g.writeStartArray ();
 		g.writeStartObject ();
-		g.write ("int", new CookJsonNumber (123));
-		g.write ("long", new CookJsonNumber (12345678901234L));
-		g.write ("bigint", new CookJsonNumber (new BigInteger ("1234567890123412345678901234")));
-		g.write ("decimal", new CookJsonNumber (12345.5));
+		g.write ("int", new CookJsonInt (123));
+		g.write ("long", new CookJsonLong (12345678901234L));
+		g.write ("bigint", new CookJsonBigDecimal (new BigInteger ("1234567890123412345678901234")));
+		g.write ("decimal", new CookJsonDouble (12345.5));
 		g.write ("string", "asdf");
 		g.writeNull ("null");
 		g.write ("true", true);
@@ -208,8 +211,8 @@ public class BsonGeneratorTest
 		g.write (false);
 		g.writeNull ();
 		g.writeStartArray ();
-		g.write (new CookJsonNumber (1234));
-		g.write (new CookJsonNumber (1234.5));
+		g.write (new CookJsonInt (1234));
+		g.write (new CookJsonDouble (1234.5));
 		g.write (true);
 		g.writeStartObject ();
 		g.writeEnd ();

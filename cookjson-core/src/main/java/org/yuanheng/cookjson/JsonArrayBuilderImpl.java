@@ -49,49 +49,49 @@ class JsonArrayBuilderImpl implements JsonArrayBuilder
 	@Override
 	public JsonArrayBuilder add (BigDecimal value)
 	{
-		m_array.add (new CookJsonNumber (value));
+		m_array.add (new CookJsonBigDecimal (value));
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder add (BigInteger value)
 	{
-		m_array.add (new CookJsonNumber (value));
+		m_array.add (new CookJsonBigDecimal (value));
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder add (int value)
 	{
-		m_array.add (new CookJsonNumber (value));
+		m_array.add (new CookJsonInt (value));
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder add (long value)
 	{
-		m_array.add (new CookJsonNumber (value));
+		m_array.add (new CookJsonLong (value));
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder add (double value)
 	{
-		m_array.add (new CookJsonNumber (value));
+		m_array.add (new CookJsonDouble (value));
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder add (boolean value)
 	{
-		m_array.add (value ? CookJsonBoolean.TRUE : CookJsonBoolean.FALSE);
+		m_array.add (value ? JsonValue.TRUE : JsonValue.FALSE);
 		return this;
 	}
 
 	@Override
 	public JsonArrayBuilder addNull ()
 	{
-		m_array.add (CookJsonNull.NULL);
+		m_array.add (JsonValue.NULL);
 		return this;
 	}
 

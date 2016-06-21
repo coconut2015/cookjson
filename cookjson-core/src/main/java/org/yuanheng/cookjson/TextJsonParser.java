@@ -26,9 +26,7 @@ import javax.json.JsonValue;
 import javax.json.stream.JsonLocation;
 import javax.json.stream.JsonParsingException;
 
-import org.yuanheng.cookjson.value.CookJsonBoolean;
-import org.yuanheng.cookjson.value.CookJsonNull;
-import org.yuanheng.cookjson.value.CookJsonNumber;
+import org.yuanheng.cookjson.value.CookJsonBigDecimal;
 import org.yuanheng.cookjson.value.CookJsonString;
 
 /**
@@ -564,13 +562,13 @@ public class TextJsonParser implements CookJsonParser
 			case KEY_NAME:
 				stateError ("getValue()");
 			case VALUE_TRUE:
-				return CookJsonBoolean.TRUE;
+				return JsonValue.TRUE;
 			case VALUE_FALSE:
-				return CookJsonBoolean.FALSE;
+				return JsonValue.FALSE;
 			case VALUE_NULL:
-				return CookJsonNull.NULL;
+				return JsonValue.NULL;
 			case VALUE_NUMBER:
-				return new CookJsonNumber (getBigDecimal ());
+				return new CookJsonBigDecimal (getBigDecimal ());
 			case VALUE_STRING:
 				return new CookJsonString (getString ());
 		}

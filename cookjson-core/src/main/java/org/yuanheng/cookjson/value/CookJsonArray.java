@@ -67,7 +67,7 @@ public class CookJsonArray extends ArrayList<JsonValue> implements JsonArray
 	@Override
 	public String getString (int index)
 	{
-		return ((JsonString) get (index)).toString ();
+		return ((JsonString) get (index)).getString ();
 	}
 
 	@Override

@@ -15,28 +15,25 @@
  */
 package org.yuanheng.cookjson.value;
 
-import javax.json.JsonValue;
+import javax.json.JsonString;
+import javax.json.JsonValue.ValueType;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * @author	Heng Yuan
  */
-public class CookJsonNull implements JsonValue
+public class CookJsonStringTest
 {
-	public static CookJsonNull NULL = new CookJsonNull ();
-
-	private CookJsonNull ()
+	@Test
+	public void test ()
 	{
-	}
-
-	@Override
-	public ValueType getValueType ()
-	{
-		return ValueType.NULL;
-	}
-
-	@Override
-	public String toString ()
-	{
-		return "null";
+		JsonString v = new CookJsonString ("test");
+		Assert.assertEquals ("test", v.getString ());
+		Assert.assertEquals ("test", v.getChars ());
+		Assert.assertEquals ("\"test\"", v.toString ());
+		Assert.assertEquals ("test".hashCode (), v.hashCode ());
+		Assert.assertEquals (ValueType.STRING, v.getValueType ());
 	}
 }

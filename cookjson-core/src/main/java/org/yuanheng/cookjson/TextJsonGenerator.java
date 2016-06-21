@@ -24,10 +24,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.stream.JsonGenerationException;
 import javax.json.stream.JsonGenerator;
 
@@ -467,7 +464,9 @@ public class TextJsonGenerator implements CookJsonGenerator
 						hexEncode (bytes);
 				}
 				else
-					quote (value.toString ());
+				{
+					quote (((JsonString)value).getString ());
+				}
 				break;
 			}
 			case TRUE:

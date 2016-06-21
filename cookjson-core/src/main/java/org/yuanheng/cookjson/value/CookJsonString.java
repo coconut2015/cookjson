@@ -17,6 +17,8 @@ package org.yuanheng.cookjson.value;
 
 import javax.json.JsonString;
 
+import org.yuanheng.cookjson.Quote;
+
 /**
  * @author	Heng Yuan
  */
@@ -56,6 +58,6 @@ public class CookJsonString implements JsonString
 	@Override
 	public String toString ()
 	{
-		return m_value;
+		return Quote.quote (m_value);
 	}
 }

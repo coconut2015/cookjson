@@ -20,7 +20,7 @@ import java.util.HashMap;
 import javax.json.*;
 
 /**
- * @author Heng Yuan
+ * @author	Heng Yuan
  */
 public class CookJsonObject extends HashMap<String, JsonValue> implements JsonObject
 {
@@ -59,7 +59,7 @@ public class CookJsonObject extends HashMap<String, JsonValue> implements JsonOb
 	@Override
 	public String getString (String name)
 	{
-		return getJsonString (name).toString ();
+		return getJsonString (name).getString ();
 	}
 
 	@Override

@@ -88,13 +88,19 @@ public class BsonParser implements CookJsonParser
 				return new CookJsonString ((String) m_value);
 			}
 			case VALUE_NUMBER:
-				return new CookJsonNumber ((Number) m_value);
+			{
+				if (m_value instanceof Integer)
+					return new CookJsonInt ((Integer)m_value);
+				if (m_value instanceof Long)
+					return new CookJsonLong ((Long)m_value);
+				return new CookJsonDouble ((Double) m_value);
+			}
 			case VALUE_NULL:
-				return CookJsonNull.NULL;
+				return JsonValue.NULL;
 			case VALUE_TRUE:
-				return CookJsonBoolean.TRUE;
+				return JsonValue.TRUE;
 			case VALUE_FALSE:
-				return CookJsonBoolean.FALSE;
+				return JsonValue.FALSE;
 			default:
 				throw new IllegalStateException ();
 		}

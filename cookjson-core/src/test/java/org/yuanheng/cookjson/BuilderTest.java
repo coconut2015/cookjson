@@ -28,7 +28,7 @@ import javax.json.JsonWriter;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.yuanheng.cookjson.value.CookJsonNumber;
+import org.yuanheng.cookjson.value.CookJsonInt;
 
 /**
  * @author	Heng Yuan
@@ -80,7 +80,7 @@ public class BuilderTest
 			.add ("object", f.createObjectBuilder ())
 			.add ("array", f.createArrayBuilder ())
 			.add ("double", 1234.5)
-			.add ("number", new CookJsonNumber (1234))
+			.add ("number", new CookJsonInt (1234))
 			.build ();
 
 		StringWriter sw = new StringWriter ();

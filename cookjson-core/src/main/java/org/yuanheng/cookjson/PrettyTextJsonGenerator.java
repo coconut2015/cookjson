@@ -20,10 +20,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.util.Map;
 
-import javax.json.JsonArray;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import javax.json.*;
 import javax.json.stream.JsonGenerator;
 
 import org.yuanheng.cookjson.value.CookJsonBinary;
@@ -203,7 +200,7 @@ public class PrettyTextJsonGenerator extends TextJsonGenerator
 						hexEncode (bytes);
 				}
 				else
-					quote (value.toString ());
+					quote (((JsonString)value).getString ());
 				break;
 			}
 			case TRUE:

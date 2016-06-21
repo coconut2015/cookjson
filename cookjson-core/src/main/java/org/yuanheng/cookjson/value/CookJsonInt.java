@@ -23,11 +23,12 @@ import javax.json.JsonNumber;
 /**
  * @author	Heng Yuan
  */
-public class CookJsonNumber implements JsonNumber
+public class CookJsonInt implements JsonNumber
 {
-	private Number m_value;
+	private final int m_value;
+	private BigDecimal m_decimal;
 
-	public CookJsonNumber (Number value)
+	public CookJsonInt (int value)
 	{
 		m_value = value;
 	}
@@ -41,50 +42,31 @@ public class CookJsonNumber implements JsonNumber
 	@Override
 	public boolean isIntegral ()
 	{
-		if (m_value instanceof Integer ||
-			m_value instanceof Long ||
-			m_value instanceof BigInteger ||
-			(m_value instanceof BigDecimal &&
-			 ((BigDecimal)m_value).scale () == 0))
-			return true;
-		return false;
+		return true;
 	}
 
 	@Override
 	public int intValue ()
 	{
-		return m_value.intValue ();
+		return m_value;
 	}
 
 	@Override
 	public int intValueExact ()
 	{
-		if (m_value instanceof Integer)
-			return m_value.intValue ();
-		else if (m_value instanceof Long)
-		{
-			long val = m_value.longValue ();
-			if (val > (long)Integer.MAX_VALUE ||
-				val < (long)Integer.MIN_VALUE)
-				throw new ArithmeticException ();
-			return (int) val;
-		}
-		return bigDecimalValue ().intValueExact ();
+		return m_value;
 	}
 
 	@Override
 	public long longValue ()
 	{
-		return m_value.longValue ();
+		return m_value;
 	}
 
 	@Override
 	public long longValueExact ()
 	{
-		if (m_value instanceof Integer ||
-			m_value instanceof Long)
-			return m_value.longValue ();
-		return bigDecimalValue ().longValueExact ();
+		return m_value;
 	}
 
 	@Override
@@ -102,44 +84,26 @@ public class CookJsonNumber implements JsonNumber
 	@Override
 	public double doubleValue ()
 	{
-		return m_value.doubleValue ();
+		return m_value;
 	}
 
 	@Override
 	public BigDecimal bigDecimalValue ()
 	{
-		if (m_value instanceof BigDecimal)
-		{
-			return (BigDecimal) m_value;
-		}
-		if (m_value instanceof Integer)
-		{
-			return new BigDecimal (m_value.intValue ());
-		}
-		if (m_value instanceof Long)
-		{
-			return new BigDecimal (m_value.longValue ());
-		}
-		if (m_value instanceof BigInteger)
-		{
-			return new BigDecimal ((BigInteger) m_value);
-		}
-		if (m_value instanceof Float)
-		{
-			return new BigDecimal (m_value.floatValue ());
-		}
-		return new BigDecimal (m_value.doubleValue ());
+		if (m_decimal == null)
+			m_decimal = new BigDecimal (m_value);
+		return m_decimal;
 	}
 
 	@Override
 	public int hashCode ()
 	{
-		return m_value.hashCode ();
+		return bigDecimalValue ().hashCode ();
 	}
 
 	@Override
 	public String toString ()
 	{
-		return m_value.toString ();
+		return Integer.toString (m_value);
 	}
 }

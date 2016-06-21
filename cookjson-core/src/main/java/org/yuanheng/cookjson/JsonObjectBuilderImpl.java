@@ -49,49 +49,49 @@ class JsonObjectBuilderImpl implements JsonObjectBuilder
 	@Override
 	public JsonObjectBuilder add (String name, BigInteger value)
 	{
-		m_object.put (name, new CookJsonNumber (value));
+		m_object.put (name, new CookJsonBigDecimal (value));
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder add (String name, BigDecimal value)
 	{
-		m_object.put (name, new CookJsonNumber (value));
+		m_object.put (name, new CookJsonBigDecimal (value));
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder add (String name, int value)
 	{
-		m_object.put (name, new CookJsonNumber (value));
+		m_object.put (name, new CookJsonInt (value));
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder add (String name, long value)
 	{
-		m_object.put (name, new CookJsonNumber (value));
+		m_object.put (name, new CookJsonLong (value));
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder add (String name, double value)
 	{
-		m_object.put (name, new CookJsonNumber (value));
+		m_object.put (name, new CookJsonDouble (value));
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder add (String name, boolean value)
 	{
-		m_object.put (name, value ? CookJsonBoolean.TRUE : CookJsonBoolean.FALSE);
+		m_object.put (name, value ? JsonValue.TRUE : JsonValue.FALSE);
 		return this;
 	}
 
 	@Override
 	public JsonObjectBuilder addNull (String name)
 	{
-		m_object.put (name, CookJsonNull.NULL);
+		m_object.put (name, JsonValue.NULL);
 		return this;
 	}
 
