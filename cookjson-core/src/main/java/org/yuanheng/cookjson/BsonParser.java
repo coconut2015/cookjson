@@ -295,7 +295,11 @@ public class BsonParser implements CookJsonParser
 				return (String) m_value;
 			}
 			case VALUE_NUMBER:
+			{
+				if (m_value instanceof Double)
+					return DoubleUtils.toString (((Double) m_value).doubleValue ());
 				return m_value.toString ();
+			}
 			default:
 				throw new IllegalStateException ();
 		}

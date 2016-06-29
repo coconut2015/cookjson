@@ -716,7 +716,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		try
 		{
 			writeName (name);
-			w (Double.toString (value));
+			w (DoubleUtils.toString (value));
 			return this;
 		}
 		catch (IOException ex)
@@ -929,7 +929,7 @@ public class TextJsonGenerator implements CookJsonGenerator
 		try
 		{
 			writeComma ();
-			w (Double.toString (value));
+			w (DoubleUtils.toString (value));
 		}
 		catch (IOException ex)
 		{

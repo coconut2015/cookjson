@@ -23,6 +23,7 @@ import javax.json.JsonValue.ValueType;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.yuanheng.cookjson.DoubleUtils;
 
 /**
  * @author	Heng Yuan
@@ -88,7 +89,7 @@ public class NumberTest
 		Assert.assertEquals (BigDecimal.valueOf (d), v.bigDecimalValue ());
 		Assert.assertEquals (d, v.doubleValue (), 0);
 		Assert.assertEquals (BigDecimal.valueOf (d).hashCode (), v.hashCode ());
-		Assert.assertEquals (Double.toString (d), v.toString ());
+		Assert.assertEquals (DoubleUtils.toString (d), v.toString ());
 	}
 
 	@Test

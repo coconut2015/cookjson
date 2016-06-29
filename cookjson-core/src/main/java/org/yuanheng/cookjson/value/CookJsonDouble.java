@@ -20,6 +20,8 @@ import java.math.BigInteger;
 
 import javax.json.JsonNumber;
 
+import org.yuanheng.cookjson.DoubleUtils;
+
 /**
  * @author	Heng Yuan
  */
@@ -104,6 +106,6 @@ public class CookJsonDouble implements JsonNumber
 	@Override
 	public String toString ()
 	{
-		return Double.toString (m_value);
+		return DoubleUtils.toString (m_value);
 	}
 }
