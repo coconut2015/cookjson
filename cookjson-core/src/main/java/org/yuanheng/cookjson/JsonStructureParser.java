@@ -186,11 +186,6 @@ public class JsonStructureParser implements CookJsonParser
 		throw new IllegalStateException ();
 	}
 
-	private void stateError ()
-	{
-		throw new IllegalStateException ();
-	}
-
 	@Override
 	public String getString ()
 	{
@@ -203,8 +198,7 @@ public class JsonStructureParser implements CookJsonParser
 			case VALUE_NUMBER:
 				return ((JsonNumber)m_value).toString ();
 			default:
-				stateError ();
-				return null;	// to make compiler happy.
+				throw new IllegalStateException ();
 		}
 	}
 
@@ -230,7 +224,7 @@ public class JsonStructureParser implements CookJsonParser
 	public boolean isIntegralNumber ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			throw new IllegalStateException ();
 		return ((JsonNumber)m_value).isIntegral ();
 	}
 
@@ -238,7 +232,7 @@ public class JsonStructureParser implements CookJsonParser
 	public int getInt ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			throw new IllegalStateException ();
 		return ((JsonNumber)m_value).intValue ();
 	}
 
@@ -246,7 +240,7 @@ public class JsonStructureParser implements CookJsonParser
 	public long getLong ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			throw new IllegalStateException ();
 		return ((JsonNumber)m_value).longValue ();
 	}
 
@@ -254,7 +248,7 @@ public class JsonStructureParser implements CookJsonParser
 	public BigDecimal getBigDecimal ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ();
+			throw new IllegalStateException ();
 		return ((JsonNumber)m_value).bigDecimalValue ();
 	}
 

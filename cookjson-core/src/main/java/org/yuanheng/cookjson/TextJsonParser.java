@@ -110,30 +110,30 @@ public class TextJsonParser implements CookJsonParser
 		m_appendBuf[m_appendPos++] = ch;
 	}
 
-	private void stateError (String function)
+	private IllegalStateException stateError (String function)
 	{
-		throw new IllegalStateException (function + " cannot be called at the current state: " + m_event + ".");
+		return new IllegalStateException (function + " cannot be called at the current state: " + m_event + ".");
 	}
 
-	private void ioError (String msg)
+	private JsonParsingException ioError (String msg)
 	{
 		JsonLocationImpl location = new JsonLocationImpl ();
 		location.m_lineNumber = m_line;
 		// -1 to back track the last read character.
 		location.m_columnNumber = m_column -1;
 		location.m_streamOffset = m_offset - 1;
-		throw new JsonParsingException ("Parsing error at " + location.toString () + ": " + msg, location);
+		return new JsonParsingException ("Parsing error at " + location.toString () + ": " + msg, location);
 	}
 
-	private void eofError ()
+	private JsonParsingException eofError ()
 	{
 		JsonLocation location = getCurrentLocation ();
-		throw new JsonParsingException ("Parsing error at " + location.toString () + ": unexpected eof.", location);
+		return new JsonParsingException ("Parsing error at " + location.toString () + ": unexpected eof.", location);
 	}
 
-	private void unexpected (char ch)
+	private JsonParsingException unexpected (char ch)
 	{
-		ioError ("unexpected character '" + ch + "'");
+		return ioError ("unexpected character '" + ch + "'");
 	}
 
 	private char read () throws IOException
@@ -157,7 +157,7 @@ public class TextJsonParser implements CookJsonParser
 		m_readPos = 0;
 		m_readMax = m_reader.read (m_readBuf);
 		if (m_readMax <= 0)
-			eofError ();
+			throw eofError ();
 	}
 
 	private void readLineComment () throws IOException
@@ -252,7 +252,7 @@ public class TextJsonParser implements CookJsonParser
 		{
 			--m_offset;
 			--m_column;
-			unexpected ('/');
+			throw unexpected ('/');
 		}
 	}
 
@@ -268,7 +268,7 @@ public class TextJsonParser implements CookJsonParser
 	private void scanUnexpected (char ch) throws IOException
 	{
 		if (!m_allowComments || ch != '/')
-			unexpected (ch);
+			throw unexpected (ch);
 		readComment ();
 	}
 
@@ -277,13 +277,13 @@ public class TextJsonParser implements CookJsonParser
 		char ch;
 		ch = read ();
 		if (ch != 'u')
-			ioError ("expecting 'u'");
+			throw ioError ("expecting 'u'");
 		ch = read ();
 		if (ch != 'l')
-			ioError ("expecting 'l'");
+			throw ioError ("expecting 'l'");
 		ch = read ();
 		if (ch != 'l')
-			ioError ("expecting 'l'");
+			throw ioError ("expecting 'l'");
 	}
 
 	private void readTrue () throws IOException
@@ -291,13 +291,13 @@ public class TextJsonParser implements CookJsonParser
 		char ch;
 		ch = read ();
 		if (ch != 'r')
-			ioError ("expecting 'r'");
+			throw ioError ("expecting 'r'");
 		ch = read ();
 		if (ch != 'u')
-			ioError ("expecting 'u'");
+			throw ioError ("expecting 'u'");
 		ch = read ();
 		if (ch != 'e')
-			ioError ("expecting 'e'");
+			throw ioError ("expecting 'e'");
 	}
 
 	private void readFalse () throws IOException
@@ -305,16 +305,16 @@ public class TextJsonParser implements CookJsonParser
 		int ch;
 		ch = read ();
 		if (ch != 'a')
-			ioError ("expecting 'a'");
+			throw ioError ("expecting 'a'");
 		ch = read ();
 		if (ch != 'l')
-			ioError ("expecting 'l'");
+			throw ioError ("expecting 'l'");
 		ch = read ();
 		if (ch != 's')
-			ioError ("expecting 's'");
+			throw ioError ("expecting 's'");
 		ch = read ();
 		if (ch != 'e')
-			ioError ("expecting 'e'");
+			throw ioError ("expecting 'e'");
 	}
 
 	private void readExp () throws IOException
@@ -334,12 +334,12 @@ public class TextJsonParser implements CookJsonParser
 			}
 			else
 			{
-				unexpected (ch);
+				throw unexpected (ch);
 			}
 		}
 		else
 		{
-			unexpected (ch);
+			throw unexpected (ch);
 		}
 		
 
@@ -476,13 +476,13 @@ public class TextJsonParser implements CookJsonParser
 							}
 						}
 					}
-					unexpected (ch);
+					throw unexpected (ch);
 				}
 				append ((char) val);
 				break;
 			}
 			default:
-				ioError ("unknown escape sequence '\\" + ch + "'");
+				throw ioError ("unknown escape sequence '\\" + ch + "'");
 		}
 	}
 
@@ -536,7 +536,7 @@ public class TextJsonParser implements CookJsonParser
 				}
 				else
 				{
-					unexpected (ch);
+					throw unexpected (ch);
 				}
 			}
 			fill ();
@@ -565,7 +565,7 @@ public class TextJsonParser implements CookJsonParser
 			case END_ARRAY:
 			case END_OBJECT:
 			case KEY_NAME:
-				stateError ("getValue()");
+				throw stateError ("getValue()");
 			case VALUE_TRUE:
 				return JsonValue.TRUE;
 			case VALUE_FALSE:
@@ -577,8 +577,7 @@ public class TextJsonParser implements CookJsonParser
 			case VALUE_STRING:
 				return new CookJsonString (getString ());
 		}
-		stateError ("getValue()");
-		return null;	// should not get here.
+		throw stateError ("getValue()");
 	}
 
 	private void expectArrayObject () throws IOException
@@ -749,7 +748,7 @@ public class TextJsonParser implements CookJsonParser
 					ch = read ();
 					if (!(ch >= '0' && ch <= '9'))
 					{
-						unexpected (ch);
+						throw unexpected (ch);
 					}
 
 					readNumber (ch);
@@ -895,7 +894,7 @@ public class TextJsonParser implements CookJsonParser
 	public boolean isIntegralNumber ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ("isIntegralNumber()");
+			throw stateError ("isIntegralNumber()");
 		return m_int || getBigDecimal ().scale () == 0;
 	}
 
@@ -903,7 +902,7 @@ public class TextJsonParser implements CookJsonParser
 	public int getInt ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ("getInt()");
+			throw stateError ("getInt()");
 		String str = getBufferString ();
 		if (m_int &&
 			(m_appendPos < 10 ||
@@ -918,7 +917,7 @@ public class TextJsonParser implements CookJsonParser
 	public long getLong ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ("getLong()");
+			throw stateError ("getLong()");
 		String str = getBufferString ();
 		if (m_int &&
 			(m_appendPos < 19 ||
@@ -933,7 +932,7 @@ public class TextJsonParser implements CookJsonParser
 	public BigDecimal getBigDecimal ()
 	{
 		if (m_event != Event.VALUE_NUMBER)
-			stateError ("getBigDecimal()");
+			throw stateError ("getBigDecimal()");
 		return new BigDecimal (getBufferString ());
 	}
 
@@ -990,7 +989,7 @@ public class TextJsonParser implements CookJsonParser
 		if (m_event != Event.VALUE_STRING &&
 			m_event != Event.VALUE_NUMBER &&
 			m_event != Event.KEY_NAME)
-			stateError ("getString()");
+			throw stateError ("getString()");
 		return getBufferString ();
 	}
 
@@ -998,7 +997,7 @@ public class TextJsonParser implements CookJsonParser
 	public boolean isBinary ()
 	{
 		if (m_event != Event.VALUE_STRING)
-			stateError ("isBinary()");
+			throw stateError ("isBinary()");
 		// For Json, it is up to the caller to interpret the string
 		// value as the binary encoded string.
 		return false;
@@ -1008,7 +1007,7 @@ public class TextJsonParser implements CookJsonParser
 	public byte[] getBytes ()
 	{
 		if (m_event != Event.VALUE_STRING)
-			stateError ("getBytes()");
+			throw stateError ("getBytes()");
 		throw new IllegalStateException ("The current string value is not binary.");
 	}
 

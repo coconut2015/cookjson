@@ -30,6 +30,7 @@ import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParser.Event;
 import javax.json.stream.JsonParserFactory;
 
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -117,6 +118,32 @@ public class JsonStructureParserTest
 		eventCount ("../tests/data/long.json", 10);
 	}
 
+	@Test
+	public void testBinary () throws IOException
+	{
+		File file = new File ("../tests/data/binary.bson".replace ('/', File.separatorChar));
+		CookJsonProvider provider = new CookJsonProvider ();
+		HashMap<String, Object> config = new HashMap<String, Object> ();
+		config.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
+		config.put (CookJsonProvider.BINARY_FORMAT, CookJsonProvider.BINARY_FORMAT_HEX);
+		JsonReader r = provider.createReaderFactory (config).createReader (new FileInputStream (file));
+		JsonStructure v = r.read ();
+		r.close ();
+
+		CookJsonParser p = new JsonStructureParser (v);
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_STRING)
+			{
+				if (p.isBinary ())
+				{
+					Assert.assertEquals (p.getString (), Hex.encodeHexString (p.getBytes ()));
+				}
+			}
+		}
+		p.close ();
+	}
+
 	private int sum (int[] array)
 	{
 		int total = 0;
@@ -166,7 +193,10 @@ public class JsonStructureParserTest
 			if (p.next () == Event.VALUE_NUMBER)
 			{
 				Assert.assertEquals (Event.VALUE_NUMBER, p.getEvent ());
+				Assert.assertTrue (p.getValue () instanceof JsonNumber);
+				Assert.assertEquals (p.getString (), ((JsonNumber)p.getValue ()).toString ());
 				ints[count++] = p.getInt ();
+				Assert.assertEquals (JsonLocationImpl.Unknown, p.getLocation ());
 			}
 		}
 		p.close ();
@@ -183,13 +213,14 @@ public class JsonStructureParserTest
 		JsonStructure v = r.read ();
 		r.close ();
 
-		JsonParser p = new JsonStructureParser (v);
+		CookJsonParser p = new JsonStructureParser (v);
 		long[] longs = new long[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
 			if (p.next () == Event.VALUE_NUMBER)
 			{
+				Assert.assertTrue (p.getValue () instanceof JsonNumber);
 				longs[count++] = p.getLong ();
 			}
 		}
@@ -201,13 +232,14 @@ public class JsonStructureParserTest
 	public void testGetBigInteger () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		CookJsonParser p = new TextJsonParser (new FileInputStream (file));
 		BigInteger[] bigints = new BigInteger[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
 			if (p.next () == Event.VALUE_NUMBER)
 			{
+				Assert.assertTrue (p.getValue () instanceof JsonNumber);
 				bigints[count++] = p.getBigDecimal ().toBigInteger ();
 			}
 		}
@@ -224,13 +256,14 @@ public class JsonStructureParserTest
 		JsonStructure v = r.read ();
 		r.close ();
 
-		JsonParser p = new JsonStructureParser (v);
+		CookJsonParser p = new JsonStructureParser (v);
 		BigDecimal[] decimals = new BigDecimal[9];
 		int count = 0;
 		while (p.hasNext ())
 		{
 			if (p.next () == Event.VALUE_NUMBER)
 			{
+				Assert.assertTrue (p.getValue () instanceof JsonNumber);
 				decimals[count++] = p.getBigDecimal ();
 			}
 		}

@@ -48,10 +48,10 @@ public class BOM
 
 		b1 = is.read ();
 		if (b1 < 0)
-			throw new IOException ("Json minimum size is 2");
+			throw new IOException ("JSON minimum size is 2");
 		b2 = is.read ();
 		if (b2 < 0)
-			throw new IOException ("Json minimum size is 2");
+			throw new IOException ("JSON minimum size is 2");
 
 		if (b1 == 0)
 		{

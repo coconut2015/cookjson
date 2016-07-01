@@ -40,6 +40,7 @@ public class DoubleUtilsTest
 		Assert.assertEquals ("0.0001234", DoubleUtils.toString (0.0001234));
 		Assert.assertEquals ("1.234e-5", DoubleUtils.toString (0.00001234));
 		Assert.assertEquals ("1.1234", DoubleUtils.toString (1.1234));
+		Assert.assertEquals ("5e-100", DoubleUtils.toString (5e-100));
 		Assert.assertEquals ("5e100", DoubleUtils.toString (5e100));
 		Assert.assertEquals ("12345678980123456", DoubleUtils.toString (12345678980123456L));
 		Assert.assertEquals ("1.2345678980123456e17", DoubleUtils.toString (123456789801234567L));
@@ -52,6 +53,7 @@ public class DoubleUtilsTest
 		Assert.assertEquals ("-0.001234", DoubleUtils.toString (-0.001234));
 		Assert.assertEquals ("-0.0001234", DoubleUtils.toString (-0.0001234));
 		Assert.assertEquals ("-1.1234", DoubleUtils.toString (-1.1234));
+		Assert.assertEquals ("-5e-100", DoubleUtils.toString (-5e-100));
 		Assert.assertEquals ("-5e100", DoubleUtils.toString (-5e100));
 		Assert.assertEquals ("-12345678980123456", DoubleUtils.toString (-12345678980123456L));
 		Assert.assertEquals ("-1.2345678980123456e17", DoubleUtils.toString (-123456789801234567L));

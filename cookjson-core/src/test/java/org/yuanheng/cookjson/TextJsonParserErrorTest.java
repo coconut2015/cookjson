@@ -15,6 +15,7 @@
  */
 package org.yuanheng.cookjson;
 
+import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 
 import javax.json.stream.JsonParsingException;
@@ -30,6 +31,22 @@ public class TextJsonParserErrorTest
 {
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testBOM ()
+	{
+		byte[] bytes = new byte[] { '{' };
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("JSON minimum size is 2");
+
+	    TextJsonParser p = new TextJsonParser (new ByteArrayInputStream (bytes));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
 
 	@Test
 	@SuppressWarnings ("resource")
@@ -80,13 +97,11 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = IllegalStateException.class)
 	@SuppressWarnings ("resource")
 	public void testStateError ()
 	{
 		String json = "{\"abc\":1234}";
-
-	    thrown.expect (IllegalStateException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -102,14 +117,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testTrue1 ()
 	{
 		String json = "[ t ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -117,14 +130,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testTrue2 ()
 	{
 		String json = "[ tr ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -132,14 +143,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testTrue3 ()
 	{
 		String json = "[ tru ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -147,14 +156,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testTrue4 ()
 	{
 		String json = "[ trua ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -162,14 +169,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testFalse1 ()
 	{
 		String json = "[ f ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -177,14 +182,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testFalse2 ()
 	{
 		String json = "[ fa ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -192,14 +195,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testFalse3 ()
 	{
 		String json = "[ fal ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -207,14 +208,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testFalse4 ()
 	{
 		String json = "[ fals ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -222,14 +221,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testFalse5 ()
 	{
 		String json = "[ falsa ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -237,14 +234,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testNull1 ()
 	{
 		String json = "[ n ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -252,14 +247,12 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testNull2 ()
 	{
 		String json = "[ nu ]";
 
-	    thrown.expect (JsonParsingException.class);
-
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
@@ -267,13 +260,11 @@ public class TextJsonParserErrorTest
 		}
 	}
 
-	@Test
+	@Test (expected = JsonParsingException.class)
 	@SuppressWarnings ("resource")
 	public void testNull3 ()
 	{
 		String json = "[ nul ]";
-
-	    thrown.expect (JsonParsingException.class);
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -337,6 +328,22 @@ public class TextJsonParserErrorTest
 
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character 'e'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber4 ()
+	{
+		String json = "[ -1e- ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 7, offset 6: unexpected character ' '");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
