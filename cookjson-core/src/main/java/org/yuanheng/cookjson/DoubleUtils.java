@@ -105,7 +105,7 @@ public class DoubleUtils
 			return "NaN";
 		if (f + f == f)
 			return (f == 0.0) ? "0" : ((f > 0) ? "Infinity" : "-Infinity");
-		StringBuilder str = new StringBuilder (23);
+		StringBuilder str = new StringBuilder (24);
 		if (f < 0)
 		{
 			str.append ('-');
