@@ -19,7 +19,7 @@
 
 	<groupId>org.yuanheng.cookjson</groupId>
 	<artifactId>cookjson-parent</artifactId>
-	<version>0.1</version>
+	<version>1.0</version>
 	<packaging>pom</packaging>
 
 	<name>cookjson</name>
@@ -43,6 +43,7 @@
 		<module>cookjson-core</module>
 		<module>cookjson-jsonpath</module>
 		<module>cookjson-utils</module>
+		<module>cookjson-benchmark</module>
 	</modules>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>

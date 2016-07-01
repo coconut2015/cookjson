@@ -55,7 +55,7 @@ public class TextJsonParser implements CookJsonParser
 	private long savedColumn;
 	private long savedOffset;
 
-	private char[] m_readBuf = new char[8192];
+	private final char[] m_readBuf = new char[8192];
 	private int m_readPos = 0;
 	private int m_readMax = 0;
 
@@ -272,49 +272,33 @@ public class TextJsonParser implements CookJsonParser
 		readComment ();
 	}
 
-	private void readNull () throws IOException
+	private void expect (String str) throws IOException
 	{
-		char ch;
-		ch = read ();
-		if (ch != 'u')
-			throw ioError ("expecting 'u'");
-		ch = read ();
-		if (ch != 'l')
-			throw ioError ("expecting 'l'");
-		ch = read ();
-		if (ch != 'l')
-			throw ioError ("expecting 'l'");
-	}
-
-	private void readTrue () throws IOException
-	{
-		char ch;
-		ch = read ();
-		if (ch != 'r')
-			throw ioError ("expecting 'r'");
-		ch = read ();
-		if (ch != 'u')
-			throw ioError ("expecting 'u'");
-		ch = read ();
-		if (ch != 'e')
-			throw ioError ("expecting 'e'");
-	}
-
-	private void readFalse () throws IOException
-	{
-		int ch;
-		ch = read ();
-		if (ch != 'a')
-			throw ioError ("expecting 'a'");
-		ch = read ();
-		if (ch != 'l')
-			throw ioError ("expecting 'l'");
-		ch = read ();
-		if (ch != 's')
-			throw ioError ("expecting 's'");
-		ch = read ();
-		if (ch != 'e')
-			throw ioError ("expecting 'e'");
+		final int len = str.length ();
+		if ((m_readPos + len) >= m_readMax)
+		{
+			// we do the slow matching
+			for (int i = 0; i < len; ++i)
+			{
+				char ch = read ();
+				if (ch != str.charAt (i))
+					throw ioError ("expecting '" + ch + "'");
+			}
+		}
+		else
+		{
+			final char[] readBuf = m_readBuf;
+			int readPos = m_readPos;
+			for (int i = 0; i < len; ++i)
+			{
+				char ch = readBuf[readPos++];
+				if (ch != str.charAt (i))
+					throw ioError ("expecting '" + ch + "'");
+			}
+			m_readPos = readPos;
+			m_offset += len;
+			m_column += len;
+		}
 	}
 
 	private void readExp () throws IOException
@@ -378,7 +362,8 @@ public class TextJsonParser implements CookJsonParser
 	{
 		m_int = true;
 		char[] buf = m_appendBuf;
-		buf[m_appendPos++] = firstChar;
+		int appendPos = m_appendPos;
+		buf[appendPos++] = firstChar;
 
 		if (firstChar == '0')
 		{
@@ -386,36 +371,43 @@ public class TextJsonParser implements CookJsonParser
 			char ch = read ();
 			if (ch == '.')
 			{
-				buf[m_appendPos++] = ch;
+				buf[appendPos++] = ch;
+				m_appendPos = appendPos;
 				readFraction ();
 			}
 			else
 			{
+				m_appendPos = appendPos;
 				unread ();		// unread the last char
-				return;
 			}
+			return;
 		}
 
 		// now read the integer part.
 		char ch;
 		while ((ch = read ()) >= '0' && ch <= '9')
 		{
-			buf[m_appendPos++] = ch;
+			buf[appendPos++] = ch;
 		}
 
 		if (ch == '.')
 		{
-			buf[m_appendPos++] = ch;
+			buf[appendPos++] = ch;
+			m_appendPos = appendPos;
 			readFraction ();
 		}
 		else if (ch == 'E' || ch == 'e')
 		{
 			m_int = false;
-			buf[m_appendPos++] = ch;
+			buf[appendPos++] = ch;
+			m_appendPos = appendPos;
 			readExp ();
 		}
 		else
+		{
+			m_appendPos = appendPos;
 			unread ();		// unread the last char
+		}
 	}
 
 	private void readEscape () throws IOException
@@ -789,21 +781,21 @@ public class TextJsonParser implements CookJsonParser
 				}
 				case 'f':
 				{
-					readFalse ();
+					expect ("alse");
 					m_event = Event.VALUE_FALSE;
 					m_lastToken = VALUE;
 					return;
 				}
 				case 'n':
 				{
-					readNull ();
+					expect ("ull");
 					m_event = Event.VALUE_NULL;
 					m_lastToken = VALUE;
 					return;
 				}
 				case 't':
 				{
-					readTrue ();
+					expect ("rue");
 					m_event = Event.VALUE_TRUE;
 					m_lastToken = VALUE;
 					return;
@@ -828,54 +820,49 @@ public class TextJsonParser implements CookJsonParser
 	{
 		try
 		{
-			switch (m_state)
+			int state = m_state;
+			if (state == ParserState.IN_OBJECT)
 			{
-				case ParserState.INITIAL:
+				int lastToken = m_lastToken;
+				if (lastToken == FIELD)
 				{
-					expectArrayObject ();
-					return m_event;
-				}
-
-				case ParserState.IN_OBJECT:
-				{
-					int lastToken = m_lastToken;
-					if (lastToken == FIELD)
-					{
-						expectColon ();
-						expectValue ();
-						return m_event;
-					}
-
-					if (lastToken == VALUE)
-					{
-						// we now expect either ',' or '}'
-						if (expectCommaObject ())
-						{
-							return m_event;
-						}
-					}
-
-					expectKeyName ();
-					return m_event;
-				}
-
-				case ParserState.IN_ARRAY:
-				{
-					if (m_lastToken == VALUE)
-					{
-						// we now expect either ',' or ']'
-						if (expectCommaArray ())
-						{
-							return m_event;
-						}
-					}
+					expectColon ();
 					expectValue ();
 					return m_event;
 				}
 
-				case ParserState.END:
-					throw new NoSuchElementException ();
+				if (lastToken == VALUE)
+				{
+					// we now expect either ',' or '}'
+					if (expectCommaObject ())
+					{
+						return m_event;
+					}
+				}
+
+				expectKeyName ();
+				return m_event;
 			}
+			else if (state == ParserState.IN_ARRAY)
+			{
+				if (m_lastToken == VALUE)
+				{
+					// we now expect either ',' or ']'
+					if (expectCommaArray ())
+					{
+						return m_event;
+					}
+				}
+				expectValue ();
+				return m_event;
+			}
+			else if (state == ParserState.INITIAL)
+			{
+				expectArrayObject ();
+				return m_event;
+			}
+			else if (state == ParserState.END)
+				throw new NoSuchElementException ();
 			throw new IllegalStateException ();
 		}
 		catch (IOException ex)
