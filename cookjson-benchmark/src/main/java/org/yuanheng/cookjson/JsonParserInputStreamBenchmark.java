@@ -108,6 +108,15 @@ public class JsonParserInputStreamBenchmark
 	public void testJackson () throws IOException
 	{
 		JsonFactory jsonFactory = new JsonFactory ();
+		com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getInputStream ());
+		perfTest2 (p);
+		p.close ();
+	}
+
+	@Benchmark
+	public void testJacksonNoCanonical () throws IOException
+	{
+		JsonFactory jsonFactory = new JsonFactory ();
 		jsonFactory.disable (JsonFactory.Feature.CANONICALIZE_FIELD_NAMES);
 		com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getInputStream ());
 		perfTest2 (p);

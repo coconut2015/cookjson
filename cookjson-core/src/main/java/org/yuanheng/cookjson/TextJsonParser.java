@@ -40,11 +40,13 @@ public class TextJsonParser implements CookJsonParser
 	private final static int VALUE = 2;
 	private final static int FIELD = 3;
 
+	private final static int READ_SIZE = 8192;
+
 	private boolean m_allowComments;
 
 	private final Reader m_reader;
 	/** append buffer for storing output string */
-	private char[] m_appendBuf = new char[8192];
+	private char[] m_appendBuf = new char[8193];
 	/** position tracking for append buffer */
 	private int m_appendPos;
 
@@ -55,7 +57,7 @@ public class TextJsonParser implements CookJsonParser
 	private long savedColumn;
 	private long savedOffset;
 
-	private final char[] m_readBuf = new char[8192];
+	private final char[] m_readBuf = new char[READ_SIZE + 1];	// +1 for extra 0 byte to indicate end of buffer
 	private int m_readPos = 0;
 	private int m_readMax = 0;
 
@@ -65,6 +67,12 @@ public class TextJsonParser implements CookJsonParser
 	private boolean m_int;
 
 	private Event m_event;
+	/**
+	 * If this flag is true, the string data is located in the input buffer rather than
+	 * m_appendBuf.
+	 */
+	private boolean m_simple;
+	private int m_start;
 
 	public TextJsonParser (Reader r)
 	{
@@ -116,7 +124,46 @@ public class TextJsonParser implements CookJsonParser
 
 	private JsonParsingException unexpected (char ch)
 	{
-		return ioError ("unexpected character '" + ch + "'");
+		String charStr;
+		switch (ch)
+		{
+			case '\b':	// 0x08
+				charStr = "\\b";
+				break;
+			case '\t':	// 0x09
+				charStr = "\\t";
+				break;
+			case '\n':	// 0x0a
+				charStr = "\\n";
+				break;
+			case '\r':	// 0x0d
+				charStr = "\\r";
+				break;
+			case '\f':	// 0x0c
+				charStr = "\\f";
+				break;
+			default:
+			{
+				if (ch < ' ')
+				{
+					charStr = "\\u00" + Quote.hex[(ch >> 4) & 0x0f] + Quote.hex[ch & 0x0f];
+				}
+				else if (ch == '\\' || ch == '\'')
+				{
+					charStr = "\\" + ch;
+				}
+				else if (ch > 127)
+				{
+					String hex = Integer.toHexString (ch);
+					charStr = "\\u" + ("0000".substring (hex.length ())) + hex;
+				}
+				else
+				{
+					charStr = Character.toString (ch);
+				}
+			}
+		}
+		return ioError ("unexpected character '" + charStr + "'");
 	}
 
 	private char read () throws IOException
@@ -138,88 +185,110 @@ public class TextJsonParser implements CookJsonParser
 	private void fill () throws IOException
 	{
 		m_readPos = 0;
-		m_readMax = m_reader.read (m_readBuf);
+		m_readMax = m_reader.read (m_readBuf, 0, READ_SIZE);
 		if (m_readMax <= 0)
 			throw eofError ();
+		m_readBuf[m_readMax] = 0;	// mark the end of buffer
 	}
 
 	private void readLineComment () throws IOException
 	{
 		char[] buf = m_readBuf;
-		int len = 0;
+
+		int readPos = m_readPos;
+
 		for (;;)
 		{
-			int readPos = m_readPos;
-			int readMax = m_readMax;
-			while (readPos < readMax)
-			{
-				char ch = buf[readPos++];
-				++len;
+			char ch = buf[readPos++];
 
-				if (ch == '\n')
-				{
-					m_offset += len;
-					m_column = 1;
-					++m_line;
-					m_readPos = readPos;
-					return;
-				}
+			if (ch == '\n')
+			{
+				m_offset += readPos - m_readPos;
+				m_column = 1;
+				++m_line;
+				m_readPos = readPos;
+				return;
 			}
-			fill ();
+			else if (ch == 0)
+			{
+				if (readPos < m_readMax)
+				{
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					throw unexpected (ch);
+				}
+				int l = readPos - m_readPos - 1;
+				m_offset += l;
+				m_column += l;
+				fill ();
+				readPos = 0;
+			}
 		}
 	}
 
 	private void readBlockComment () throws IOException
 	{
 		char[] buf = m_readBuf;
+
+		int readPos = m_readPos;
 		int len = 0;
 		for (;;)
 		{
-			int readPos = m_readPos;
-			int readMax = m_readMax;
-			while (readPos < readMax)
-			{
-				char ch = buf[readPos++];
-				++len;
+			char ch = buf[readPos++];
+			++len;
 
-				// switch is useful for scanning characters that are
-				// mostly handled as default.
-				switch (ch)
+			// switch is useful for scanning characters that are
+			// mostly handled as default.
+			switch (ch)
+			{
+				case '\n':
 				{
-					case '\n':
+					m_offset += len;
+					m_column = 1;
+					++m_line;
+					len = 0;
+					break;
+				}
+				case '*':
+				{
+					char nextChar;
+					if (readPos < m_readMax)
 					{
-						m_offset += len;
-						m_column = 1;
-						++m_line;
-						len = 0;
-						break;
+						nextChar = buf[readPos];
 					}
-					case '*':
+					else
 					{
-						char nextChar;
-						if (readPos < readMax)
-						{
-							nextChar = buf[readPos];
-						}
-						else
-						{
-							fill ();
-							readPos = m_readPos;
-							readMax = m_readMax;
-							nextChar = buf[readPos];
-						}
-						if (nextChar == '/')
-						{
-							m_offset += len + 1;
-							m_column += len + 1;
-							m_readPos = readPos + 1;
-							return;
-						}
-						break;
+						fill ();
+						readPos = 0;
+						nextChar = buf[readPos];
 					}
+					if (nextChar == '/')
+					{
+						m_offset += len + 1;
+						m_column += len + 1;
+						m_readPos = readPos + 1;
+						return;
+					}
+					break;
+				}
+				case 0:
+				{
+					if (readPos < m_readMax)
+					{
+						int l = readPos - m_readPos;
+						m_offset += l;
+						m_column += l;
+						throw unexpected (ch);
+					}
+					int l = readPos - m_readPos - 1;
+					m_offset += l;
+					m_column += l;
+					fill ();
+					readPos = 0;
+					break;
 				}
 			}
-			fill ();
 		}
 	}
 
@@ -312,10 +381,21 @@ public class TextJsonParser implements CookJsonParser
 
 		for (;;)
 		{
-			ch = read ();
+			ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			if (ch >= '0' && ch <= '9')
 			{
 				append (ch);
+				continue;
+			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
 				continue;
 			}
 			unread ();		// unread the last char
@@ -328,10 +408,40 @@ public class TextJsonParser implements CookJsonParser
 		m_int = false;
 		char ch;
 		char[] buf = m_appendBuf;
-		while ((ch = read ()) >= '0' && ch <= '9')
+		final char[] readBuf = m_readBuf;
+		int readPos = m_readPos;
+		for (;;)
 		{
-			buf[m_appendPos++] = ch;
+			ch = readBuf[readPos++];
+			if (ch >= '0' && ch <= '9')
+			{
+				buf[m_appendPos++] = ch;
+				continue;
+			}
+			if (ch == 0)
+			{
+				if (readPos < m_readMax)
+				{
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					throw unexpected (ch);
+				}
+				int l = readPos - m_readPos - 1;
+				m_offset += l;
+				m_column += l;
+				fill ();
+				readPos = 0;
+				continue;
+			}
+			break;
 		}
+
+		int l = readPos - m_readPos;
+		m_offset += l;
+		m_column += l;
+		m_readPos = readPos;
+
 		if (ch == 'E' || ch == 'e')
 		{
 			buf[m_appendPos++] = ch;
@@ -343,6 +453,7 @@ public class TextJsonParser implements CookJsonParser
 
 	private void readNumber (char firstChar) throws IOException
 	{
+		m_simple = false;
 		m_int = true;
 		char[] buf = m_appendBuf;
 		int appendPos = m_appendPos;
@@ -368,10 +479,32 @@ public class TextJsonParser implements CookJsonParser
 
 		// now read the integer part.
 		char ch;
-		while ((ch = read ()) >= '0' && ch <= '9')
+		final char[] readBuf = m_readBuf;
+		int readPos = m_readPos;
+		for (;;)
 		{
-			buf[appendPos++] = ch;
+			ch = readBuf[readPos++];
+			if (ch >= '0' && ch <= '9')
+			{
+				buf[appendPos++] = ch;
+				continue;
+			}
+			if (ch == 0)
+			{
+				int l = readPos - m_readPos - 1;
+				m_offset += l;
+				m_column += l;
+				fill ();
+				readPos = 0;
+				continue;
+			}
+			break;
 		}
+
+		int l = readPos - m_readPos;
+		m_offset += l;
+		m_column += l;
+		m_readPos = readPos;
 
 		if (ch == '.')
 		{
@@ -461,65 +594,157 @@ public class TextJsonParser implements CookJsonParser
 		}
 	}
 
+	/**
+	 * Check if we have a case where we do not need to refresh the buffer, and no escape sequences etc
+	 * were encountered.  In this case, we do not need to copy the data to m_appendBuf and thus saves
+	 * quite a bit performance.
+	 */
 	private void readString () throws IOException
 	{
-		m_appendPos = 0;
+		final char[] readBuf = m_readBuf;
+		int readPos = m_readPos;
+		m_simple = true;
+		m_start = readPos;
 
-		char[] buf = m_readBuf;
 		for (;;)
 		{
-			int readPos = m_readPos;
-			int readMax = m_readMax;
-			while (readPos < readMax)
+			char ch = readBuf[readPos++];
+			// JSON does not allow 0x00 - 0x1f in string.
+			// And '"' and '\\' must be escaped.
+			if (ch > '\\')
+				continue;
+			else if (ch > '"')
 			{
-				char ch = buf[readPos++];
-				++m_offset;
-				++m_column;
-				// JSON does not allow 0x00 - 0x1f in string.
-				// And '"' and '\\' must be escaped.
-				if (ch > '\\')
+				if (ch < '\\')
+					continue;
+				else
 				{
-					append (ch);
+					// Encountered escape sequence.  We have to deal with the slower way.
+					readComplexString (readPos - 1);
+					return;
 				}
-				else if (ch > '"')
+			}
+			else if (ch >= ' ')
+			{
+				if (ch < '"')
 				{
-					if (ch < '\\')
-					{
-						append (ch);
-					}
-					else
-					{
-						// handle '\\' case
-						m_readPos = readPos;
-						readEscape ();
-						readPos = m_readPos;
-						readMax = m_readMax;
-					}
-				}
-				else if (ch >= ' ')
-				{
-					if (ch < '"')
-					{
-						append (ch);
-					}
-					else
-					{
-						// handle '"' case
-						m_readPos = readPos;
-						return;
-					}
+					continue;
 				}
 				else
 				{
-					throw unexpected (ch);
+					// handle '"' case, which closes this scan
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					m_readPos = readPos;
+					return;
 				}
 			}
-			fill ();
+			else if (ch == 0)
+			{
+				// Encountered end of buffer.
+				readComplexString (readPos - 1);
+				return;
+			}
+			else
+			{
+				int l = readPos - m_readPos;
+				m_offset += l;
+				m_column += l;
+				throw unexpected (ch);
+			}
+		}
+	}
+
+	private void readComplexString (int readPos) throws IOException
+	{
+		m_simple = false;
+		final char[] readBuf = m_readBuf;
+		int len = readPos - m_start;
+		// first, copy the string
+		if (m_appendBuf.length < len)
+		{
+			int appendBufLen = m_appendBuf.length;
+			while (appendBufLen < len)
+			{
+				appendBufLen += appendBufLen;
+			}
+			m_appendBuf = new char[appendBufLen];
+		}
+		System.arraycopy (readBuf, m_start, m_appendBuf, 0, len);
+		m_appendPos = len;
+
+		for (;;)
+		{
+			char ch = readBuf[readPos++];
+			// JSON does not allow 0x00 - 0x1f in string.
+			// And '"' and '\\' must be escaped.
+			if (ch > '\\')
+			{
+				append (ch);
+			}
+			else if (ch > '"')
+			{
+				if (ch < '\\')
+				{
+					append (ch);
+				}
+				else
+				{
+					// handle '\\' case
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					m_readPos = readPos;
+					readEscape ();
+					readPos = m_readPos;
+				}
+			}
+			else if (ch >= ' ')
+			{
+				if (ch < '"')
+				{
+					append (ch);
+				}
+				else
+				{
+					// handle '"' case
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					m_readPos = readPos;
+					return;
+				}
+			}
+			else if (ch == 0)
+			{
+				if (readPos < m_readMax)
+				{
+					int l = readPos - m_readPos;
+					m_offset += l;
+					m_column += l;
+					throw unexpected (ch);
+				}
+				int l = readPos - m_readPos - 1;
+				m_offset += l;
+				m_column += l;
+				fill ();
+				readPos = 0;
+			}
+			else
+			{
+				int l = readPos - m_readPos;
+				m_offset += l;
+				m_column += l;
+				throw unexpected (ch);
+			}
 		}
 	}
 
 	private String getBufferString ()
 	{
+		if (m_simple)
+			return new String (m_readBuf, m_start, m_readPos - m_start - 1);	// -1 to remove ending "
 		return new String (m_appendBuf, 0, m_appendPos);
 	}
 
@@ -559,7 +784,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			// since we are only call at initiation.  We are mostly expecting
 			// '[' and '{', not anything else.
 			if (ch == '[')
@@ -584,6 +811,15 @@ public class TextJsonParser implements CookJsonParser
 				++m_line;
 				continue;
 			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
+				continue;
+			}
 			scanUnexpected (ch);
 		}
 	}
@@ -592,7 +828,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			if (ch == ',')
 				return false;
 			if (ch == '}')
@@ -610,6 +848,15 @@ public class TextJsonParser implements CookJsonParser
 				++m_line;
 				continue;
 			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
+				continue;
+			}
 			scanUnexpected (ch);
 		}
 	}
@@ -618,7 +865,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			if (ch == ',')
 				return false;
 			if (ch == ']')
@@ -636,6 +885,15 @@ public class TextJsonParser implements CookJsonParser
 				++m_line;
 				continue;
 			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
+				continue;
+			}
 			scanUnexpected (ch);
 		}
 	}
@@ -644,7 +902,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			if (ch == ':')
 				return;
 			if (ch == ' ' || ch == '\t' || ch == '\r')
@@ -655,6 +915,15 @@ public class TextJsonParser implements CookJsonParser
 				++m_line;
 				continue;
 			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
+				continue;
+			}
 			scanUnexpected (ch);
 		}
 	}
@@ -663,7 +932,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			if (ch == '"')
 			{
 				saveLocation ();
@@ -688,6 +959,15 @@ public class TextJsonParser implements CookJsonParser
 				++m_line;
 				continue;
 			}
+			if (ch == 0)
+			{
+				if (m_readPos < m_readMax)
+					throw unexpected (ch);
+				--m_offset;
+				--m_column;
+				fill ();
+				continue;
+			}
 			scanUnexpected (ch);
 		}
 	}
@@ -696,7 +976,9 @@ public class TextJsonParser implements CookJsonParser
 	{
 		for (;;)
 		{
-			char ch = read ();
+			char ch = m_readBuf[m_readPos++];
+			++m_offset;
+			++m_column;
 			switch (ch)
 			{
 				case '\t':
@@ -789,6 +1071,15 @@ public class TextJsonParser implements CookJsonParser
 					m_event = Event.START_OBJECT;
 					m_lastToken = START;
 					return;
+				}
+				case 0:
+				{
+					if (m_readPos < m_readMax)
+						throw unexpected (ch);
+					--m_offset;
+					--m_column;
+					fill ();
+					break;
 				}
 				default:
 				{
@@ -934,8 +1225,8 @@ public class TextJsonParser implements CookJsonParser
 			case KEY_NAME:
 			case VALUE_STRING:
 			{
-				location.m_columnNumber = savedColumn - 1;	// minus 2 to account for '"'
-				location.m_streamOffset = savedOffset - 1;	// minus 2 to account for '"'
+				location.m_columnNumber = savedColumn - 1;	// minus 1 to account for '"'
+				location.m_streamOffset = savedOffset - 1;	// minus 1 to account for '"'
 				location.m_lineNumber = savedLine;
 				return location;
 			}

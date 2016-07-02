@@ -138,18 +138,24 @@ public class TextJsonParserTest
 		{
 			switch (p.next ())
 			{
-				case VALUE_NUMBER:
+				case KEY_NAME:
+					Assert.assertEquals ("abc", p.getString ());
 					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 2, offset 1", location.toString ());
+					break;
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-1234", p.getString ());
+					location = p.getLocation ();
+					Assert.assertEquals (1, location.getLineNumber ());
+					Assert.assertEquals (10, location.getColumnNumber ());
+					Assert.assertEquals (9, location.getStreamOffset ());
+					Assert.assertEquals ("line 1, column 10, offset 9", location.toString ());
 					break;
 				default:
 					break;
 			}
 		}
 		p.close ();
-		Assert.assertEquals (1, location.getLineNumber ());
-		Assert.assertEquals (10, location.getColumnNumber ());
-		Assert.assertEquals (9, location.getStreamOffset ());
-		Assert.assertEquals ("line 1, column 10, offset 9", location.toString ());
 	}
 
 	@Test
@@ -164,6 +170,7 @@ public class TextJsonParserTest
 			switch (p.next ())
 			{
 				case KEY_NAME:
+					Assert.assertEquals ("abc", p.getString ());
 					location = p.getLocation ();
 					break;
 				default:
@@ -179,7 +186,7 @@ public class TextJsonParserTest
 	@Test
 	public void testLocation3 ()
 	{
-		String json = "{\"abc\\t\" : \"def\"}";
+		String json = "{\"abc\\t\" : \"def\\t\\\"ghi\"}";
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 	    JsonLocation location = null;
@@ -187,17 +194,21 @@ public class TextJsonParserTest
 		{
 			switch (p.next ())
 			{
-				case VALUE_STRING:
+				case KEY_NAME:
+					Assert.assertEquals ("abc\t", p.getString ());
 					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 2, offset 1", location.toString ());
+					break;
+				case VALUE_STRING:
+					Assert.assertEquals ("def\t\"ghi", p.getString ());
+					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 12, offset 11", location.toString ());
 					break;
 				default:
 					break;
 			}
 		}
 		p.close ();
-		Assert.assertEquals (1, location.getLineNumber ());
-		Assert.assertEquals (12, location.getColumnNumber ());
-		Assert.assertEquals (11, location.getStreamOffset ());
 	}
 
 	@Test
