@@ -33,7 +33,6 @@ public class TextJsonParserErrorTest
 	public ExpectedException thrown = ExpectedException.none();
 
 	@Test
-	@SuppressWarnings ("resource")
 	public void testBOM ()
 	{
 		byte[] bytes = new byte[] { '{' };
@@ -41,7 +40,7 @@ public class TextJsonParserErrorTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("JSON minimum size is 2");
 
-	    TextJsonParser p = new TextJsonParser (new ByteArrayInputStream (bytes));
+	    CookJsonParser p = TextJsonConfigHandler.getJsonParser (new ByteArrayInputStream (bytes));
 		for (;;)
 		{
 			p.next ();
@@ -391,7 +390,7 @@ public class TextJsonParserErrorTest
 		String json = "[ \"\t\" ]";
 
 	    thrown.expect (JsonParsingException.class);
-	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\t'");
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\t'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)

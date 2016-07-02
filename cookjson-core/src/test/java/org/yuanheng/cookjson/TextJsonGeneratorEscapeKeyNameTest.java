@@ -15,10 +15,7 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.NoSuchElementException;
 
 import javax.json.JsonNumber;
@@ -33,7 +30,12 @@ import org.junit.Test;
  */
 public class TextJsonGeneratorEscapeKeyNameTest
 {
-	void convert (CookJsonParser p, TextJsonGenerator g)
+	private TextJsonParser getJsonParser (File file) throws IOException
+	{
+		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+	}
+
+	private void convert (CookJsonParser p, TextJsonGenerator g)
 	{
 		g.setKeyNameEscaped (true);	// enable the setting
 		String name = null;
@@ -151,7 +153,7 @@ public class TextJsonGeneratorEscapeKeyNameTest
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		TextJsonParser p1 = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p1 = getJsonParser (file);
 		TextJsonGenerator g1 = new TextJsonGenerator (out1);
 		// convert using keyname escape
 		convert (p1, g1);
@@ -159,7 +161,7 @@ public class TextJsonGeneratorEscapeKeyNameTest
 		g1.close ();
 
 		StringWriter out2 = new StringWriter ();
-		TextJsonParser p2 = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p2 = getJsonParser (file);
 		JsonGenerator g2 = new TextJsonGenerator (out2);
 		Utils.convert (p2, g2);
 		p2.close ();

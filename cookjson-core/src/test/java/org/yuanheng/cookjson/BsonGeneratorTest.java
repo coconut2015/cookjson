@@ -53,7 +53,7 @@ public class BsonGeneratorTest
 		config.put (CookJsonProvider.FORMAT, CookJsonProvider.FORMAT_BSON);
 		config.put (CookJsonProvider.USE_DOUBLE, useDouble);
 		File testFile = testFolder.newFile ();
-		TextJsonParser p = new TextJsonParser (new FileInputStream (file1));
+		CookJsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file1));
 		JsonGenerator g = provider.createGeneratorFactory (config).createGenerator (new FileOutputStream (testFile));
 		Utils.convert (p, g);
 		p.close ();
@@ -104,7 +104,7 @@ public class BsonGeneratorTest
 
 		// first convert from Json to Bson
 		File bsonFile = testFolder.newFile ();
-		CookJsonParser p = new TextJsonParser (new FileInputStream (file1));
+		CookJsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file1));
 		JsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
 		Utils.convert (p, g);
 		p.close ();
@@ -136,7 +136,7 @@ public class BsonGeneratorTest
 
 		// first convert from Json to Bson using stream API
 		File bsonFile = testFolder.newFile ();
-		CookJsonParser p = new TextJsonParser (new FileInputStream (file1));
+		CookJsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file1));
 		JsonGenerator g = new BsonGenerator (new FileOutputStream (bsonFile));
 		Utils.convert (p, g);
 		p.close ();
@@ -144,7 +144,7 @@ public class BsonGeneratorTest
 
 		// convert from Json to Bson using tree api
 		File bsonFile2 = testFolder.newFile ();
-		p = new TextJsonParser (new FileInputStream (file1));
+		p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file1));
 		p.next ();
 		JsonValue value = p.getValue ();
 		p.close ();

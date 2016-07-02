@@ -30,13 +30,13 @@ import org.junit.Test;
  */
 public class BOMTest
 {
-	void testFile (Charset charset) throws IOException
+	private void testFile (Charset charset) throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
 
 		CookJsonProvider provider = new CookJsonProvider ();
 		ByteArrayOutputStream bos = new ByteArrayOutputStream ();
-		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		JsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file));
 		JsonGenerator g = provider.createGeneratorFactory (new HashMap<String, Object> ()).createGenerator (bos, charset);
 		Utils.convert (p, g);
 		p.close ();

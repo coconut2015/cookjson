@@ -32,11 +32,16 @@ import org.junit.Test;
  */
 public class TextJsonParserTest
 {
+	private TextJsonParser getJsonParser (File file) throws IOException
+	{
+		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+	}
+
 	@Test
 	public void testGetInt () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		JsonParser p = getJsonParser (file);
 		int[] ints = new int[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -54,7 +59,7 @@ public class TextJsonParserTest
 	public void testGetLong () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		JsonParser p = getJsonParser (file);
 		long[] longs = new long[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -72,7 +77,7 @@ public class TextJsonParserTest
 	public void testGetDecimal () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = new TextJsonParser (new FileInputStream (file));
+		JsonParser p = getJsonParser (file);
 		BigDecimal[] decimals = new BigDecimal[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -91,7 +96,7 @@ public class TextJsonParserTest
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		TextJsonParser p1 = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p1 = getJsonParser (file);
 		TextJsonGenerator g1 = new TextJsonGenerator (out1);
 		Utils.convert (p1, g1);
 		p1.close ();

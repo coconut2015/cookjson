@@ -28,12 +28,17 @@ import org.junit.Test;
  */
 public class PrettyTextJsonGenerator2Test
 {
-	void testFile (String f) throws IOException
+	private TextJsonParser getJsonParser (File file) throws IOException
+	{
+		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+	}
+
+	private void testFile (String f) throws IOException
 	{
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		TextJsonParser p1 = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p1 = getJsonParser (file);
 		p1.next ();
 		JsonValue v = p1.getValue ();
 		TextJsonGenerator g1 = new PrettyTextJsonGenerator (out1);
@@ -42,7 +47,7 @@ public class PrettyTextJsonGenerator2Test
 		g1.close ();
 
 		StringWriter out2 = new StringWriter ();
-		TextJsonParser p2 = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p2 = getJsonParser (file);
 		JsonGenerator g2 = new PrettyTextJsonGenerator (out2);
 		Utils.convert (p2, g2);
 		p2.close ();

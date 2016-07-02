@@ -20,7 +20,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonParser;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,7 +46,7 @@ public class FixBsonTest
 		File srcFile = new File (src.replace ('/', File.separatorChar));
 
 		// first generate the BSON file
-		JsonParser p = new TextJsonParser (new FileInputStream (srcFile));
+		CookJsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (srcFile));
 		JsonGenerator g = new BsonGenerator (new FileOutputStream (dstFile));
 		Utils.convert (p, g);
 		p.close ();

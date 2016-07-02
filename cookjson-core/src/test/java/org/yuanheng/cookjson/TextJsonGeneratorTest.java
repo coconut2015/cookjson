@@ -15,10 +15,7 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 
 import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
@@ -33,6 +30,11 @@ import org.junit.Test;
  */
 public class TextJsonGeneratorTest
 {
+	private TextJsonParser getJsonParser (File file) throws IOException
+	{
+		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+	}
+
 	@Test
 	public void testWriteInt ()
 	{
@@ -91,7 +93,7 @@ public class TextJsonGeneratorTest
 
 		JsonValue value;
 
-		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p = getJsonParser (file);
 		p.next ();
 		value = p.getValue ();
 		p.close ();

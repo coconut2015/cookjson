@@ -18,6 +18,7 @@ package org.yuanheng.cookjson;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
@@ -41,7 +42,7 @@ public class BsonFixLengthTest
 		File srcFile = new File (src.replace ('/', File.separatorChar));
 
 		// first generate the BSON file
-		JsonParser p = new TextJsonParser (new FileInputStream (srcFile));
+		JsonParser p = new TextJsonParser (new InputStreamReader (new FileInputStream (srcFile), BOM.utf8));
 		JsonGenerator g = new BsonGenerator (new FileOutputStream (dstFile));
 		Utils.convert (p, g);
 		p.close ();

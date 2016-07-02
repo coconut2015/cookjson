@@ -21,6 +21,7 @@ import java.util.Map;
 
 import javax.json.JsonException;
 import javax.json.stream.JsonGenerator;
+import javax.json.stream.JsonParsingException;
 
 /**
  * @author	Heng Yuan
@@ -28,6 +29,23 @@ import javax.json.stream.JsonGenerator;
 class TextJsonConfigHandler implements ConfigHandler
 {
 	private final static ConfigHandler s_instance = new TextJsonConfigHandler ();
+
+	public static CookJsonParser getJsonParser (InputStream is)
+	{
+		PushbackInputStream pis = new PushbackInputStream (is, 3);
+		Charset charset;
+		try
+		{
+			charset = BOM.guessCharset (pis);
+		}
+		catch (IOException ex)
+		{
+			JsonLocationImpl location = new JsonLocationImpl ();
+			location.m_streamOffset = 0;
+			throw new JsonParsingException (ex.getMessage (), ex, location);
+		}
+		return new TextJsonParser (new InputStreamReader (pis, charset));
+	}
 
 	public static ConfigHandler getInstance ()
 	{

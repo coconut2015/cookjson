@@ -36,7 +36,7 @@ public class TextJsonGenerator2Test
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		TextJsonParser p1 = new TextJsonParser (new FileInputStream (file));
+		CookJsonParser p1 = TextJsonConfigHandler.getJsonParser (new FileInputStream (file));
 		p1.next ();
 		JsonValue v = p1.getValue ();
 		TextJsonGenerator g1 = new TextJsonGenerator (out1);
@@ -45,7 +45,7 @@ public class TextJsonGenerator2Test
 		g1.close ();
 
 		StringWriter out2 = new StringWriter ();
-		TextJsonParser p2 = new TextJsonParser (new FileInputStream (file));
+		CookJsonParser p2 = TextJsonConfigHandler.getJsonParser (new FileInputStream (file));
 		JsonGenerator g2 = new TextJsonGenerator (out2);
 		Utils.convert (p2, g2);
 		p2.close ();

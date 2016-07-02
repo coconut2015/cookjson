@@ -71,7 +71,7 @@ public class CookJsonProvider extends JsonProvider
 	@Override
 	public JsonParser createParser (InputStream is)
 	{
-		return new TextJsonParser (is);
+		return TextJsonConfigHandler.getJsonParser (is);
 	}
 
 	@Override
@@ -107,7 +107,7 @@ public class CookJsonProvider extends JsonProvider
 	@Override
 	public JsonReader createReader (InputStream is)
 	{
-		return new JsonReaderImpl (new TextJsonParser (is));
+		return new JsonReaderImpl (TextJsonConfigHandler.getJsonParser (is));
 	}
 
 	@Override

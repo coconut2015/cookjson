@@ -15,10 +15,7 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.StringWriter;
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -39,6 +36,11 @@ import org.junit.Test;
  */
 public class JsonStructureParserTest
 {
+	private TextJsonParser getJsonParser (File file) throws IOException
+	{
+		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+	}
+
 	private JsonParser createParser (JsonProvider provider, JsonValue value)
 	{
 		HashMap<String, Object> config = new HashMap<String, Object> ();
@@ -55,7 +57,7 @@ public class JsonStructureParserTest
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		JsonValue value;
-		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p = getJsonParser (file);
 		p.next ();
 		value = p.getValue ();
 		p.close ();
@@ -93,7 +95,7 @@ public class JsonStructureParserTest
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		JsonValue value;
-		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		TextJsonParser p = getJsonParser (file);
 		p.next ();
 		value = p.getValue ();
 		p.close ();
@@ -232,7 +234,7 @@ public class JsonStructureParserTest
 	public void testGetBigInteger () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		CookJsonParser p = new TextJsonParser (new FileInputStream (file));
+		CookJsonParser p = getJsonParser (file);
 		BigInteger[] bigints = new BigInteger[9];
 		int count = 0;
 		while (p.hasNext ())

@@ -131,7 +131,7 @@ public class JsonParserFactoryTest
 		File file = new File (fileName.replace ('/', File.separatorChar));
 
 		JsonValue value;
-		TextJsonParser p = new TextJsonParser (new FileInputStream (file));
+		CookJsonParser p = TextJsonConfigHandler.getJsonParser (new FileInputStream (file));
 		p.next ();
 		value = p.getValue ();
 		p.close ();
