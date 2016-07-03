@@ -16,7 +16,7 @@
 package org.yuanheng.cookjson;
 
 import java.io.IOException;
-import java.io.Reader;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.NoSuchElementException;
@@ -29,12 +29,12 @@ import org.yuanheng.cookjson.value.CookJsonBigDecimal;
 import org.yuanheng.cookjson.value.CookJsonString;
 
 /**
- * This JsonParser adds the ability to allow parse JavaScript line and
- * block comments.
+ * This parser is much like TextJsonParser, except that it only works on UTF-8
+ * InputStream.  It can be several times faster than TextJsonParser.
  *
  * @author	Heng Yuan
  */
-public class TextJsonParser implements CookJsonParser, CommentJsonParser
+public class UTF8TextJsonParser implements CookJsonParser, CommentJsonParser
 {
 	private final static int START = 1;
 	private final static int VALUE = 2;
@@ -44,9 +44,9 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private boolean m_allowComments;
 
-	private final Reader m_reader;
+	private final InputStream m_in;
 	/** append buffer for storing output string */
-	private char[] m_appendBuf = new char[8193];
+	private byte[] m_appendBuf = new byte[8193];
 	/** position tracking for append buffer */
 	private int m_appendPos;
 
@@ -57,7 +57,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	private long savedColumn;
 	private long savedOffset;
 
-	private final char[] m_readBuf;
+	private final byte[] m_readBuf;
 	private int m_readPos = 0;
 	private int m_readMax = 0;
 
@@ -76,28 +76,29 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	private int m_len;
 
 	/**
-	 * Create a JsonParser based on a Reader input.
+	 * Create a JsonParser based on a UTF-8 InputStream input.
 	 *
-	 * @param	r
-	 * 			reader input
+	 * @param	is
+	 * 			UTF-8 InputStream
 	 */
-	public TextJsonParser (Reader r)
+	public UTF8TextJsonParser (InputStream is)
 	{
-		this (r, READ_SIZE + 1);
+		this (is, READ_SIZE + 1);
 	}
 
 	/**
-	 * Create a JsonParser based on a Reader input and specifying the buffer size.
+	 * Create a JsonParser based on a UTF-8 InputStream input and specifying
+	 * the buffer size.
 	 *
-	 * @param	r
-	 * 			reader input
+	 * @param	is
+	 * 			UTF-8 InputStream
 	 * @param	bufferSize
 	 * 			the input buffer size.
 	 */
-	public TextJsonParser (Reader r, int bufferSize)
+	public UTF8TextJsonParser (InputStream is, int bufferSize)
 	{
-		m_readBuf = new char[bufferSize];
-		m_reader = r;
+		m_readBuf = new byte[bufferSize];
+		m_in = is;
 		m_line = 1;
 		m_column = 1;
 	}
@@ -109,13 +110,13 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		savedColumn = m_column;
 	}
 
-	private void append (char ch)
+	private void append (byte ch)
 	{
 		if (m_appendPos >= m_appendBuf.length)
 		{
 			int len = m_appendBuf.length;
 			// we need to expand the buffer by 50%
-			char[] newBuffer = new char[len + len / 2];
+			byte[] newBuffer = new byte[len + len / 2];
 			System.arraycopy (m_appendBuf, 0, newBuffer, 0, len);
 			m_appendBuf = newBuffer;
 		}
@@ -143,7 +144,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		return new JsonParsingException ("Parsing error at " + location.toString () + ": unexpected eof.", location);
 	}
 
-	private JsonParsingException unexpected (char ch)
+	private JsonParsingException unexpected (byte ch)
 	{
 		String charStr;
 		switch (ch)
@@ -178,7 +179,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				}
 				else
 				{
-					charStr = Character.toString (ch);
+					charStr = Character.toString ((char)ch);
 				}
 				break;
 			}
@@ -186,7 +187,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		return ioError ("unexpected character '" + charStr + "'");
 	}
 
-	private char read () throws IOException
+	private byte read () throws IOException
 	{
 		if (m_readPos >= m_readMax)
 			fill ();
@@ -204,9 +205,9 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private void fill () throws IOException
 	{
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 		m_readPos = 0;
-		m_readMax = m_reader.read (readBuf, 0, readBuf.length - 1);
+		m_readMax = m_in.read (readBuf, 0, readBuf.length - 1);
 		if (m_readMax <= 0)
 			throw eofError ();
 		readBuf[m_readMax] = 0;	// mark the end of buffer
@@ -214,13 +215,13 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private void readLineComment () throws IOException
 	{
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 
 		int readPos = m_readPos;
 
 		for (;;)
 		{
-			char ch = readBuf[readPos++];
+			byte ch = readBuf[readPos++];
 
 			if (ch == '\n')
 			{
@@ -250,13 +251,13 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private void readBlockComment () throws IOException
 	{
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 
 		int readPos = m_readPos;
 		int len = 0;
 		for (;;)
 		{
-			char ch = readBuf[readPos++];
+			byte ch = readBuf[readPos++];
 			++len;
 
 			// switch is useful for scanning characters that are
@@ -273,7 +274,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				}
 				case '*':
 				{
-					char nextChar;
+					byte nextChar;
 					if (readPos < m_readMax)
 					{
 						nextChar = readBuf[readPos];
@@ -312,7 +313,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private void readComment () throws IOException
 	{
-		char ch;
+		byte ch;
 		ch = read ();
 		if (ch == '/')
 			readLineComment ();
@@ -322,7 +323,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		{
 			--m_offset;
 			--m_column;
-			throw unexpected ('/');
+			throw unexpected ((byte) '/');
 		}
 	}
 
@@ -335,7 +336,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	 * @throws	IOException
 	 * 			in case of error.
 	 */
-	private void scanUnexpected (char ch) throws IOException
+	private void scanUnexpected (byte ch) throws IOException
 	{
 		if (!m_allowComments || ch != '/')
 			throw unexpected (ch);
@@ -350,18 +351,18 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 			// we do the slow matching
 			for (int i = 0; i < len; ++i)
 			{
-				char ch = read ();
+				byte ch = read ();
 				if (ch != str.charAt (i))
 					throw ioError ("expecting '" + ch + "'");
 			}
 		}
 		else
 		{
-			final char[] readBuf = m_readBuf;
+			final byte[] readBuf = m_readBuf;
 			int readPos = m_readPos;
 			for (int i = 0; i < len; ++i)
 			{
-				char ch = readBuf[readPos++];
+				byte ch = readBuf[readPos++];
 				if (ch != str.charAt (i))
 					throw ioError ("expecting '" + ch + "'");
 			}
@@ -379,7 +380,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		m_appendBuf[0] = '-';
 		m_appendPos = 1;
 
-		char ch = m_readBuf[m_readPos++];
+		byte ch = m_readBuf[m_readPos++];
 		++m_offset;
 		++m_column;
 		if (ch == 0)
@@ -408,14 +409,14 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		readFastNumber (ch);
 	}
 
-	private void readFastNumber (char firstChar) throws IOException
+	private void readFastNumber (byte firstChar) throws IOException
 	{
 		m_simple = true;
 		m_int = true;
 
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 		int readPos = m_readPos;
-		char ch;
+		byte ch;
 
 		if (firstChar == '0')
 		{
@@ -553,14 +554,14 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		m_len = m_readPos - m_start;
 	}
 
-	private void readNumber (char firstChar) throws IOException
+	private void readNumber (byte firstChar) throws IOException
 	{
 		m_simple = false;
 		m_int = true;
 
 		append (firstChar);
 
-		char ch;
+		byte ch;
 
 		if (firstChar == '0')
 		{
@@ -661,23 +662,23 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 
 	private void readEscape () throws IOException
 	{
-		char ch = read ();
+		byte ch = read ();
 		switch (ch)
 		{
 			case 'b':
-				append ('\b');
+				append ((byte) '\b');
 				break;
 			case 'f':
-				append ('\f');
+				append ((byte) '\f');
 				break;
 			case 'n':
-				append ('\n');
+				append ((byte) '\n');
 				break;
 			case 'r':
-				append ('\r');
+				append ((byte) '\r');
 				break;
 			case 't':
-				append ('\t');
+				append ((byte) '\t');
 				break;
 			case '\\':
 			case '/':
@@ -719,11 +720,11 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 					}
 					throw unexpected (ch);
 				}
-				append ((char) val);
+				append ((byte) val);
 				break;
 			}
 			default:
-				throw ioError ("unknown escape sequence '\\" + ch + "'");
+				throw ioError ("unknown escape sequence '\\" + ((char)ch) + "'");
 		}
 	}
 
@@ -734,17 +735,17 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	 */
 	private void readString () throws IOException
 	{
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 		int readPos = m_readPos;
 		m_simple = true;
 		m_start = readPos;
 
 		for (;;)
 		{
-			char ch = readBuf[readPos++];
+			byte ch = readBuf[readPos++];
 			// JSON does not allow 0x00 - 0x1f in string.
 			// And '"' and '\\' must be escaped.
-			if (ch > '\\')
+			if (ch > '\\' || ch < 0)
 				continue;
 			else if (ch > '"')
 			{
@@ -785,7 +786,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				int l = readPos - m_readPos;
 				m_offset += l;
 				m_column += l;
-				throw unexpected (ch);
+				throw unexpected ((byte)ch);
 			}
 		}
 	}
@@ -793,7 +794,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	private void readComplexString (int readPos) throws IOException
 	{
 		m_simple = false;
-		final char[] readBuf = m_readBuf;
+		final byte[] readBuf = m_readBuf;
 		int len = readPos - m_start;
 		// first, copy the string
 		if (m_appendBuf.length < len)
@@ -803,17 +804,17 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 			{
 				appendBufLen += appendBufLen;
 			}
-			m_appendBuf = new char[appendBufLen];
+			m_appendBuf = new byte[appendBufLen];
 		}
 		System.arraycopy (readBuf, m_start, m_appendBuf, 0, len);
 		m_appendPos = len;
 
 		for (;;)
 		{
-			char ch = readBuf[readPos++];
+			byte ch = readBuf[readPos++];
 			// JSON does not allow 0x00 - 0x1f in string.
 			// And '"' and '\\' must be escaped.
-			if (ch > '\\')
+			if (ch > '\\' || ch < 0)
 			{
 				append (ch);
 			}
@@ -878,8 +879,8 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	private String getBufferString ()
 	{
 		if (m_simple)
-			return new String (m_readBuf, m_start, m_len);
-		return new String (m_appendBuf, 0, m_appendPos);
+			return new String (m_readBuf, m_start, m_len, BOM.utf8);
+		return new String (m_appendBuf, 0, m_appendPos, BOM.utf8);
 	}
 
 	@Override
@@ -918,7 +919,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			// since we are only call at initiation.  We are mostly expecting
@@ -962,7 +963,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			if (ch == ',')
@@ -999,7 +1000,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			if (ch == ',')
@@ -1036,7 +1037,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			if (ch == ':')
@@ -1066,7 +1067,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			if (ch == '"')
@@ -1110,7 +1111,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		for (;;)
 		{
-			char ch = m_readBuf[m_readPos++];
+			byte ch = m_readBuf[m_readPos++];
 			++m_offset;
 			++m_column;
 			switch (ch)
@@ -1300,8 +1301,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				return Integer.valueOf (getBufferString ());
 			}
 		}
-		BigDecimal bd = m_simple ? new BigDecimal (m_readBuf, m_start, m_len) : new BigDecimal (getBufferString ());
-		return bd.intValue ();
+		return new BigDecimal (getBufferString ()).intValue ();
 	}
 
 	@Override
@@ -1318,8 +1318,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				return Long.valueOf (getBufferString ());
 			}
 		}
-		BigDecimal bd = m_simple ? new BigDecimal (m_readBuf, m_start, m_len) : new BigDecimal (getBufferString ());
-		return bd.longValue ();
+		return new BigDecimal (getBufferString ()).longValue ();
 	}
 
 	@Override
@@ -1327,8 +1326,6 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw stateError ("getBigDecimal()");
-		if (m_simple)
-			return new BigDecimal (m_readBuf, m_start, m_len);
 		return new BigDecimal (getBufferString ());
 	}
 
@@ -1385,11 +1382,17 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	@Override
 	public String getString ()
 	{
-		if (m_event != Event.VALUE_STRING &&
-			m_event != Event.VALUE_NUMBER &&
-			m_event != Event.KEY_NAME)
+		if (m_event == null)
 			throw stateError ("getString()");
-		return getBufferString ();
+		switch (m_event)
+		{
+			case VALUE_STRING:
+			case VALUE_NUMBER:
+			case KEY_NAME:
+				return getBufferString ();
+			default:
+				throw stateError ("getString()");
+		}
 	}
 
 	@Override
@@ -1415,7 +1418,7 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 	{
 		try
 		{
-			m_reader.close ();
+			m_in.close ();
 		}
 		catch (IOException ex)
 		{

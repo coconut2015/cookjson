@@ -19,7 +19,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import javax.json.JsonException;
 import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParsingException;
 
@@ -44,6 +43,8 @@ class TextJsonConfigHandler implements ConfigHandler
 			location.m_streamOffset = 0;
 			throw new JsonParsingException (ex.getMessage (), ex, location);
 		}
+		if (charset == BOM.utf8)
+			return new UTF8TextJsonParser (pis);
 		return new TextJsonParser (new InputStreamReader (pis, charset));
 	}
 
@@ -56,38 +57,41 @@ class TextJsonConfigHandler implements ConfigHandler
 	{
 	}
 
-	@Override
-	public CookJsonParser createParser (Map<String, ?> config, Reader reader)
+	private void configure (Map<String, ?> config, CookJsonParser p)
 	{
 		boolean allowComments = false;
 		Object obj = config.get (CookJsonProvider.COMMENT);
 		if (obj != null)
 			allowComments = "true".equals (obj.toString ());
+		((CommentJsonParser)p).setAllowComments (allowComments);
+	}
+
+	@Override
+	public CookJsonParser createParser (Map<String, ?> config, Reader reader)
+	{
 		TextJsonParser p = new TextJsonParser (reader);
-		p.setAllowComments (allowComments);
+		configure (config, p);
 		return p;
 	}
 
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is)
 	{
-		PushbackInputStream pis = new PushbackInputStream (is, 3);
-		Charset charset;
-		try
-		{
-			charset = BOM.guessCharset (pis);
-		}
-		catch (IOException ex)
-		{
-			throw new JsonException (ex.getMessage (), ex);
-		}
-		return createParser (config, new InputStreamReader (pis, charset));
+		CookJsonParser p = getJsonParser (is);
+		configure (config, p);
+		return p;
 	}
 
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is, Charset charset)
 	{
-		return createParser (config, new InputStreamReader (is, charset));
+		CookJsonParser p;
+		if (BOM.utf8.equals (charset))
+			p = new UTF8TextJsonParser (is);
+		else
+			p = new TextJsonParser (new InputStreamReader (is, charset));
+		configure (config, p);
+		return p;
 	}
 
 	@Override

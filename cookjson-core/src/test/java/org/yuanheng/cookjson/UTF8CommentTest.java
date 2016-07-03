@@ -31,16 +31,16 @@ import org.junit.rules.ExpectedException;
 /**
  * @author	Heng Yuan
  */
-public class CommentTest
+public class UTF8CommentTest
 {
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
 
-	private JsonParser getJsonParser (Reader r, boolean smallBuf) throws IOException
+	private JsonParser getJsonParser (InputStream is, boolean smallBuf) throws IOException
 	{
 		if (smallBuf)
 		{
-			TextJsonParser p = new TextJsonParser (r, 2);
+			UTF8TextJsonParser p = new UTF8TextJsonParser (is, 2);
 			Assert.assertFalse (p.isAllowComments ());
 			p.setAllowComments (true);
 			Assert.assertTrue (p.isAllowComments ());
@@ -49,13 +49,13 @@ public class CommentTest
 		HashMap<String, Object> config = new HashMap<String, Object> ();
 		config.put (CookJsonProvider.COMMENT, Boolean.TRUE);
 		JsonProvider provider = new CookJsonProvider ();
-		return provider.createParserFactory (config).createParser (r);
+		return provider.createParserFactory (config).createParser (is);
 	}
 
 	private JsonParser getJsonParser (File file, boolean smallBuf) throws IOException
 	{
-		Reader r = new InputStreamReader (new FileInputStream (file), BOM.utf8);
-		return getJsonParser (r, smallBuf);
+		InputStream is = new FileInputStream (file);
+		return getJsonParser (is, smallBuf);
 	}
 
 	void testFile (String f1, String f2, boolean smallBuf) throws IOException
@@ -103,7 +103,7 @@ public class CommentTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 2, column 6, offset 12: unexpected character '\\u0000'");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+	    UTF8TextJsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)), 2);
 	    p.setAllowComments (true);
 		while (p.hasNext ())
 		{
@@ -120,7 +120,7 @@ public class CommentTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 2, column 6, offset 12: unexpected character '\\u0000'");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    UTF8TextJsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)));
 	    p.setAllowComments (true);
 		while (p.hasNext ())
 		{
@@ -137,7 +137,7 @@ public class CommentTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 2, column 6, offset 12: unexpected character '\\u0000'");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+	    UTF8TextJsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)), 2);
 	    p.setAllowComments (true);
 		while (p.hasNext ())
 		{
@@ -154,7 +154,7 @@ public class CommentTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 2, column 6, offset 12: unexpected character '\\u0000'");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+	    UTF8TextJsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)));
 	    p.setAllowComments (true);
 		while (p.hasNext ())
 		{
@@ -171,7 +171,7 @@ public class CommentTest
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 2, column 6, offset 12: unexpected character '\\u0000'");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+	    UTF8TextJsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)), 2);
 	    p.setAllowComments (true);
 		while (p.hasNext ())
 		{

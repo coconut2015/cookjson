@@ -89,8 +89,7 @@ public class JsonParserInputStreamBenchmark
 	@Benchmark
 	public void testCookJson () throws IOException
 	{
-		JsonProvider provider = new CookJsonProvider ();
-		JsonParser p = provider.createParser (getInputStream ());
+		JsonParser p = new UTF8TextJsonParser (getInputStream ());
 		perfTest (p);
 		p.close ();
 	}
