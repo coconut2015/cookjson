@@ -32,16 +32,24 @@ import org.junit.Test;
  */
 public class TextJsonParserTest
 {
-	private TextJsonParser getJsonParser (File file) throws IOException
+	private TextJsonParser getJsonParser (File file, int buffType) throws IOException
 	{
-		return new TextJsonParser (new InputStreamReader (new FileInputStream (file), BOM.utf8));
+		Reader r = new InputStreamReader (new FileInputStream (file), BOM.utf8);
+		if (buffType > 0)
+		{
+			if (buffType == 1)
+				return new TextJsonParser (r, 2);
+			if (buffType == 2)
+				return new TextJsonParser (r, 100000);
+		}
+		return new TextJsonParser (r);
 	}
 
 	@Test
 	public void testGetInt () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = getJsonParser (file);
+		JsonParser p = getJsonParser (file, 0);
 		int[] ints = new int[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -59,7 +67,7 @@ public class TextJsonParserTest
 	public void testGetLong () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = getJsonParser (file);
+		JsonParser p = getJsonParser (file, 0);
 		long[] longs = new long[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -77,7 +85,7 @@ public class TextJsonParserTest
 	public void testGetDecimal () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
-		JsonParser p = getJsonParser (file);
+		JsonParser p = getJsonParser (file, 0);
 		BigDecimal[] decimals = new BigDecimal[9];
 		int count = 0;
 		while (p.hasNext ())
@@ -91,12 +99,12 @@ public class TextJsonParserTest
 		Assert.assertArrayEquals (new BigDecimal[]{ new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1234), new BigDecimal (12345678901234L), new BigDecimal ("1234567890123412345678901234"), new BigDecimal (12345.5), new BigDecimal (1) }, decimals);
 	}
 
-	void testFile (String f) throws IOException
+	void testFile (String f, int buffType) throws IOException
 	{
 		File file = new File (f.replace ('/', File.separatorChar));
 
 		StringWriter out1 = new StringWriter ();
-		TextJsonParser p1 = getJsonParser (file);
+		TextJsonParser p1 = getJsonParser (file, buffType);
 		TextJsonGenerator g1 = new TextJsonGenerator (out1);
 		Utils.convert (p1, g1);
 		p1.close ();
@@ -110,21 +118,43 @@ public class TextJsonParserTest
 		p2.close ();
 		g2.close ();
 
-		Assert.assertEquals (out1.toString (), out2.toString ());
+		Assert.assertEquals (out2.toString (), out1.toString ());
 	}
 
 	@Test
 	public void test () throws IOException
 	{
-		testFile ("../tests/data/complex1.json");
-		testFile ("../tests/data/double.json");
-		testFile ("../tests/data/empty.json");
-		testFile ("../tests/data/long.json");
-		testFile ("../tests/data/number.json");
-		testFile ("../tests/data/string.json");
-		testFile ("../tests/data/string2.json");
-		testFile ("../tests/data/string3.json");
-		testFile ("../tests/data/types.json");
+		testFile ("../tests/data/complex1.json", 0);
+		testFile ("../tests/data/double.json", 0);
+		testFile ("../tests/data/empty.json", 0);
+		testFile ("../tests/data/long.json", 0);
+		testFile ("../tests/data/number.json", 0);
+		testFile ("../tests/data/string.json", 0);
+		testFile ("../tests/data/string2.json", 0);
+		testFile ("../tests/data/string3.json", 0);
+		testFile ("../tests/data/string4.json", 0);
+		testFile ("../tests/data/types.json", 0);
+	}
+
+	@Test
+	public void testSmallBuf () throws IOException
+	{
+		testFile ("../tests/data/complex1.json", 1);
+		testFile ("../tests/data/double.json", 1);
+		testFile ("../tests/data/empty.json", 1);
+		testFile ("../tests/data/long.json", 1);
+		testFile ("../tests/data/number.json", 1);
+		testFile ("../tests/data/string.json", 1);
+		testFile ("../tests/data/string2.json", 1);
+		testFile ("../tests/data/string3.json", 1);
+		testFile ("../tests/data/string4.json", 1);
+		testFile ("../tests/data/types.json", 1);
+	}
+
+	@Test
+	public void testBigBuf () throws IOException
+	{
+		testFile ("../tests/data/string4.json", 2);
 	}
 
 	@Test
@@ -161,7 +191,7 @@ public class TextJsonParserTest
 	@Test
 	public void testLocation2 ()
 	{
-		String json = "{\"abc\" : -1234}";
+		String json = "{\"abc\" : 1234}";
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 	    JsonLocation location = null;
@@ -172,15 +202,46 @@ public class TextJsonParserTest
 				case KEY_NAME:
 					Assert.assertEquals ("abc", p.getString ());
 					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 2, offset 1", location.toString ());
+					break;
+				case VALUE_NUMBER:
+					Assert.assertEquals ("1234", p.getString ());
+					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 10, offset 9", location.toString ());
 					break;
 				default:
 					break;
 			}
 		}
 		p.close ();
-		Assert.assertEquals (1, location.getLineNumber ());
-		Assert.assertEquals (2, location.getColumnNumber ());
-		Assert.assertEquals (1, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testLocation2_2 ()
+	{
+		String json = "{\"abc\" : 1234}";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+	    JsonLocation location = null;
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case KEY_NAME:
+					Assert.assertEquals ("abc", p.getString ());
+					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 2, offset 1", location.toString ());
+					break;
+				case VALUE_NUMBER:
+					Assert.assertEquals ("1234", p.getString ());
+					location = p.getLocation ();
+					Assert.assertEquals ("line 1, column 10, offset 9", location.toString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
 	}
 
 	@Test
@@ -305,5 +366,145 @@ public class TextJsonParserTest
 		Assert.assertEquals (1, location.getLineNumber ());
 		Assert.assertEquals (16, location.getColumnNumber ());
 		Assert.assertEquals (15, location.getStreamOffset ());
+	}
+
+	@Test
+	public void testNumber1 ()
+	{
+		String json = "{\"abc\" : 0 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("0", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber2 ()
+	{
+		String json = "{\"abc\" : 0.1 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("0.1", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber3 ()
+	{
+		String json = "{\"abc\" : -0.1 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0.1", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber4 ()
+	{
+		String json = "{\"abc\" : 0.1e2 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("0.1e2", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber5 ()
+	{
+		String json = "{\"abc\" : -0.1e2 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0.1e2", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber6 ()
+	{
+		String json = "{\"abc\" : -0.1234567890 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0.1234567890", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testNumber7 ()
+	{
+		String json = "{\"abc\" : 99e12 }";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("99e12", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
 	}
 }

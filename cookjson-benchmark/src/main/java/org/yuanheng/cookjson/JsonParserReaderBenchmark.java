@@ -112,15 +112,6 @@ public class JsonParserReaderBenchmark
 	}
 
 	@Benchmark
-	public void testCookJson () throws IOException
-	{
-		JsonProvider provider = new CookJsonProvider ();
-		JsonParser p = provider.createParser (getReader ());
-		perfTest (p);
-		p.close ();
-	}
-
-	@Benchmark
 	public void testGlassFish () throws IOException
 	{
 		JsonProvider provider = new JsonProviderImpl ();
@@ -130,7 +121,16 @@ public class JsonParserReaderBenchmark
 	}
 
 	@Benchmark
-	public void testJackson () throws IOException
+	public void testCookJson () throws IOException
+	{
+		JsonProvider provider = new CookJsonProvider ();
+		JsonParser p = provider.createParser (getReader ());
+		perfTest (p);
+		p.close ();
+	}
+
+	@Benchmark
+	public void testAJackson () throws IOException
 	{
 		JsonFactory jsonFactory = new JsonFactory ();
 		com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getReader ());
@@ -139,7 +139,7 @@ public class JsonParserReaderBenchmark
 	}
 
 	@Benchmark
-	public void testJacksonNoCanonical () throws IOException
+	public void testAJacksonNoCanonical () throws IOException
 	{
 		JsonFactory jsonFactory = new JsonFactory ();
 		jsonFactory.disable (JsonFactory.Feature.CANONICALIZE_FIELD_NAMES);

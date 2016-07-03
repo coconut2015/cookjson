@@ -321,6 +321,22 @@ public class TextJsonParserErrorTest
 
 	@Test
 	@SuppressWarnings ("resource")
+	public void testNumber2_2 ()
+	{
+		String json = "[ -1e ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
 	public void testNumber3 ()
 	{
 		String json = "[ -e ]";
@@ -345,6 +361,166 @@ public class TextJsonParserErrorTest
 	    thrown.expectMessage ("Parsing error at line 1, column 7, offset 6: unexpected character ' '");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber5 ()
+	{
+		String json = "[ -0 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber5_2 ()
+	{
+		String json = "[ -0 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber6 ()
+	{
+		String json = "[ - ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber6_2 ()
+	{
+		String json = "[ - ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber7 ()
+	{
+		String json = "[ -\u0000 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber7_2 ()
+	{
+		String json = "[ -\u0000 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber8 ()
+	{
+		String json = "[ 0. ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber8_2 ()
+	{
+		String json = "[ 0. ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber9 ()
+	{
+		String json = "[ 0.5e5\u0000 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 8, offset 7: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testNumber9_2 ()
+	{
+		String json = "[ 0.5e5\u0000 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 8, offset 7: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
 		for (;;)
 		{
 			p.next ();
@@ -391,6 +567,214 @@ public class TextJsonParserErrorTest
 
 	    thrown.expect (JsonParsingException.class);
 	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\t'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString4 ()
+	{
+		String json = "[ \"\n\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\n'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString5 ()
+	{
+		String json = "[ \"\b\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\b'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString6 ()
+	{
+		String json = "[ \"\r\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\r'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString7 ()
+	{
+		String json = "[ \"\f\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\f'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString8 ()
+	{
+		String json = "[ \"\\b\u0000\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testString9 ()
+	{
+		String json = "[ \"\\b\u001f\" ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character '\\u001f'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError1 ()
+	{
+		String json = "[ -\\ ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\\\'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError2 ()
+	{
+		String json = "[ -' ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 4, offset 3: unexpected character '\\''");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError3 ()
+	{
+		String json = "[ \u0000 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 3, offset 2: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError4 ()
+	{
+		String json = "{ \"a\" \u0000: 1 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 7, offset 6: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError5 ()
+	{
+		String json = "{ \u0000\"a\" : 1 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 3, offset 2: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError6 ()
+	{
+		String json = "\u0000{ \"a\" : 1 ]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 1, offset 0: unexpected character '\\u0000'");
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		for (;;)
+		{
+			p.next ();
+		}
+	}
+
+	@Test
+	@SuppressWarnings ("resource")
+	public void testError7 ()
+	{
+		String json = "{ \"a\" : 1 \u0000]";
+
+	    thrown.expect (JsonParsingException.class);
+	    thrown.expectMessage ("Parsing error at line 1, column 11, offset 10: unexpected character '\\u0000'");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
