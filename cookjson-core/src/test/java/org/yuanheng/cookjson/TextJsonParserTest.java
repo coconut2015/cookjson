@@ -64,10 +64,46 @@ public class TextJsonParserTest
 	}
 
 	@Test
+	public void testGetInt_2 () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = getJsonParser (file, 1);
+		int[] ints = new int[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				ints[count++] = p.getInt ();
+			}
+		}
+		p.close ();
+		Assert.assertArrayEquals (new int[]{ 1234, 1942892530, -115429390, 12345, 1234, 1942892530, -115429390, 12345, 1 }, ints);
+	}
+
+	@Test
 	public void testGetLong () throws IOException
 	{
 		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
 		JsonParser p = getJsonParser (file, 0);
+		long[] longs = new long[9];
+		int count = 0;
+		while (p.hasNext ())
+		{
+			if (p.next () == Event.VALUE_NUMBER)
+			{
+				longs[count++] = p.getLong ();
+			}
+		}
+		p.close ();
+		Assert.assertArrayEquals (new long[]{ 1234, 12345678901234L, 7888426545362939890L, 12345, 1234, 12345678901234L, 7888426545362939890L, 12345, 1 }, longs);
+	}
+
+	@Test
+	public void testGetLong_2 () throws IOException
+	{
+		File file = new File ("../tests/data/types.json".replace ('/', File.separatorChar));
+		JsonParser p = getJsonParser (file, 1);
 		long[] longs = new long[9];
 		int count = 0;
 		while (p.hasNext ())

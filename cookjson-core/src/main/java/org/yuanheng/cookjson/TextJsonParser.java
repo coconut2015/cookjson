@@ -1280,17 +1280,17 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw stateError ("getInt()");
-		String str = getBufferString ();
 		if (m_int)
 		{
 			int len = m_simple ? m_len : m_appendPos;
 			if (len < 10 ||
 				(len < 11 && m_appendBuf[0] == '-'))
 			{
-				return Integer.valueOf (str);
+				return Integer.valueOf (getBufferString ());
 			}
 		}
-		return new BigDecimal (str).intValue ();
+		BigDecimal bd = m_simple ? new BigDecimal (m_readBuf, m_start, m_len) : new BigDecimal (getBufferString ());
+		return bd.intValue ();
 	}
 
 	@Override
@@ -1298,17 +1298,17 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw stateError ("getLong()");
-		String str = getBufferString ();
 		if (m_int)
 		{
 			int len = m_simple ? m_len : m_appendPos;
 			if (len < 19 ||
 				(len < 20 && m_appendBuf[0] == '-'))
 			{
-				return Long.valueOf (str);
+				return Long.valueOf (getBufferString ());
 			}
 		}
-		return new BigDecimal (str).longValue ();
+		BigDecimal bd = m_simple ? new BigDecimal (m_readBuf, m_start, m_len) : new BigDecimal (getBufferString ());
+		return bd.longValue ();
 	}
 
 	@Override
@@ -1316,6 +1316,8 @@ public class TextJsonParser implements CookJsonParser
 	{
 		if (m_event != Event.VALUE_NUMBER)
 			throw stateError ("getBigDecimal()");
+		if (m_simple)
+			return new BigDecimal (m_readBuf, m_start, m_len);
 		return new BigDecimal (getBufferString ());
 	}
 
