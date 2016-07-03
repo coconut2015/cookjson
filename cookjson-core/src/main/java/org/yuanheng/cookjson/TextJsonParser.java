@@ -97,9 +97,9 @@ public class TextJsonParser implements CookJsonParser
 
 	private void append (char ch)
 	{
-		int len = m_appendBuf.length;
-		if (m_appendPos >= len)
+		if (m_appendPos >= m_appendBuf.length)
 		{
+			int len = m_appendBuf.length;
 			// we need to expand the buffer by 50%
 			char[] newBuffer = new char[len + len / 2];
 			System.arraycopy (m_appendBuf, 0, newBuffer, 0, len);
@@ -200,13 +200,13 @@ public class TextJsonParser implements CookJsonParser
 
 	private void readLineComment () throws IOException
 	{
-		char[] buf = m_readBuf;
+		final char[] readBuf = m_readBuf;
 
 		int readPos = m_readPos;
 
 		for (;;)
 		{
-			char ch = buf[readPos++];
+			char ch = readBuf[readPos++];
 
 			if (ch == '\n')
 			{
@@ -236,13 +236,13 @@ public class TextJsonParser implements CookJsonParser
 
 	private void readBlockComment () throws IOException
 	{
-		char[] buf = m_readBuf;
+		final char[] readBuf = m_readBuf;
 
 		int readPos = m_readPos;
 		int len = 0;
 		for (;;)
 		{
-			char ch = buf[readPos++];
+			char ch = readBuf[readPos++];
 			++len;
 
 			// switch is useful for scanning characters that are
@@ -262,13 +262,13 @@ public class TextJsonParser implements CookJsonParser
 					char nextChar;
 					if (readPos < m_readMax)
 					{
-						nextChar = buf[readPos];
+						nextChar = readBuf[readPos];
 					}
 					else
 					{
 						fill ();
 						readPos = 0;
-						nextChar = buf[readPos];
+						nextChar = readBuf[readPos];
 					}
 					if (nextChar == '/')
 					{
