@@ -21,7 +21,7 @@ import java.io.PrintWriter;
 import org.apache.commons.cli.*;
 
 /**
- * This file fixes the streaming Bson file's length value for Document / Array
+ * This file fixes the streaming BSON file's length value for Document / Array
  * types.
  *
  * @author	Heng Yuan

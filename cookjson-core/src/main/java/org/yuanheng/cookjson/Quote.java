@@ -164,6 +164,21 @@ public class Quote
 		out.write ('"');
 	}
 
+	/**
+	 * This function double quotes a string and escapes characters as
+	 * necessary so that the generated string can be used either as
+	 * the key name or raw string value.
+	 * <p>
+	 * The main use case of this function is to generate double quoted
+	 * key names.  This way, by setting {@link TextJsonGenerator#setKeyNameEscaped(boolean)}
+	 * to true, user can improve the JSON output performance in applications
+	 * where the same key names are being used over and over again (such
+	 * as database ResultSet).
+	 *
+	 * @param	str
+	 *			the string to be double quoted.
+	 * @return	The double quoted string.
+	 */
 	public static String quote (String str)
 	{
 		try

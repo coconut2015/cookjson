@@ -25,7 +25,8 @@
 	<artifactId>cookjson-benchmark</artifactId>
 	<packaging>jar</packaging>
 
-	<name>CookJson Benchmark</name>
+	<name>cookjson-benchmark</name>
+	<description>CookJson Benchmark</description>
 
 	<prerequisites>
 		<maven>3.0</maven>

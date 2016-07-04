@@ -20,6 +20,12 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 
 /**
+ * <a href="https://en.wikipedia.org/wiki/Byte_order_mark">BOM (Byte Order Mark)</a>
+ * is used to indicate the encoding of the input.
+ * <p>
+ * This class does not actually read BOM.  It guesses encoding based on the input
+ * pattern.
+ *
  * @author	Heng Yuan
  */
 public class BOM
@@ -31,9 +37,11 @@ public class BOM
 	public final static Charset utf32be = Charset.forName ("utf-32be");
 
 	/**
-	 * It should be noted that (rfc4627) does not requires BOM.  Instead,
-	 * it uses a pattern to determine if a JSON file is encoded in
-	 * utf-8, utf-16le, utf-16be, utf-32le, utf-32be.
+	 * This function guess the encoding for a JSON file using a pattern.
+	 * <p>
+	 * It should be noted that JSON (rfc4627) does not requires BOM.
+	 * Instead, its encoding can be inferred from a pattern to determine
+	 * if it is in utf-8, utf-16le, utf-16be, utf-32le or utf-32be.
 	 *
 	 * @param	is
 	 *			a PushbackInputStream to allow bytes to be unread.

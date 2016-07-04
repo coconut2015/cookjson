@@ -15,7 +15,12 @@
  */
 package org.yuanheng.cookjson;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 import javax.json.JsonException;
 import javax.json.JsonValue;
@@ -27,6 +32,8 @@ import com.jayway.jsonpath.InvalidJsonException;
 import com.jayway.jsonpath.spi.json.AbstractJsonProvider;
 
 /**
+ * This class is a very simple javax.json based Jayway {@link com.jayway.jsonpath.spi.json.JsonProvider}.
+ *
  * @author	Heng Yuan
  */
 public class JsonPathProvider extends AbstractJsonProvider
@@ -66,14 +73,13 @@ public class JsonPathProvider extends AbstractJsonProvider
 	{
 		try
 		{
-			InputStreamReader reader = new InputStreamReader (is, charset);
-			TextJsonParser p = new TextJsonParser (reader);
+			CookJsonParser p = TextJsonConfigHandler.getJsonParser (is, Charset.forName (charset));
 			p.next ();	// read the very first token to get initiated.
 			JsonValue v = p.getValue ();
 			p.close ();
 			return v;
 		}
-		catch (UnsupportedEncodingException ex)
+		catch (UnsupportedCharsetException ex)
 		{
 			throw new InvalidJsonException (ex);
 		}

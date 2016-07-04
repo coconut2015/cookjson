@@ -120,6 +120,13 @@ public class DoubleUtils
 		return Math.scalb ((double) quo, bex + point);
 	}
 
+	/**
+	 * This function converts a double representation to a string format.
+	 *
+	 * @param	f
+	 *			A double value.
+	 * @return	A string representation of the double value f.
+	 */
 	public static String toString (double f)
 	{
 		long lbits = Double.doubleToLongBits (f);

@@ -29,6 +29,8 @@ import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParserFactory;
 
 /**
+ * A JsonProvider supports both JSON and BSON format.
+ *
  * @author	Heng Yuan
  */
 public class CookJsonProvider extends JsonProvider

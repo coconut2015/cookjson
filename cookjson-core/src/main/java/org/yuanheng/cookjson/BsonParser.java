@@ -30,7 +30,22 @@ import org.apache.commons.codec.binary.Hex;
 import org.yuanheng.cookjson.value.*;
 
 /**
- * This BSON parser has the option of treating the root document as array.
+ * This is a simple implementation of JsonParser for BSON format.
+ * <p>
+ * Due to the fact that BSON has a lot of types that are MongoDB specific,
+ * only the following types are supported by this JsonParser.
+ * <ul>
+ *  <li>document</li>
+ *  <li>array</li>
+ * 	<li>int32</li>
+ *  <li>int64 - UTC Date/Time, Timestamp are treated as longs.</li>
+ *  <li>string - JavaScript code, Deprecated are treated as strings.</li>
+ *  <li>double</li>
+ *  <li>null</li>
+ *  <li>true</li>
+ *  <li>false</li>
+ *  <li>binary - binary subtype information is ignored.  ObjectId is treated as binary.</li>
+ * </ul>
  *
  * @author	Heng Yuan
  */
@@ -406,8 +421,8 @@ public class BsonParser implements CookJsonParser
 	/**
 	 * Gets the binary format for storing byte[].
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @return	the binaryFormat
 	 */
@@ -419,8 +434,8 @@ public class BsonParser implements CookJsonParser
 	/**
 	 * Sets the binary format for storing byte[].  The default is Base64.
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @param	binaryFormat
 	 *			the binary format

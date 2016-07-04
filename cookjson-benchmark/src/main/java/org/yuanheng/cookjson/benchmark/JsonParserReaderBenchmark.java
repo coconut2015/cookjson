@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.yuanheng.cookjson;
+package org.yuanheng.cookjson.benchmark;
 
 import java.io.*;
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 import javax.json.spi.JsonProvider;
-import javax.json.stream.JsonGenerator;
 import javax.json.stream.JsonParser;
+import javax.json.stream.JsonParser.Event;
 
 import org.glassfish.json.JsonProviderImpl;
 import org.openjdk.jmh.annotations.*;
+import org.yuanheng.cookjson.CookJsonProvider;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonToken;
 
 /**
- * This test compares the performance of TextJsonGenerator against
- * glassfish JsonGenerator.
- *
  * @author	Heng Yuan
  */
 @OutputTimeUnit (TimeUnit.MILLISECONDS)
@@ -37,7 +39,7 @@ import org.openjdk.jmh.annotations.*;
 @Warmup (iterations = 5)
 @BenchmarkMode (Mode.AverageTime)
 @Measurement(iterations = 20)
-public class JsonGeneratorBenchmark
+public class JsonParserReaderBenchmark
 {
 	private char[] m_chars;
 
@@ -65,26 +67,85 @@ public class JsonGeneratorBenchmark
 		m_chars = builder.toString ().toCharArray ();
 	}
 
-	@Benchmark
-	public void testCookJson () throws IOException
+	private void perfTest (JsonParser p)
 	{
-		JsonProvider glassFishProvider = new JsonProviderImpl ();
-		JsonProvider provider = new CookJsonProvider ();
-		JsonParser p = glassFishProvider.createParser (getReader ());
-		JsonGenerator g = provider.createGenerator (new StringWriter ());
-		Utils.convert (p, g);
-		p.close ();
-		g.close ();
+		try
+		{
+			for (;;)
+			{
+				Event e = p.next ();
+				switch (e)
+				{
+					case KEY_NAME:
+					case VALUE_NUMBER:
+					case VALUE_STRING:
+						p.getString ();
+						break;
+					default:
+						break;
+					
+				}
+			}
+		}
+		catch (NoSuchElementException ex)
+		{
+		}
+	}
+
+	public void perfTest2 (com.fasterxml.jackson.core.JsonParser p) throws IOException
+	{
+		JsonToken e;
+		while ((e = p.nextToken ()) != null)
+		{
+			switch (e)
+			{
+				case FIELD_NAME:
+				case VALUE_STRING:
+				case VALUE_NUMBER_INT:
+				case VALUE_NUMBER_FLOAT:
+					p.getText ();
+					break;
+				default:
+					break;
+				
+			}
+		}
 	}
 
 	@Benchmark
 	public void testGlassFish () throws IOException
 	{
-		JsonProvider glassFishProvider = new JsonProviderImpl ();
-		JsonParser p = glassFishProvider.createParser (getReader ());
-		JsonGenerator g = glassFishProvider.createGenerator (new StringWriter ());
-		Utils.convert (p, g);
+		JsonProvider provider = new JsonProviderImpl ();
+		JsonParser p = provider.createParser (getReader ());
+		perfTest (p);
 		p.close ();
-		g.close ();
+	}
+
+	@Benchmark
+	public void testCookJson () throws IOException
+	{
+		JsonProvider provider = new CookJsonProvider ();
+		JsonParser p = provider.createParser (getReader ());
+		perfTest (p);
+		p.close ();
+	}
+
+	@Benchmark
+	public void testAJackson () throws IOException
+	{
+		JsonFactory jsonFactory = new JsonFactory ();
+		com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getReader ());
+		perfTest2 (p);
+		p.close ();
+	}
+
+	@Benchmark
+	public void testAJacksonNoCanonical () throws IOException
+	{
+		JsonFactory jsonFactory = new JsonFactory ();
+		jsonFactory.disable (JsonFactory.Feature.CANONICALIZE_FIELD_NAMES);
+		com.fasterxml.jackson.core.JsonParser p = jsonFactory.createParser (getReader ());
+		perfTest2 (p);
+		p.close ();
 	}
 }

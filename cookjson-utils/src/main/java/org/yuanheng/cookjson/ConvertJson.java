@@ -30,7 +30,8 @@ import javax.json.stream.JsonParserFactory;
 import org.apache.commons.cli.*;
 
 /**
- * An extremely simple utility that dumps a BSON file to JSON file.
+ * An extremely simple utility that dumps converts between different JSON files
+ * formats.
  *
  * @author	Heng Yuan
  */

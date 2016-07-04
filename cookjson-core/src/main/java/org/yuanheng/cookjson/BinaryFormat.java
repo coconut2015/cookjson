@@ -20,6 +20,12 @@ package org.yuanheng.cookjson;
  */
 public class BinaryFormat
 {
+	/**
+	 * MIME Base64 encoding in a single line.
+	 */
 	public final static int BINARY_FORMAT_BASE64 = 0;
+	/**
+	 * Hexadecimal encoding.
+	 */
 	public final static int BINARY_FORMAT_HEX = 1;
 }

@@ -37,8 +37,6 @@ import org.yuanheng.cookjson.value.*;
  */
 public class Utils
 {
-	public static int THRESHOLD = 10000;
-
 	static void setInt (byte[] bytes, int value)
 	{
 		bytes[0] = (byte) (value & 0xff);
@@ -157,7 +155,15 @@ public class Utils
 		}
 	}
 
-	public static JsonValue getStructure (CookJsonParser p)
+	/**
+	 * A simple utility that constructs {@link JsonArray} and
+	 * {@link JsonObject} from a {@link JsonParser}.
+	 *
+	 * @param	p
+	 * 			JSON input parser.
+	 * @return	constructed JsonArray / JsonObject.
+	 */
+	public static JsonStructure getStructure (CookJsonParser p)
 	{
 		Event e = p.getEvent ();
 		switch (e)
@@ -179,6 +185,19 @@ public class Utils
 		}
 	}
 
+	/**
+	 * This utility reads data from a {@link JsonParser} and dumps it to a
+	 * {@link JsonGenerator}.  This utility is useful for converting data
+	 * from one format to another.
+	 * <p>
+	 * In cookjson-utils package, ConvertJson utility calls this function
+	 * for command-line based execution.
+	 *
+	 * @param	p
+	 * 			JSON input parser.
+	 * @param	g
+	 * 			JSON output generator.
+	 */
 	public static void convert (JsonParser p, JsonGenerator g)
 	{
 		CookJsonParser p2 = null;
@@ -365,6 +384,13 @@ public class Utils
 		}
 	}
 
+	/**
+	 * A simple utility that gets everything in a file as a UTF-8 string.
+	 *
+	 * @param	file
+	 * 			input file
+	 * @return	the file's string content.
+	 */
 	public static String getString (File file)
 	{
 		try

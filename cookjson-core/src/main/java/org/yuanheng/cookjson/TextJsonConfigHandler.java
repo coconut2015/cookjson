@@ -48,6 +48,14 @@ class TextJsonConfigHandler implements ConfigHandler
 		return new TextJsonParser (new InputStreamReader (pis, charset));
 	}
 
+	public static CookJsonParser getJsonParser (InputStream is, Charset charset)
+	{
+		if (BOM.utf8.equals (charset))
+			return new UTF8TextJsonParser (is);
+		else
+			return new TextJsonParser (new InputStreamReader (is, charset));
+	}
+
 	public static ConfigHandler getInstance ()
 	{
 		return s_instance;
@@ -69,7 +77,7 @@ class TextJsonConfigHandler implements ConfigHandler
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, Reader reader)
 	{
-		TextJsonParser p = new TextJsonParser (reader);
+		CookJsonParser p = new TextJsonParser (reader);
 		configure (config, p);
 		return p;
 	}
@@ -85,11 +93,7 @@ class TextJsonConfigHandler implements ConfigHandler
 	@Override
 	public CookJsonParser createParser (Map<String, ?> config, InputStream is, Charset charset)
 	{
-		CookJsonParser p;
-		if (BOM.utf8.equals (charset))
-			p = new UTF8TextJsonParser (is);
-		else
-			p = new TextJsonParser (new InputStreamReader (is, charset));
+		CookJsonParser p = getJsonParser (is, charset);
 		configure (config, p);
 		return p;
 	}

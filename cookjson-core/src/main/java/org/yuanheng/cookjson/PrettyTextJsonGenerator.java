@@ -26,6 +26,9 @@ import javax.json.stream.JsonGenerator;
 import org.yuanheng.cookjson.value.CookJsonBinary;
 
 /**
+ * This JsonGenerator behaves much like {@link TextJsonGenerator} except that
+ * the output is formatted for improved readability.
+ *
  * @author	Heng Yuan
  */
 public class PrettyTextJsonGenerator extends TextJsonGenerator

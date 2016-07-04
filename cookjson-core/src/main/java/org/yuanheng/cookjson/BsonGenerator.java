@@ -29,8 +29,19 @@ import javax.json.stream.JsonGenerator;
 import org.yuanheng.cookjson.value.CookJsonBinary;
 
 /**
- * This version of generator does not do any validations to maximize the
- * performance.
+ * A simple implementation of JsonGenerator that generates
+ * output in BSON format.
+ * <p>
+ * Because BSON does not support {@link BigDecimal} and {@link BigInteger}
+ * types, they are stored as string literals.  It is possible to store
+ * them as double (for certain range of values).  To do so, use the
+ * function {@link #setUseDouble(boolean)}.
+ * <p>
+ * It should be noted that the generated BSON file is in a stream format
+ * that has 0's for Document / Array type lengths.  While {@link BsonParser}
+ * has no problems reading the file, some utilities such as bsondump do
+ * require them to be correctly specified.  Use {@link BsonFixLength#fix(java.io.File)}
+ * to update the length information.
  *
  * @author	Heng Yuan
  */
@@ -59,11 +70,24 @@ public class BsonGenerator implements CookJsonGenerator
 
 	private boolean m_useDouble;
 
+	/**
+	 * Constructor for BsonGenerator.
+	 *
+	 * @param	os
+	 * 			the output stream.
+	 */
 	public BsonGenerator (OutputStream os)
 	{
 		m_os = os;
 	}
 
+	/**
+	 * If the flag is set to true, {@link BigDecimal} / {@link BigInteger}
+	 * values are stored as double instead of string.
+	 *
+	 * @param	b
+	 * 			boolean flag.
+	 */
 	public void setUseDouble (boolean b)
 	{
 		m_useDouble = b;

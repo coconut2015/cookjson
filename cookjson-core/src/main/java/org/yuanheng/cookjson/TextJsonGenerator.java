@@ -34,15 +34,8 @@ import javax.json.stream.JsonGenerator;
 import org.yuanheng.cookjson.value.CookJsonBinary;
 
 /**
- * This version of generator does not do any validations to maximize the
- * performance.
- * <p>
- * The idea is that once you verified the writing logic is correct using a
- * checked JsonGenerator, then switch to use this unchecked JsonGenerator.
- * <p>
- * This JsonGenerator does not write the BOM to the file.  If you want to
- * have it, use {@link BOM#write(OutputStream, java.nio.charset.Charset)} to
- * do so.
+ * This is a straightforward implementation of text based JSON output in
+ * space saving format.  For nicely indented format, use {@link PrettyTextJsonGenerator}.
  *
  * @author	Heng Yuan
  */
@@ -1054,8 +1047,8 @@ public class TextJsonGenerator implements CookJsonGenerator
 	/**
 	 * Gets the binary format for storing byte[].
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @return	the binaryFormat
 	 */
@@ -1067,8 +1060,8 @@ public class TextJsonGenerator implements CookJsonGenerator
 	/**
 	 * Sets the binary format for storing byte[].  The default is Base64.
 	 * <p>
-	 * It is one of {@link #BINARY_FORMAT_BASE64} and
-	 * {@link #BINARY_FORMAT_HEX}.
+	 * It is one of {@link BinaryFormat#BINARY_FORMAT_BASE64} and
+	 * {@link BinaryFormat#BINARY_FORMAT_HEX}.
 	 *
 	 * @param	binaryFormat
 	 *			the binary format
