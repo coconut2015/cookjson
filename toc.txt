@@ -1,11 +1,17 @@
 .. toctree::
 	:maxdepth: 3
+	:caption: Modules
 
 	cookjson-core
 	cookjson-jsonpath
 	cookjson-utils
-	Benchmark
+	cookjson-benchmark
 
+.. toctree::
+	:maxdepth: 3
+	:caption: Links
+
+	JavaDoc <http://www.javadoc.io/doc/org.yuanheng.cookjson/cookjson-core/1.0>
 	Releases <https://github.com/coconut2015/cookjson/releases>
 	Discussion Group <https://groups.google.com/forum/#!forum/cookjson>
 	GitHub <https://github.com/coconut2015/cookjson>

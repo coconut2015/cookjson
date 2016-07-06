@@ -8,8 +8,8 @@
 	</script>
 
 
-Benchmarks
-==========
+cookjson-benchmark
+==================
 
 ``cookjson-benchmark`` contains some benchmark tests that compare CookJson
 against GlassFish implementation, Jackson and Bson4Jackson.
