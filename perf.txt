@@ -1,0 +1,22 @@
+Benchmark                                              Mode  Cnt   Score   Error  Units
+BsonParserBenchmark.testBson4Jackson                   avgt   20  13.845 ± 0.085  ms/op
+BsonParserBenchmark.testCookJson                       avgt   20   8.568 ± 0.068  ms/op
+JsonGeneratorBenchmark.testCookJson                    avgt   20  30.564 ± 0.520  ms/op
+JsonGeneratorBenchmark.testGlassFish                   avgt   20  30.223 ± 1.121  ms/op
+JsonParserInputStreamBenchmark.testCookJson            avgt   20   4.918 ± 0.022  ms/op
+JsonParserInputStreamBenchmark.testGlassFish           avgt   20  13.992 ± 0.289  ms/op
+JsonParserInputStreamBenchmark.testJackson             avgt   20   4.977 ± 0.121  ms/op
+JsonParserInputStreamBenchmark.testJacksonNoCanonical  avgt   20  12.668 ± 0.070  ms/op
+JsonParserReaderBenchmark.testAJackson                 avgt   20   7.326 ± 0.222  ms/op
+JsonParserReaderBenchmark.testAJacksonNoCanonical      avgt   20   7.263 ± 0.337  ms/op
+JsonParserReaderBenchmark.testCookJson                 avgt   20   6.415 ± 0.233  ms/op
+JsonParserReaderBenchmark.testGlassFish                avgt   20   8.003 ± 0.053  ms/op
+
+BSON
+{ "CookJson" : 8.568, "Jackson" : 13.845 }
+JsonGenerator
+{ "CookJson" : 30.564, "GlassFish" : 30.223 }
+JSON InputStream
+{ "CookJson" : 4.918, "GlassFish" : 13.992, "Jackson" : 4.977, "JacksonNoCanonical" : 12.668 }
+JSON Reader
+{ "CookJson" : 6.415, "GlassFish" : 8.003, "Jackson" : 7.326, "JacksonNoCanonical" : 7.263 }

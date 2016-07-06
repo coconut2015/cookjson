@@ -1,0 +1,39 @@
+JSON
+----
+
+Parsers
+
+* ``TextJsonParser`` - A JSON parser with Reader as input.
+* ``UTFTextJsonParser`` - A *very fast* JSON parser specifically for UTF-8 input.
+
+Generators
+
+* ``TextJsonGenerator`` - JSON output with compact format.
+* ``PrettyTextJsonGenerator`` - JSON output with indented format.
+
+These classes are all public.  So you can either directly construct them or
+use JsonProvider to create them.
+
+It should be noted that the location unit returned by TextJsonParser is in
+characters, while the location unit returned by UTFTextJsonParser is in
+bytes.
+
+Performance Tips
+~~~~~~~~~~~~~~~~
+
+When parsing JSON inputs in UTF-8, use ``UTFTextJsonParser`` instead of ``TextJsonParser``.
+It can be several times faster.
+
+For example, instead of the following parser construction:
+
+.. code-block:: java
+
+	CookJsonProvider provider = new CookJsonProvider ();
+	JsonParser p = provider.createParser (new InputStreamReader (new FileInputStream (srcFile), "utf-8"));
+
+The parsing is far more efficient using the following approach:
+
+.. code-block:: java
+
+	CookJsonProvider provider = new CookJsonProvider ();
+	JsonParser p = provider.createParser (new FileInputStream (srcFile), Charset.forName ("utf-8"));

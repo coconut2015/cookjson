@@ -1,0 +1,30 @@
+BSON
+----
+`BSON <http://bsonspec.org/>`__ is a file format used by MongoDB.
+The main advantage of this particular file format is its native support for
+binary data.  However, space-wise, it is not particularly efficient.  It
+also contains a lot of MongoDB specific data types that are not useful
+to general audiences.
+
+BsonParser
+~~~~~~~~~~
+
+* setRootArray(boolean) basically treats the root ``Document`` as an
+  Array instead of an Object in JSON.  It does not verify if the fields
+  names are correct.
+
+BsonGenerator
+~~~~~~~~~~~~~
+
+One major disadvantage of the file format is that every ``Document`` and
+``Array`` type needs to have its length information generated.  Here I
+follow `Bson4Jackson <https://www.michel-kraemer.com/binary-json-with-bson4jackson/>`__ 's approach to generate a stream format that contains
+``0``s for the length information.  One can call ``BsonFixLength.fix()`` function
+to correct the length information.
+
+``BsonGenerator`` generates a BSON file using a stream operation that does not
+have correct lengths for ``Document`` and ``Array`` types.  This format is
+identical to Bson4Jackson stream output.  This file can be parsed by
+``BsonParser``.
+
+The length information can be fixed by calling ``BsonFixLength.fix()`` function.
