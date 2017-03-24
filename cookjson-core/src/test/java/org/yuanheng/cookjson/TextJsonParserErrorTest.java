@@ -18,7 +18,6 @@ package org.yuanheng.cookjson;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 
-import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParsingException;
 
 import org.junit.Rule;
