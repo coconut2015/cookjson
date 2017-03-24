@@ -429,15 +429,9 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 				readNumber (firstChar);
 				return;
 			}
-			else
+			else if (ch != 'e' && ch != 'E')
 			{
-				if (m_appendPos > 0)	// buffer initiated with '-'
-				{
-					++m_offset;
-					++m_column;
-					throw unexpected (ch);
-				}
-				m_len = 1;
+				m_len = m_readPos - m_start;
 				return;
 			}
 		}
@@ -565,15 +559,8 @@ public class TextJsonParser implements CookJsonParser, CommentJsonParser
 		if (firstChar == '0')
 		{
 			ch = read ();
-			if (ch == '.')
+			if (ch != '.' && ch != 'e' && ch != 'E')
 			{
-			}
-			else
-			{
-				if (m_appendBuf[0] == '-')
-				{
-					throw unexpected (ch);
-				}
 				unread ();
 				return;
 			}

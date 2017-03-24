@@ -543,4 +543,84 @@ public class TextJsonParserTest
 		}
 		p.close ();
 	}
+
+	@Test
+	public void testZero1 ()
+	{
+		String json = "[ -0 ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testZero2 ()
+	{
+		String json = "[ 0e0 ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("0e0", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testZero3 ()
+	{
+		String json = "[ -0E0 ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0E0", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
+
+	@Test
+	public void testZero4 ()
+	{
+		String json = "[ -0E40 ]";
+
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
+		while (p.hasNext ())
+		{
+			switch (p.next ())
+			{
+				case VALUE_NUMBER:
+					Assert.assertEquals ("-0E40", p.getString ());
+					break;
+				default:
+					break;
+			}
+		}
+		p.close ();
+	}
 }

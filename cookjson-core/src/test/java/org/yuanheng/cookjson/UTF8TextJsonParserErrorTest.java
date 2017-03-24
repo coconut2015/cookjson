@@ -372,7 +372,7 @@ public class UTF8TextJsonParserErrorTest
 	@SuppressWarnings ("resource")
 	public void testNumber5 ()
 	{
-		String json = "[ -0 ]";
+		String json = "[ 0. ]";
 
 		thrown.expect (JsonParsingException.class);
 		thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
@@ -388,12 +388,12 @@ public class UTF8TextJsonParserErrorTest
 	@SuppressWarnings ("resource")
 	public void testNumber5_2 ()
 	{
-		String json = "[ -0 ]";
+		String json = "[ -0. ]";
 
 		thrown.expect (JsonParsingException.class);
-		thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+		thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character ' '");
 
-		JsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)), 2);
+		JsonParser p = new UTF8TextJsonParser (new ByteArrayInputStream (json.getBytes (BOM.utf8)));
 		for (;;)
 		{
 			p.next ();

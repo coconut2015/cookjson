@@ -18,6 +18,7 @@ package org.yuanheng.cookjson;
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
 
+import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParsingException;
 
 import org.junit.Rule;
@@ -371,10 +372,10 @@ public class TextJsonParserErrorTest
 	@SuppressWarnings ("resource")
 	public void testNumber5 ()
 	{
-		String json = "[ -0 ]";
+		String json = "[ 0. ]";
 
-	    thrown.expect (JsonParsingException.class);
-	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+		thrown.expect (JsonParsingException.class);
+		thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
 
 	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
@@ -387,12 +388,12 @@ public class TextJsonParserErrorTest
 	@SuppressWarnings ("resource")
 	public void testNumber5_2 ()
 	{
-		String json = "[ -0 ]";
+		String json = "[ -0. ]";
 
-	    thrown.expect (JsonParsingException.class);
-	    thrown.expectMessage ("Parsing error at line 1, column 5, offset 4: unexpected character ' '");
+		thrown.expect (JsonParsingException.class);
+		thrown.expectMessage ("Parsing error at line 1, column 6, offset 5: unexpected character ' '");
 
-	    TextJsonParser p = new TextJsonParser (new StringReader (json), 2);
+	    TextJsonParser p = new TextJsonParser (new StringReader (json));
 		for (;;)
 		{
 			p.next ();
