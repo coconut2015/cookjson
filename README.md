@@ -3,3 +3,26 @@
 CookJson contains [JSON](http://www.json.org/) and [BSON](http://bsonspec.org/) parsers and generators for [JSON API for Java (JSR 353)](https://jsonp.java.net/).  There is also a JsonProvider for [Jayway JsonPath](https://github.com/jayway/JsonPath).
 
 Website: http://cookjson.yuanheng.org
+
+Maven
+=====
+
+cookjson-core
+
+```xml
+<dependency>
+    <groupId>org.yuanheng.cookjson</groupId>
+    <artifactId>cookjson-core</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
+
+cookjson-jsonpath
+
+```xml
+<dependency>
+    <groupId>org.yuanheng.cookjson</groupId>
+    <artifactId>cookjson-jsonpath</artifactId>
+    <version>1.0.1</version>
+</dependency>
+```
