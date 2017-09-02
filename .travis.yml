@@ -2,7 +2,6 @@ language: java
 sudo: false
 jdk:
   - openjdk7
-  - oraclejdk7
   - oraclejdk8
 script: mvn test
 install: mvn install -DskipTests -Dgpg.skip
