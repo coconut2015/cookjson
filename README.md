@@ -4,6 +4,8 @@ CookJson contains [JSON](http://www.json.org/) and [BSON](http://bsonspec.org/) 
 
 Website: http://cookjson.yuanheng.org
 
+v1.0.2 is the same v1.0.1.  There was some issues with 1.0.1 on Maven.
+
 Maven
 =====
 
@@ -13,7 +15,7 @@ cookjson-core
 <dependency>
     <groupId>org.yuanheng.cookjson</groupId>
     <artifactId>cookjson-core</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```
 
@@ -23,6 +25,6 @@ cookjson-jsonpath
 <dependency>
     <groupId>org.yuanheng.cookjson</groupId>
     <artifactId>cookjson-jsonpath</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
 </dependency>
 ```

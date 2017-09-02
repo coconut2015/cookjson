@@ -18,14 +18,14 @@
 
 	<groupId>org.yuanheng.cookjson</groupId>
 	<artifactId>cookjson-parent</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<packaging>pom</packaging>
 
 	<name>cookjson</name>
 	<description>Parsers / generators for javax.json</description>
 	<url>http://cookjson.yuanheng.org</url>
 	<scm>
-		<developerConnection>scm:git:https://github.com/coconut2015/cookjson.git</developerConnection>
+		<url>https://github.com/coconut2015/cookjson</url>
 	</scm>
 	<licenses>
 		<license>
